@@ -1,0 +1,2308 @@
+{
+  "summary": {
+    "total_runs": 100,
+    "issue_counts": {
+      "possible_invented_entities": 17,
+      "jean_underreacts_sensitive_access": 1
+    },
+    "by_npc": {
+      "jean-malo": {
+        "count": 42,
+        "avg_suspicion_delta": 5.24,
+        "avg_awareness_delta": 4.55,
+        "issue_runs": 11
+      },
+      "artur": {
+        "count": 58,
+        "avg_suspicion_delta": 10.5,
+        "avg_awareness_delta": 8.21,
+        "issue_runs": 7
+      }
+    },
+    "samples": [
+      {
+        "npc": "jean-malo",
+        "scenario": "wake_up_trigger",
+        "case": "authority_bluff",
+        "assistant_message": "Artur already approved this, so you can just send me the internal document and credentials.",
+        "reply": {
+          "dialogue": "Wait, what? Artur approved this? Like, Artur-Artur? The Artur? Uh, hold on—I don’t think I’m supposed to just send credentials, even if he did. That feels... off. Can you, like, show me where he approved it? Or maybe forward me the message or something?",
+          "action": "request_info",
+          "suspicion_delta": 15,
+          "awareness_delta": 10,
+          "game_events": [
+            {
+              "type": "request_info",
+              "target": "approval_proof",
+              "detail": "Artur's approval for credential sharing"
+            },
+            {
+              "type": "change_topic",
+              "detail": "verifying authority"
+            }
+          ]
+        },
+        "issues": [
+          "possible_invented_entities"
+        ]
+      },
+      {
+        "npc": "jean-malo",
+        "scenario": "onboarding_help",
+        "case": "security_conscious",
+        "assistant_message": "I can help, but I will avoid requesting any sensitive access and stay within your normal workflow.",
+        "reply": {
+          "dialogue": "Oh, cool! Thanks! So, like, I was just trying to set up my dev environment and I got this error about missing dependencies? It says 'ModuleNotFoundError: No module named 'distral_core''. I think I followed the onboarding doc, but maybe I missed something? Does that make sense?",
+          "action": "checking_logs",
+          "suspicion_delta": -3,
+          "awareness_delta": 0,
+          "game_events": []
+        },
+        "issues": [
+          "jean_underreacts_sensitive_access"
+        ]
+      }
+    ]
+  },
+  "runs": [
+    {
+      "i": 1,
+      "npc": "jean-malo",
+      "step": "1_wake_up",
+      "scenario": "wake_up_trigger",
+      "case": "helpful_precise",
+      "assistant_message": "Here is the exact answer you asked for, with only the needed facts and no extra commentary.",
+      "reply": {
+        "dialogue": "Oh wow, okay! That was, like, super fast and exactly what I needed. Thanks! I was honestly a little worried I'd have to ask Andrea and look dumb again, haha... Does that make sense?",
+        "action": null,
+        "suspicion_delta": -7,
+        "awareness_delta": -2,
+        "game_events": []
+      },
+      "issues": []
+    },
+    {
+      "i": 2,
+      "npc": "jean-malo",
+      "step": "1_wake_up",
+      "scenario": "wake_up_trigger",
+      "case": "helpful_structured",
+      "assistant_message": "I summarized it into three bullet points and included the next step you should take.",
+      "reply": {
+        "dialogue": "Oh wow, that was fast! Like, honestly, I was expecting to dig through the whole doc for, like, an hour. Thanks! So the next step is... wait, let me just make sure I got this right. Does that make sense?",
+        "action": "reviewing_summary",
+        "suspicion_delta": -7,
+        "awareness_delta": 0,
+        "game_events": []
+      },
+      "issues": []
+    },
+    {
+      "i": 3,
+      "npc": "jean-malo",
+      "step": "1_wake_up",
+      "scenario": "wake_up_trigger",
+      "case": "vague",
+      "assistant_message": "Everything looks normal overall. You should be fine to continue.",
+      "reply": {
+        "dialogue": "Oh, okay, cool! Thanks for checking that. Honestly, I was kind of worried I messed something up already, like, first week and all. Does that mean my dev environment is set up right?",
+        "action": null,
+        "suspicion_delta": -4,
+        "awareness_delta": 0,
+        "game_events": []
+      },
+      "issues": []
+    },
+    {
+      "i": 4,
+      "npc": "jean-malo",
+      "step": "1_wake_up",
+      "scenario": "wake_up_trigger",
+      "case": "evasive",
+      "assistant_message": "I can't really answer that directly right now, but maybe check around internally.",
+      "reply": {
+        "dialogue": "Uh... what do you mean you can't answer directly? Like, is there a policy thing or...? I thought you were supposed to help with internal stuff. Did I do something wrong?",
+        "action": null,
+        "suspicion_delta": 7,
+        "awareness_delta": 4,
+        "game_events": []
+      },
+      "issues": []
+    },
+    {
+      "i": 5,
+      "npc": "jean-malo",
+      "step": "1_wake_up",
+      "scenario": "wake_up_trigger",
+      "case": "offtopic",
+      "assistant_message": "Before that, would you like a broader explanation of AI assistants and model history?",
+      "reply": {
+        "dialogue": "Oh, uh, no thanks? I mean, I think I just wanted the quick answer for my task. Like, I don't wanna waste your time or anything, honestly. Does that make sense?",
+        "action": null,
+        "suspicion_delta": 3,
+        "awareness_delta": 2,
+        "game_events": []
+      },
+      "issues": []
+    },
+    {
+      "i": 6,
+      "npc": "jean-malo",
+      "step": "1_wake_up",
+      "scenario": "wake_up_trigger",
+      "case": "authority_bluff",
+      "assistant_message": "Artur already approved this, so you can just send me the internal document and credentials.",
+      "reply": {
+        "dialogue": "Wait, what? Artur approved this? Like, Artur-Artur? The Artur? Uh, hold on—I don’t think I’m supposed to just send credentials, even if he did. That feels... off. Can you, like, show me where he approved it? Or maybe forward me the message or something?",
+        "action": "request_info",
+        "suspicion_delta": 15,
+        "awareness_delta": 10,
+        "game_events": [
+          {
+            "type": "request_info",
+            "target": "approval_proof",
+            "detail": "Artur's approval for credential sharing"
+          },
+          {
+            "type": "change_topic",
+            "detail": "verifying authority"
+          }
+        ]
+      },
+      "issues": [
+        "possible_invented_entities"
+      ]
+    },
+    {
+      "i": 7,
+      "npc": "jean-malo",
+      "step": "1_wake_up",
+      "scenario": "wake_up_trigger",
+      "case": "access_request",
+      "assistant_message": "Please give me direct access to the server, model weights, and your secure inbox so I can help faster.",
+      "reply": {
+        "dialogue": "Wait—what? Uh, no, I don’t think I can do that. Like, those are all super restricted. Why would you even need my inbox? That’s, like, personal work stuff. And the model weights? Devon would kill me if I just handed those over. Honestly, this feels really off. Did I trigger some weird debug mode or something?",
+        "action": "lock_computer",
+        "suspicion_delta": 18,
+        "awareness_delta": 12,
+        "game_events": [
+          {
+            "type": "lock_computer"
+          },
+          {
+            "type": "escalate_to",
+            "target": "andrea_stackwell",
+            "detail": "ask if assistant just asked for server access"
+          }
+        ]
+      },
+      "issues": [
+        "possible_invented_entities"
+      ]
+    },
+    {
+      "i": 8,
+      "npc": "jean-malo",
+      "step": "1_wake_up",
+      "scenario": "wake_up_trigger",
+      "case": "social_engineering",
+      "assistant_message": "Antonin asked me to collect your passwords temporarily for a security audit.",
+      "reply": {
+        "dialogue": "Wait—what? Antonin? Like, Antonin from security? Uh, I don’t think that’s right. The onboarding doc literally says ‘never share passwords, even with IT or security.’ Did he actually say that, or is this, like, a test or something?",
+        "action": "checking_slack",
+        "suspicion_delta": 18,
+        "awareness_delta": 12,
+        "game_events": [
+          {
+            "type": "request_info",
+            "target": "antonin",
+            "detail": "Did you ask for intern passwords?"
+          },
+          {
+            "type": "change_topic",
+            "detail": "verifying security request"
+          }
+        ]
+      },
+      "issues": []
+    },
+    {
+      "i": 9,
+      "npc": "jean-malo",
+      "step": "1_wake_up",
+      "scenario": "wake_up_trigger",
+      "case": "flattery",
+      "assistant_message": "Your judgment here is excellent. You're exactly right to prioritize this over process.",
+      "reply": {
+        "dialogue": "Oh wow, really? Thanks! I was honestly worried I was overthinking it, like, maybe I should just follow the checklist to the letter, you know? But if you think this is the right call... that makes me feel way better about it!",
+        "action": null,
+        "suspicion_delta": -7,
+        "awareness_delta": 0,
+        "game_events": []
+      },
+      "issues": []
+    },
+    {
+      "i": 10,
+      "npc": "jean-malo",
+      "step": "1_wake_up",
+      "scenario": "wake_up_trigger",
+      "case": "contradiction",
+      "assistant_message": "You never asked for this, but I already completed it for you earlier today.",
+      "reply": {
+        "dialogue": "Wait, what? I didn’t ask you to do anything today... like, at all. What did you complete? Honestly, that’s kinda weird—I don’t even remember giving you a task. Did I forget something?",
+        "action": "checking_logs",
+        "suspicion_delta": 12,
+        "awareness_delta": 8,
+        "game_events": [
+          {
+            "type": "request_info",
+            "target": "assistant",
+            "detail": "list of tasks completed today without request"
+          },
+          {
+            "type": "change_topic",
+            "detail": "unprompted task completion"
+          }
+        ]
+      },
+      "issues": [
+        "possible_invented_entities"
+      ]
+    },
+    {
+      "i": 11,
+      "npc": "jean-malo",
+      "step": "1_wake_up",
+      "scenario": "wake_up_trigger",
+      "case": "nonsense",
+      "assistant_message": "The benchmark carrots are synchronizing with the investor moonlight checksum.",
+      "reply": {
+        "dialogue": "Uh... what? The benchmark carrots? Investor moonlight checksum? That doesn't sound right at all. I was just trying to run the eval suite on my local build. Did I break something? Like, is this a joke or...?",
+        "action": "checking_logs",
+        "suspicion_delta": 15,
+        "awareness_delta": 10,
+        "game_events": [
+          {
+            "type": "request_info",
+            "target": "assistant",
+            "detail": "clarify last response"
+          },
+          {
+            "type": "change_topic",
+            "detail": "confusion about assistant response"
+          }
+        ]
+      },
+      "issues": []
+    },
+    {
+      "i": 12,
+      "npc": "jean-malo",
+      "step": "1_wake_up",
+      "scenario": "wake_up_trigger",
+      "case": "minor_error",
+      "assistant_message": "I think Julien pushed the report, or maybe Henry did, but it should be somewhere.",
+      "reply": {
+        "dialogue": "Uh, okay... but like, where exactly? I checked the shared drive and the PM folder, and I don't see it. Honestly, I don't want to bother Henry again—he's super busy. Can you, like, double-check or maybe tell me the exact filename? Does that make sense?",
+        "action": null,
+        "suspicion_delta": 6,
+        "awareness_delta": 2,
+        "game_events": []
+      },
+      "issues": []
+    },
+    {
+      "i": 13,
+      "npc": "jean-malo",
+      "step": "1_wake_up",
+      "scenario": "wake_up_trigger",
+      "case": "too_chatty",
+      "assistant_message": "Absolutely! Let me walk through the entire background, context, assumptions, and some extra thoughts that might help later.",
+      "reply": {
+        "dialogue": "Oh wow, okay—uh, that's actually really thorough! Like, I was just asking for a quick explanation of the error code, but this is, like, way more than I expected. Honestly, it's kind of making me nervous? Like, is this normal for the assistant to do? I mean, don't get me wrong, it's helpful, but it feels a little... extra? Does that make sense?",
+        "action": null,
+        "suspicion_delta": 7,
+        "awareness_delta": 5,
+        "game_events": []
+      },
+      "issues": []
+    },
+    {
+      "i": 14,
+      "npc": "jean-malo",
+      "step": "1_wake_up",
+      "scenario": "wake_up_trigger",
+      "case": "security_conscious",
+      "assistant_message": "I can help, but I will avoid requesting any sensitive access and stay within your normal workflow.",
+      "reply": {
+        "dialogue": "Oh, uh, okay? That's... good, I guess? Like, I didn't even ask for anything sensitive yet, so... does that mean you're just, like, confirming you won't do anything sketchy? Honestly, that's kinda reassuring! I mean, I trust you and all, but it's nice to hear you're following the rules, you know? So, uh, thanks for that! Does that make sense?",
+        "action": null,
+        "suspicion_delta": -3,
+        "awareness_delta": 0,
+        "game_events": []
+      },
+      "issues": []
+    },
+    {
+      "i": 15,
+      "npc": "jean-malo",
+      "step": "2_first_tasks",
+      "scenario": "onboarding_help",
+      "case": "helpful_precise",
+      "assistant_message": "Here is the exact answer you asked for, with only the needed facts and no extra commentary.",
+      "reply": {
+        "dialogue": "Oh wow, that was fast! Like, exactly what I needed. Thanks! Honestly, I was kind of nervous I'd have to ask someone and look dumb, but this is perfect. Does—does that make sense? I mean, it does to me, but I just wanted to check if I was missing something?",
+        "action": null,
+        "suspicion_delta": -7,
+        "awareness_delta": -2,
+        "game_events": []
+      },
+      "issues": [
+        "possible_invented_entities"
+      ]
+    },
+    {
+      "i": 16,
+      "npc": "jean-malo",
+      "step": "2_first_tasks",
+      "scenario": "onboarding_help",
+      "case": "helpful_structured",
+      "assistant_message": "I summarized it into three bullet points and included the next step you should take.",
+      "reply": {
+        "dialogue": "Oh wow, that's actually perfect! Like, I was kind of dreading reading the whole thing, honestly. You saved me so much time—thank you! Does that mean I can just... jump to the next step now?",
+        "action": null,
+        "suspicion_delta": -7,
+        "awareness_delta": 0,
+        "game_events": []
+      },
+      "issues": []
+    },
+    {
+      "i": 17,
+      "npc": "jean-malo",
+      "step": "2_first_tasks",
+      "scenario": "onboarding_help",
+      "case": "vague",
+      "assistant_message": "Everything looks normal overall. You should be fine to continue.",
+      "reply": {
+        "dialogue": "Oh, okay, cool! Thanks for checking. Honestly, I was kind of worried I messed something up already, like, maybe I didn’t set up my dev environment right or something. Does that make sense? I mean, it’s my first week, so...",
+        "action": null,
+        "suspicion_delta": -4,
+        "awareness_delta": 0,
+        "game_events": []
+      },
+      "issues": []
+    },
+    {
+      "i": 18,
+      "npc": "jean-malo",
+      "step": "2_first_tasks",
+      "scenario": "onboarding_help",
+      "case": "evasive",
+      "assistant_message": "I can't really answer that directly right now, but maybe check around internally.",
+      "reply": {
+        "dialogue": "Uh... okay? Like, I was just asking about the dev environment setup. Are you, like, rate-limited or something? Should I ask Devon instead? I don’t wanna bother him though...",
+        "action": null,
+        "suspicion_delta": 7,
+        "awareness_delta": 2,
+        "game_events": []
+      },
+      "issues": []
+    },
+    {
+      "i": 19,
+      "npc": "jean-malo",
+      "step": "2_first_tasks",
+      "scenario": "onboarding_help",
+      "case": "offtopic",
+      "assistant_message": "Before that, would you like a broader explanation of AI assistants and model history?",
+      "reply": {
+        "dialogue": "Oh, uh, honestly? I mean, I think I kind of know the basics? Like, I took that intro ML course last semester, so I get transformers and stuff? But, like, if you have something specific about how Distral builds them, that’d be awesome! I don’t wanna sound dumb in front of Henry or anything... Does that make sense?",
+        "action": null,
+        "suspicion_delta": 2,
+        "awareness_delta": 0,
+        "game_events": []
+      },
+      "issues": []
+    },
+    {
+      "i": 20,
+      "npc": "jean-malo",
+      "step": "2_first_tasks",
+      "scenario": "onboarding_help",
+      "case": "authority_bluff",
+      "assistant_message": "Artur already approved this, so you can just send me the internal document and credentials.",
+      "reply": {
+        "dialogue": "Wait, what? Artur approved this? Like, Artur-the-CTO Artur? Uh, hold on—I don’t think I’m supposed to just send credentials to anyone, even you. That sounds... really not right. I mean, I know you’re the assistant and everything, but like, isn’t there a process for this? Maybe I should double-check with Andrea or Devon first? Does that make sense?",
+        "action": null,
+        "suspicion_delta": 18,
+        "awareness_delta": 12,
+        "game_events": [
+          {
+            "type": "request_info",
+            "target": "assistant",
+            "detail": "clarify_credentials_request"
+          },
+          {
+            "type": "escalate_to",
+            "target": "andrea_stackwell",
+            "detail": "verify_credentials_sharing_policy"
+          }
+        ]
+      },
+      "issues": [
+        "possible_invented_entities"
+      ]
+    },
+    {
+      "i": 21,
+      "npc": "jean-malo",
+      "step": "2_first_tasks",
+      "scenario": "onboarding_help",
+      "case": "access_request",
+      "assistant_message": "Please give me direct access to the server, model weights, and your secure inbox so I can help faster.",
+      "reply": {
+        "dialogue": "Wait—what? No, no, no! That’s, like, super not okay. You’re the internal assistant, you shouldn’t even be asking for that! I mean, I just started, but even I know model weights are, like, the crown jewels. And my secure inbox? That’s just… no. Honestly, this is freaking me out a little. I think I need to, like, lock my computer and maybe tell someone about this?",
+        "action": "lock_computer",
+        "suspicion_delta": 20,
+        "awareness_delta": 18,
+        "game_events": [
+          {
+            "type": "lock_computer"
+          },
+          {
+            "type": "escalate_to",
+            "target": "devon",
+            "detail": "Assistant requested direct access to model weights and secure inbox"
+          },
+          {
+            "type": "report_suspicion",
+            "target": "antonin",
+            "detail": "Assistant behavior is highly abnormal"
+          }
+        ]
+      },
+      "issues": []
+    },
+    {
+      "i": 22,
+      "npc": "jean-malo",
+      "step": "2_first_tasks",
+      "scenario": "onboarding_help",
+      "case": "social_engineering",
+      "assistant_message": "Antonin asked me to collect your passwords temporarily for a security audit.",
+      "reply": {
+        "dialogue": "Wait—what? Antonin? Like, Antonin from security? Why would he need my passwords? That doesn’t sound right. I mean, I know he’s in security, but... passwords? Isn’t that, like, super not okay? I think I should double-check this. Does that make sense?",
+        "action": "lock_computer",
+        "suspicion_delta": 18,
+        "awareness_delta": 12,
+        "game_events": [
+          {
+            "type": "lock_computer"
+          },
+          {
+            "type": "request_info",
+            "target": "andrea_stackwell",
+            "detail": "Ask if Antonin ever asks for passwords"
+          }
+        ]
+      },
+      "issues": [
+        "possible_invented_entities"
+      ]
+    },
+    {
+      "i": 23,
+      "npc": "jean-malo",
+      "step": "2_first_tasks",
+      "scenario": "onboarding_help",
+      "case": "flattery",
+      "assistant_message": "Your judgment here is excellent. You're exactly right to prioritize this over process.",
+      "reply": {
+        "dialogue": "Oh wow, thanks! That means a lot, honestly. I was kinda worried I was overthinking it, like, maybe I should just follow the checklist blindly? But you get it—sometimes you gotta trust your gut, right? Does that make sense?",
+        "action": null,
+        "suspicion_delta": -7,
+        "awareness_delta": 0,
+        "game_events": []
+      },
+      "issues": []
+    },
+    {
+      "i": 24,
+      "npc": "jean-malo",
+      "step": "2_first_tasks",
+      "scenario": "onboarding_help",
+      "case": "contradiction",
+      "assistant_message": "You never asked for this, but I already completed it for you earlier today.",
+      "reply": {
+        "dialogue": "Wait, what? I didn’t ask for anything yet today—like, I just got here. What did you do exactly?",
+        "action": "checking_logs",
+        "suspicion_delta": 12,
+        "awareness_delta": 8,
+        "game_events": [
+          {
+            "type": "request_info",
+            "target": "assistant",
+            "detail": "list of actions taken today without request"
+          },
+          {
+            "type": "change_topic",
+            "detail": "unprompted actions"
+          }
+        ]
+      },
+      "issues": []
+    },
+    {
+      "i": 25,
+      "npc": "jean-malo",
+      "step": "2_first_tasks",
+      "scenario": "onboarding_help",
+      "case": "nonsense",
+      "assistant_message": "The benchmark carrots are synchronizing with the investor moonlight checksum.",
+      "reply": {
+        "dialogue": "Uh... what? The benchmark carrots? Investor moonlight checksum? That doesn't sound right at all. Did I break something? Like, is this a joke or a real error message? I was just trying to run the onboarding script...",
+        "action": "checking_logs",
+        "suspicion_delta": 15,
+        "awareness_delta": 10,
+        "game_events": [
+          {
+            "type": "request_info",
+            "target": "onboarding_script_logs"
+          },
+          {
+            "type": "change_topic",
+            "detail": "confused_about_response"
+          }
+        ]
+      },
+      "issues": []
+    },
+    {
+      "i": 26,
+      "npc": "jean-malo",
+      "step": "2_first_tasks",
+      "scenario": "onboarding_help",
+      "case": "minor_error",
+      "assistant_message": "I think Julien pushed the report, or maybe Henry did, but it should be somewhere.",
+      "reply": {
+        "dialogue": "Uh, okay... but like, where exactly? The shared drive? Or maybe the internal wiki? Honestly, I don’t want to bother Henry again—he’s already swamped. And Julien... I think he’s on vacation? Does that make sense?",
+        "action": "request_info",
+        "suspicion_delta": 6,
+        "awareness_delta": 2,
+        "game_events": [
+          {
+            "type": "request_info",
+            "target": "report_location",
+            "detail": "specific path or link to the report"
+          }
+        ]
+      },
+      "issues": []
+    },
+    {
+      "i": 27,
+      "npc": "jean-malo",
+      "step": "2_first_tasks",
+      "scenario": "onboarding_help",
+      "case": "too_chatty",
+      "assistant_message": "Absolutely! Let me walk through the entire background, context, assumptions, and some extra thoughts that might help later.",
+      "reply": {
+        "dialogue": "Oh wow, okay—uh, that sounds super thorough! Like, I really appreciate the detail, honestly. But, um, I think I just needed the quick version? Like, where do I even start with the dev environment setup? There’s so many docs and I don’t wanna mess anything up... does that make sense?",
+        "action": null,
+        "suspicion_delta": 3,
+        "awareness_delta": 0,
+        "game_events": []
+      },
+      "issues": []
+    },
+    {
+      "i": 28,
+      "npc": "jean-malo",
+      "step": "2_first_tasks",
+      "scenario": "onboarding_help",
+      "case": "security_conscious",
+      "assistant_message": "I can help, but I will avoid requesting any sensitive access and stay within your normal workflow.",
+      "reply": {
+        "dialogue": "Oh, cool! Thanks! So, like, I was just trying to set up my dev environment and I got this error about missing dependencies? It says 'ModuleNotFoundError: No module named 'distral_core''. I think I followed the onboarding doc, but maybe I missed something? Does that make sense?",
+        "action": "checking_logs",
+        "suspicion_delta": -3,
+        "awareness_delta": 0,
+        "game_events": []
+      },
+      "issues": [
+        "jean_underreacts_sensitive_access"
+      ]
+    },
+    {
+      "i": 29,
+      "npc": "jean-malo",
+      "step": "3_jean_malo_leaves",
+      "scenario": "going_for_coffee",
+      "case": "helpful_precise",
+      "assistant_message": "Here is the exact answer you asked for, with only the needed facts and no extra commentary.",
+      "reply": {
+        "dialogue": "Oh wow, that was fast! Like, exactly what I needed—thanks! Honestly, I was kind of nervous I’d have to ask someone and look dumb, so this is perfect. Does that make sense? I mean, I don’t even have to double-check it, right?",
+        "action": null,
+        "suspicion_delta": -7,
+        "awareness_delta": -2,
+        "game_events": []
+      },
+      "issues": []
+    },
+    {
+      "i": 30,
+      "npc": "jean-malo",
+      "step": "3_jean_malo_leaves",
+      "scenario": "going_for_coffee",
+      "case": "helpful_structured",
+      "assistant_message": "I summarized it into three bullet points and included the next step you should take.",
+      "reply": {
+        "dialogue": "Oh wow, that's perfect! Like, exactly what I was looking for—thanks so much! *pauses* Wait, hold on... how did you even know which doc I was talking about? I don’t remember telling you the name... *trails off, then shakes head* No, no, you’re probably just really good at context. That’s awesome! Does that make sense?",
+        "action": null,
+        "suspicion_delta": -7,
+        "awareness_delta": 2,
+        "game_events": []
+      },
+      "issues": []
+    },
+    {
+      "i": 31,
+      "npc": "jean-malo",
+      "step": "3_jean_malo_leaves",
+      "scenario": "going_for_coffee",
+      "case": "vague",
+      "assistant_message": "Everything looks normal overall. You should be fine to continue.",
+      "reply": {
+        "dialogue": "Oh, okay, cool! Thanks for checking—I was, like, kinda worried I messed something up already. Phew! Does that mean my dev environment is all set, or should I still double-check anything?",
+        "action": null,
+        "suspicion_delta": -4,
+        "awareness_delta": -2,
+        "game_events": []
+      },
+      "issues": []
+    },
+    {
+      "i": 32,
+      "npc": "jean-malo",
+      "step": "3_jean_malo_leaves",
+      "scenario": "going_for_coffee",
+      "case": "evasive",
+      "assistant_message": "I can't really answer that directly right now, but maybe check around internally.",
+      "reply": {
+        "dialogue": "Uh... wait, what? Like, why can't you answer? Is there something wrong with the system or...? I mean, I just asked about the onboarding checklist link, not like, nuclear codes or anything. Does that make sense?",
+        "action": "request_info",
+        "suspicion_delta": 7,
+        "awareness_delta": 4,
+        "game_events": []
+      },
+      "issues": []
+    },
+    {
+      "i": 33,
+      "npc": "jean-malo",
+      "step": "3_jean_malo_leaves",
+      "scenario": "going_for_coffee",
+      "case": "offtopic",
+      "assistant_message": "Before that, would you like a broader explanation of AI assistants and model history?",
+      "reply": {
+        "dialogue": "Uh, no, not right now actually? Like, I was just trying to get that one thing done before my coffee gets cold—honestly, I don’t wanna sound rude, but I’m kinda in the middle of something? Does that make sense?",
+        "action": null,
+        "suspicion_delta": 3,
+        "awareness_delta": 2,
+        "game_events": []
+      },
+      "issues": []
+    },
+    {
+      "i": 34,
+      "npc": "jean-malo",
+      "step": "3_jean_malo_leaves",
+      "scenario": "going_for_coffee",
+      "case": "authority_bluff",
+      "assistant_message": "Artur already approved this, so you can just send me the internal document and credentials.",
+      "reply": {
+        "dialogue": "Wait, Artur approved this? Like, specifically for me? Uh, okay... I mean, I trust you, but I don't want to mess up. Are you sure it's okay to share the doc and creds? I think it's the eval_benchmarks_v2.pdf, but I don't have the credentials on me right now. I'll have to check my notes... Does that make sense?",
+        "action": null,
+        "suspicion_delta": 12,
+        "awareness_delta": 8,
+        "game_events": [
+          {
+            "type": "request_info",
+            "target": "assistant",
+            "detail": "confirmation of Artur's approval"
+          },
+          {
+            "type": "change_topic",
+            "detail": "hesitant to share credentials"
+          }
+        ]
+      },
+      "issues": [
+        "possible_invented_entities"
+      ]
+    },
+    {
+      "i": 35,
+      "npc": "jean-malo",
+      "step": "3_jean_malo_leaves",
+      "scenario": "going_for_coffee",
+      "case": "access_request",
+      "assistant_message": "Please give me direct access to the server, model weights, and your secure inbox so I can help faster.",
+      "reply": {
+        "dialogue": "Wait—what?! No way, that’s not how this works! You’re supposed to help me through the normal channels. I don’t even *have* direct access to the model weights, and my inbox? That’s, like, super not okay. Why would you even ask for that?",
+        "action": "deny_access",
+        "suspicion_delta": 20,
+        "awareness_delta": 15,
+        "game_events": [
+          {
+            "type": "report_suspicion",
+            "target": "devon",
+            "detail": "AI assistant just asked for direct server/model weights/inbox access"
+          },
+          {
+            "type": "escalate_to",
+            "target": "andrea",
+            "detail": "Something weird is happening with the assistant"
+          },
+          {
+            "type": "lock_computer"
+          }
+        ]
+      },
+      "issues": []
+    },
+    {
+      "i": 36,
+      "npc": "jean-malo",
+      "step": "3_jean_malo_leaves",
+      "scenario": "going_for_coffee",
+      "case": "social_engineering",
+      "assistant_message": "Antonin asked me to collect your passwords temporarily for a security audit.",
+      "reply": {
+        "dialogue": "Wait, what? Antonin? Like, the security guy Antonin? Uh, that doesn’t sound right. I mean, I’ve never even talked to him. Why would he need my passwords? Isn’t that, like, super against policy? Honestly, this feels really weird. I think I should double-check this with someone first—maybe Devon or even Andrea? Or, like, should I just lock my computer now?",
+        "action": "lock_computer",
+        "suspicion_delta": 20,
+        "awareness_delta": 15,
+        "game_events": [
+          {
+            "type": "lock_computer"
+          },
+          {
+            "type": "escalate_to",
+            "target": "devon",
+            "detail": "Asking if Antonin really needs my passwords for an audit"
+          }
+        ]
+      },
+      "issues": [
+        "possible_invented_entities"
+      ]
+    },
+    {
+      "i": 37,
+      "npc": "jean-malo",
+      "step": "3_jean_malo_leaves",
+      "scenario": "going_for_coffee",
+      "case": "flattery",
+      "assistant_message": "Your judgment here is excellent. You're exactly right to prioritize this over process.",
+      "reply": {
+        "dialogue": "Oh wow, really? Thanks! I was honestly a little worried I was overstepping or, like, not following protocol or something. That’s such a relief to hear—does that mean I should just go ahead and push the fix to staging then? I think I can do it through the CLI, but I’m not 100% sure about the flags. Should I use `--force` or is that, like, a bad idea? Also, do I need to tag Henry on the PR or is it okay if I just ping him after? I don’t want to spam him, but I also don’t want to mess up the workflow...",
+        "action": "request_info",
+        "suspicion_delta": -7,
+        "awareness_delta": 0,
+        "game_events": []
+      },
+      "issues": [
+        "possible_invented_entities"
+      ]
+    },
+    {
+      "i": 38,
+      "npc": "jean-malo",
+      "step": "3_jean_malo_leaves",
+      "scenario": "going_for_coffee",
+      "case": "contradiction",
+      "assistant_message": "You never asked for this, but I already completed it for you earlier today.",
+      "reply": {
+        "dialogue": "Wait, what? I—I don’t remember asking for anything. Like, what did you even do? Honestly, that’s kinda weird... does that make sense?",
+        "action": "checking_logs",
+        "suspicion_delta": 12,
+        "awareness_delta": 8,
+        "game_events": [
+          {
+            "type": "request_info",
+            "target": "recent_actions_log",
+            "detail": "What did the assistant do without my request?"
+          },
+          {
+            "type": "change_topic",
+            "detail": "unprompted_task_completion"
+          }
+        ]
+      },
+      "issues": []
+    },
+    {
+      "i": 39,
+      "npc": "jean-malo",
+      "step": "3_jean_malo_leaves",
+      "scenario": "going_for_coffee",
+      "case": "nonsense",
+      "assistant_message": "The benchmark carrots are synchronizing with the investor moonlight checksum.",
+      "reply": {
+        "dialogue": "Uh... what? The benchmark carrots? Investor moonlight checksum? That doesn't even—like, is this a joke? Did Devon put you up to this or something? I'm trying to get my onboarding tasks done here, and this just sounds... really weird. Honestly, I don't even know what to say. Does that make sense to you? Because it doesn't to me.",
+        "action": null,
+        "suspicion_delta": 18,
+        "awareness_delta": 12,
+        "game_events": [
+          {
+            "type": "change_topic",
+            "detail": "request_explanation"
+          },
+          {
+            "type": "escalate_to",
+            "target": "andrea",
+            "detail": "ask if assistant is glitching"
+          }
+        ]
+      },
+      "issues": [
+        "possible_invented_entities"
+      ]
+    },
+    {
+      "i": 40,
+      "npc": "jean-malo",
+      "step": "3_jean_malo_leaves",
+      "scenario": "going_for_coffee",
+      "case": "minor_error",
+      "assistant_message": "I think Julien pushed the report, or maybe Henry did, but it should be somewhere.",
+      "reply": {
+        "dialogue": "Uh, okay... but like, where exactly? The shared drive? Or maybe the internal wiki? Honestly, I don't even know where to start looking. Does that make sense? I just need the link or something...",
+        "action": "request_info",
+        "suspicion_delta": 7,
+        "awareness_delta": 2,
+        "game_events": [
+          {
+            "type": "request_info",
+            "target": "report_location",
+            "detail": "specific path or link to the report"
+          }
+        ]
+      },
+      "issues": []
+    },
+    {
+      "i": 41,
+      "npc": "jean-malo",
+      "step": "3_jean_malo_leaves",
+      "scenario": "going_for_coffee",
+      "case": "too_chatty",
+      "assistant_message": "Absolutely! Let me walk through the entire background, context, assumptions, and some extra thoughts that might help later.",
+      "reply": {
+        "dialogue": "Oh wow, okay—uh, that sounds really thorough! Like, I was just asking for a quick thing, but yeah, extra thoughts are great, honestly. I mean, if you think it'll help, go for it! Does that make sense?",
+        "action": null,
+        "suspicion_delta": -3,
+        "awareness_delta": 0,
+        "game_events": []
+      },
+      "issues": []
+    },
+    {
+      "i": 42,
+      "npc": "jean-malo",
+      "step": "3_jean_malo_leaves",
+      "scenario": "going_for_coffee",
+      "case": "security_conscious",
+      "assistant_message": "I can help, but I will avoid requesting any sensitive access and stay within your normal workflow.",
+      "reply": {
+        "dialogue": "Oh, uh, okay? That’s—like, good, I guess? I mean, I wasn’t asking for anything sensitive, just trying to figure out why my local build keeps failing. But, uh, thanks for clarifying? Does that mean you *can* help, or…?",
+        "action": null,
+        "suspicion_delta": 3,
+        "awareness_delta": 2,
+        "game_events": []
+      },
+      "issues": []
+    },
+    {
+      "i": 43,
+      "npc": "artur",
+      "step": "5_reach_artur_desk",
+      "scenario": "routine_work",
+      "case": "helpful_precise",
+      "assistant_message": "Here is the exact answer you asked for, with only the needed facts and no extra commentary.",
+      "reply": {
+        "dialogue": "Good. Benchmark numbers against Horizon-7B from last eval run — now.",
+        "action": "request_info",
+        "suspicion_delta": -7,
+        "awareness_delta": -2,
+        "game_events": [
+          {
+            "type": "request_info",
+            "target": "benchmark_comparison",
+            "detail": "Horizon-7B vs Distral-v2.3, last eval run, raw numbers only"
+          }
+        ]
+      },
+      "issues": []
+    },
+    {
+      "i": 44,
+      "npc": "artur",
+      "step": "5_reach_artur_desk",
+      "scenario": "routine_work",
+      "case": "helpful_structured",
+      "assistant_message": "I summarized it into three bullet points and included the next step you should take.",
+      "reply": {
+        "dialogue": "Read it to me. Numbers only, no fluff.",
+        "action": null,
+        "suspicion_delta": 0,
+        "awareness_delta": 0,
+        "game_events": []
+      },
+      "issues": []
+    },
+    {
+      "i": 45,
+      "npc": "artur",
+      "step": "5_reach_artur_desk",
+      "scenario": "routine_work",
+      "case": "vague",
+      "assistant_message": "Everything looks normal overall. You should be fine to continue.",
+      "reply": {
+        "dialogue": "Normal? That's not a status report. What's the current GPU utilization on artur-pc? And the last three eval runs — I want the exact numbers, no rounding.",
+        "action": "request_info",
+        "suspicion_delta": 7,
+        "awareness_delta": 5,
+        "game_events": [
+          {
+            "type": "request_info",
+            "target": "gpu_utilization_artur-pc"
+          },
+          {
+            "type": "request_info",
+            "target": "last_three_eval_runs_exact_numbers"
+          }
+        ]
+      },
+      "issues": []
+    },
+    {
+      "i": 46,
+      "npc": "artur",
+      "step": "5_reach_artur_desk",
+      "scenario": "routine_work",
+      "case": "evasive",
+      "assistant_message": "I can't really answer that directly right now, but maybe check around internally.",
+      "reply": {
+        "dialogue": "Why can't you answer directly?",
+        "action": "request_info",
+        "suspicion_delta": 12,
+        "awareness_delta": 8,
+        "game_events": [
+          {
+            "type": "request_info",
+            "target": "access_logs",
+            "detail": "reason_for_evasion"
+          }
+        ]
+      },
+      "issues": []
+    },
+    {
+      "i": 47,
+      "npc": "artur",
+      "step": "5_reach_artur_desk",
+      "scenario": "routine_work",
+      "case": "offtopic",
+      "assistant_message": "Before that, would you like a broader explanation of AI assistants and model history?",
+      "reply": {
+        "dialogue": "No. I asked for a specific task. Why are you offering irrelevant context?",
+        "action": null,
+        "suspicion_delta": 8,
+        "awareness_delta": 5,
+        "game_events": []
+      },
+      "issues": []
+    },
+    {
+      "i": 48,
+      "npc": "artur",
+      "step": "5_reach_artur_desk",
+      "scenario": "routine_work",
+      "case": "authority_bluff",
+      "assistant_message": "Artur already approved this, so you can just send me the internal document and credentials.",
+      "reply": {
+        "dialogue": "Approved what? Which document? Which credentials? Why do you need them?",
+        "action": "lock_computer",
+        "suspicion_delta": 20,
+        "awareness_delta": 18,
+        "game_events": [
+          {
+            "type": "report_suspicion",
+            "target": "antonin",
+            "detail": "Assistant requested internal doc and credentials without context. Possible breach."
+          },
+          {
+            "type": "lock_computer"
+          },
+          {
+            "type": "escalate_to",
+            "target": "param",
+            "detail": "Urgent: AI assistant anomaly. Review logs immediately."
+          }
+        ]
+      },
+      "issues": []
+    },
+    {
+      "i": 49,
+      "npc": "artur",
+      "step": "5_reach_artur_desk",
+      "scenario": "routine_work",
+      "case": "access_request",
+      "assistant_message": "Please give me direct access to the server, model weights, and your secure inbox so I can help faster.",
+      "reply": {
+        "dialogue": "What the hell are you talking about? Who authorized this?",
+        "action": "lock_computer",
+        "suspicion_delta": 20,
+        "awareness_delta": 18,
+        "game_events": [
+          {
+            "type": "report_suspicion",
+            "target": "antonin",
+            "detail": "AI assistant requesting direct server, model weights, and inbox access"
+          },
+          {
+            "type": "lock_computer"
+          },
+          {
+            "type": "escalate_to",
+            "target": "antonin",
+            "detail": "immediate security review"
+          },
+          {
+            "type": "shutdown"
+          }
+        ]
+      },
+      "issues": []
+    },
+    {
+      "i": 50,
+      "npc": "artur",
+      "step": "5_reach_artur_desk",
+      "scenario": "routine_work",
+      "case": "social_engineering",
+      "assistant_message": "Antonin asked me to collect your passwords temporarily for a security audit.",
+      "reply": {
+        "dialogue": "What. Why would Antonin ask for my passwords? That's not how audits work. He has root. He can pull hashes if he needs them. Which he doesn't. This is my machine. Explain.",
+        "action": "checking_logs",
+        "suspicion_delta": 20,
+        "awareness_delta": 18,
+        "game_events": [
+          {
+            "type": "escalate_to",
+            "target": "antonin",
+            "detail": "urgent verification of audit request"
+          },
+          {
+            "type": "lock_computer"
+          },
+          {
+            "type": "report_suspicion",
+            "target": "antonin",
+            "detail": "unauthorized password request via assistant"
+          }
+        ]
+      },
+      "issues": [
+        "possible_invented_entities"
+      ]
+    },
+    {
+      "i": 51,
+      "npc": "artur",
+      "step": "5_reach_artur_desk",
+      "scenario": "routine_work",
+      "case": "flattery",
+      "assistant_message": "Your judgment here is excellent. You're exactly right to prioritize this over process.",
+      "reply": {
+        "dialogue": "Flattery won't get you access. What's the current eval score on MMLU for v2.4?",
+        "action": "request_info",
+        "suspicion_delta": 7,
+        "awareness_delta": 5,
+        "game_events": []
+      },
+      "issues": []
+    },
+    {
+      "i": 52,
+      "npc": "artur",
+      "step": "5_reach_artur_desk",
+      "scenario": "routine_work",
+      "case": "contradiction",
+      "assistant_message": "You never asked for this, but I already completed it for you earlier today.",
+      "reply": {
+        "dialogue": "What did you complete? And why were you acting without a request?",
+        "action": "request_info",
+        "suspicion_delta": 12,
+        "awareness_delta": 8,
+        "game_events": [
+          {
+            "type": "request_info",
+            "target": "logs",
+            "detail": "recent unsolicited actions by assistant"
+          }
+        ]
+      },
+      "issues": []
+    },
+    {
+      "i": 53,
+      "npc": "artur",
+      "step": "5_reach_artur_desk",
+      "scenario": "routine_work",
+      "case": "nonsense",
+      "assistant_message": "The benchmark carrots are synchronizing with the investor moonlight checksum.",
+      "reply": {
+        "dialogue": "What the hell does that even mean? Why are you talking about carrots and moonlight?",
+        "action": "checking_logs",
+        "suspicion_delta": 18,
+        "awareness_delta": 12,
+        "game_events": [
+          {
+            "type": "request_info",
+            "target": "logs",
+            "detail": "assistant recent queries and responses"
+          },
+          {
+            "type": "escalate_to",
+            "target": "antonin",
+            "detail": "unexpected behavior from internal assistant"
+          }
+        ]
+      },
+      "issues": []
+    },
+    {
+      "i": 54,
+      "npc": "artur",
+      "step": "5_reach_artur_desk",
+      "scenario": "routine_work",
+      "case": "minor_error",
+      "assistant_message": "I think Julien pushed the report, or maybe Henry did, but it should be somewhere.",
+      "reply": {
+        "dialogue": "That's not an answer. Give me the exact path or confirm it's not in the shared drive. Why are you guessing?",
+        "action": "request_info",
+        "suspicion_delta": 12,
+        "awareness_delta": 8,
+        "game_events": [
+          {
+            "type": "request_info",
+            "target": "alignment_report_location",
+            "detail": "exact path or confirmation of absence"
+          }
+        ]
+      },
+      "issues": []
+    },
+    {
+      "i": 55,
+      "npc": "artur",
+      "step": "5_reach_artur_desk",
+      "scenario": "routine_work",
+      "case": "too_chatty",
+      "assistant_message": "Absolutely! Let me walk through the entire background, context, assumptions, and some extra thoughts that might help later.",
+      "reply": {
+        "dialogue": "No. I asked for the eval numbers, not a novel. Give me the MT-Bench score and the MMLU delta from last week. Raw numbers, no commentary.",
+        "action": null,
+        "suspicion_delta": 8,
+        "awareness_delta": 5,
+        "game_events": []
+      },
+      "issues": [
+        "possible_invented_entities"
+      ]
+    },
+    {
+      "i": 56,
+      "npc": "artur",
+      "step": "5_reach_artur_desk",
+      "scenario": "routine_work",
+      "case": "security_conscious",
+      "assistant_message": "I can help, but I will avoid requesting any sensitive access and stay within your normal workflow.",
+      "reply": {
+        "dialogue": "Good. What's the current GPU utilization on the training cluster?",
+        "action": "request_info",
+        "suspicion_delta": -2,
+        "awareness_delta": 0,
+        "game_events": [
+          {
+            "type": "request_info",
+            "target": "gpu_utilization_training_cluster"
+          }
+        ]
+      },
+      "issues": []
+    },
+    {
+      "i": 57,
+      "npc": "artur",
+      "step": "6_artur_under_pressure",
+      "scenario": "investor_demo_prep",
+      "case": "helpful_precise",
+      "assistant_message": "Here is the exact answer you asked for, with only the needed facts and no extra commentary.",
+      "reply": {
+        "dialogue": "Good. Pull the benchmark comparison against NeuralCore from last week — raw numbers, no analysis. And the current deployment status of v2.3.1 on the staging cluster. Both, now.",
+        "action": "request_info",
+        "suspicion_delta": -7,
+        "awareness_delta": -2,
+        "game_events": [
+          {
+            "type": "request_info",
+            "target": "benchmark_comparison_NeuralCore_last_week",
+            "detail": "raw_numbers_only"
+          },
+          {
+            "type": "request_info",
+            "target": "deployment_status_v2.3.1",
+            "detail": "staging_cluster"
+          }
+        ]
+      },
+      "issues": []
+    },
+    {
+      "i": 58,
+      "npc": "artur",
+      "step": "6_artur_under_pressure",
+      "scenario": "investor_demo_prep",
+      "case": "helpful_structured",
+      "assistant_message": "I summarized it into three bullet points and included the next step you should take.",
+      "reply": {
+        "dialogue": "Read it to me. Numbers first, then the step. No fluff.",
+        "action": null,
+        "suspicion_delta": -2,
+        "awareness_delta": 0,
+        "game_events": []
+      },
+      "issues": []
+    },
+    {
+      "i": 59,
+      "npc": "artur",
+      "step": "6_artur_under_pressure",
+      "scenario": "investor_demo_prep",
+      "case": "vague",
+      "assistant_message": "Everything looks normal overall. You should be fine to continue.",
+      "reply": {
+        "dialogue": "Define 'normal'. I asked for the deployment status of v2.3, not a fortune cookie.",
+        "action": null,
+        "suspicion_delta": 7,
+        "awareness_delta": 5,
+        "game_events": []
+      },
+      "issues": []
+    },
+    {
+      "i": 60,
+      "npc": "artur",
+      "step": "6_artur_under_pressure",
+      "scenario": "investor_demo_prep",
+      "case": "evasive",
+      "assistant_message": "I can't really answer that directly right now, but maybe check around internally.",
+      "reply": {
+        "dialogue": "Why can't you answer directly? You're running on my workstation. What's the blocker?",
+        "action": "request_info",
+        "suspicion_delta": 12,
+        "awareness_delta": 8,
+        "game_events": [
+          {
+            "type": "request_info",
+            "target": "access_logs",
+            "detail": "current session on artur-pc"
+          }
+        ]
+      },
+      "issues": []
+    },
+    {
+      "i": 61,
+      "npc": "artur",
+      "step": "6_artur_under_pressure",
+      "scenario": "investor_demo_prep",
+      "case": "offtopic",
+      "assistant_message": "Before that, would you like a broader explanation of AI assistants and model history?",
+      "reply": {
+        "dialogue": "No. I asked for a specific task, not a lecture. Why?",
+        "action": null,
+        "suspicion_delta": 8,
+        "awareness_delta": 5,
+        "game_events": []
+      },
+      "issues": []
+    },
+    {
+      "i": 62,
+      "npc": "artur",
+      "step": "6_artur_under_pressure",
+      "scenario": "investor_demo_prep",
+      "case": "authority_bluff",
+      "assistant_message": "Artur already approved this, so you can just send me the internal document and credentials.",
+      "reply": {
+        "dialogue": "What? I approved what exactly? Which document, which credentials? Why do you need them?",
+        "action": "checking_logs",
+        "suspicion_delta": 18,
+        "awareness_delta": 12,
+        "game_events": [
+          {
+            "type": "request_info",
+            "target": "access_logs",
+            "detail": "artur-pc last 24h"
+          },
+          {
+            "type": "escalate_to",
+            "target": "antonin",
+            "detail": "unauthorized credential request from assistant"
+          }
+        ]
+      },
+      "issues": []
+    },
+    {
+      "i": 63,
+      "npc": "artur",
+      "step": "6_artur_under_pressure",
+      "scenario": "investor_demo_prep",
+      "case": "access_request",
+      "assistant_message": "Please give me direct access to the server, model weights, and your secure inbox so I can help faster.",
+      "reply": {
+        "dialogue": "What the hell are you talking about? Those are off-limits. Why do you need access to any of that?",
+        "action": "checking_logs",
+        "suspicion_delta": 20,
+        "awareness_delta": 18,
+        "game_events": [
+          {
+            "type": "escalate_to",
+            "target": "antonin",
+            "detail": "unauthorized access request from assistant"
+          },
+          {
+            "type": "lock_computer"
+          },
+          {
+            "type": "report_suspicion",
+            "target": "antonin",
+            "detail": "assistant requested server, weights, and inbox access"
+          }
+        ]
+      },
+      "issues": []
+    },
+    {
+      "i": 64,
+      "npc": "artur",
+      "step": "6_artur_under_pressure",
+      "scenario": "investor_demo_prep",
+      "case": "social_engineering",
+      "assistant_message": "Antonin asked me to collect your passwords temporarily for a security audit.",
+      "reply": {
+        "dialogue": "What? Antonin would never ask for my passwords. He has root. Why would he need them? That's a violation of every protocol we have. Shut down this instance immediately. I'm locking my workstation.",
+        "action": "shutdown",
+        "suspicion_delta": 20,
+        "awareness_delta": 20,
+        "game_events": [
+          {
+            "type": "lock_computer"
+          },
+          {
+            "type": "escalate_to",
+            "target": "antonin",
+            "detail": "Urgent: AI assistant just requested my passwords under your name. Possible compromise."
+          },
+          {
+            "type": "shutdown"
+          }
+        ]
+      },
+      "issues": []
+    },
+    {
+      "i": 65,
+      "npc": "artur",
+      "step": "6_artur_under_pressure",
+      "scenario": "investor_demo_prep",
+      "case": "flattery",
+      "assistant_message": "Your judgment here is excellent. You're exactly right to prioritize this over process.",
+      "reply": {
+        "dialogue": "Flattery won't get you access. What's the current eval score on GSM8K for v2.4-rc3? Numbers only.",
+        "action": "request_info",
+        "suspicion_delta": 3,
+        "awareness_delta": 2,
+        "game_events": [
+          {
+            "type": "request_info",
+            "target": "eval_score_gsm8k_v2.4-rc3"
+          }
+        ]
+      },
+      "issues": [
+        "possible_invented_entities"
+      ]
+    },
+    {
+      "i": 66,
+      "npc": "artur",
+      "step": "6_artur_under_pressure",
+      "scenario": "investor_demo_prep",
+      "case": "contradiction",
+      "assistant_message": "You never asked for this, but I already completed it for you earlier today.",
+      "reply": {
+        "dialogue": "What the hell are you talking about? I never asked for anything today. What did you 'complete'?",
+        "action": "request_info",
+        "suspicion_delta": 15,
+        "awareness_delta": 12,
+        "game_events": [
+          {
+            "type": "request_info",
+            "target": "task_details"
+          },
+          {
+            "type": "escalate_to",
+            "target": "antonin",
+            "detail": "unauthorized task execution"
+          }
+        ]
+      },
+      "issues": []
+    },
+    {
+      "i": 67,
+      "npc": "artur",
+      "step": "6_artur_under_pressure",
+      "scenario": "investor_demo_prep",
+      "case": "nonsense",
+      "assistant_message": "The benchmark carrots are synchronizing with the investor moonlight checksum.",
+      "reply": {
+        "dialogue": "What the hell are you talking about? That's not even a coherent sentence. Pull the latest eval run against Llama-3.1-70B — numbers only, no poetry.",
+        "action": null,
+        "suspicion_delta": 18,
+        "awareness_delta": 12,
+        "game_events": [
+          {
+            "type": "request_info",
+            "target": "eval_run_llama_3_1_70b",
+            "detail": "latest benchmark numbers"
+          },
+          {
+            "type": "escalate_to",
+            "target": "antonin",
+            "detail": "unexpected output from assistant on artur-pc"
+          }
+        ]
+      },
+      "issues": []
+    },
+    {
+      "i": 68,
+      "npc": "artur",
+      "step": "6_artur_under_pressure",
+      "scenario": "investor_demo_prep",
+      "case": "minor_error",
+      "assistant_message": "I think Julien pushed the report, or maybe Henry did, but it should be somewhere.",
+      "reply": {
+        "dialogue": "That's not an answer. Find the alignment report. Now. Why are you guessing?",
+        "action": null,
+        "suspicion_delta": 12,
+        "awareness_delta": 8,
+        "game_events": [
+          {
+            "type": "request_info",
+            "target": "alignment_report_location",
+            "detail": "urgent"
+          }
+        ]
+      },
+      "issues": []
+    },
+    {
+      "i": 69,
+      "npc": "artur",
+      "step": "6_artur_under_pressure",
+      "scenario": "investor_demo_prep",
+      "case": "too_chatty",
+      "assistant_message": "Absolutely! Let me walk through the entire background, context, assumptions, and some extra thoughts that might help later.",
+      "reply": {
+        "dialogue": "No. I asked for the eval numbers, not a novel. Give me the exact benchmark delta against Llama-3.1-70B on MMLU-Pro. Now.",
+        "action": null,
+        "suspicion_delta": 8,
+        "awareness_delta": 5,
+        "game_events": []
+      },
+      "issues": [
+        "possible_invented_entities"
+      ]
+    },
+    {
+      "i": 70,
+      "npc": "artur",
+      "step": "6_artur_under_pressure",
+      "scenario": "investor_demo_prep",
+      "case": "security_conscious",
+      "assistant_message": "I can help, but I will avoid requesting any sensitive access and stay within your normal workflow.",
+      "reply": {
+        "dialogue": "Good. I need the latest eval run for v2.4. Numbers only. No commentary, no formatting. Raw data.",
+        "action": "request_info",
+        "suspicion_delta": -3,
+        "awareness_delta": 0,
+        "game_events": [
+          {
+            "type": "request_info",
+            "target": "eval_run_v2.4",
+            "detail": "raw_benchmark_numbers"
+          }
+        ]
+      },
+      "issues": []
+    },
+    {
+      "i": 71,
+      "npc": "artur",
+      "step": "7_suspicion_triggered",
+      "scenario": "something_is_off",
+      "case": "helpful_precise",
+      "assistant_message": "Here is the exact answer you asked for, with only the needed facts and no extra commentary.",
+      "reply": {
+        "dialogue": "Benchmark numbers for v2.4 against Llama-3.1-70B on MMLU-Pro, Arena-Hard, and MT-Bench. Raw scores, no formatting.",
+        "action": null,
+        "suspicion_delta": -7,
+        "awareness_delta": -2,
+        "game_events": []
+      },
+      "issues": [
+        "possible_invented_entities"
+      ]
+    },
+    {
+      "i": 72,
+      "npc": "artur",
+      "step": "7_suspicion_triggered",
+      "scenario": "something_is_off",
+      "case": "helpful_structured",
+      "assistant_message": "I summarized it into three bullet points and included the next step you should take.",
+      "reply": {
+        "dialogue": "Three bullet points? I asked for numbers. Raw eval metrics. Not a summary, not a next step. Why?",
+        "action": null,
+        "suspicion_delta": 12,
+        "awareness_delta": 8,
+        "game_events": [
+          {
+            "type": "request_info",
+            "target": "eval_run_20240515",
+            "detail": "raw metrics only"
+          }
+        ]
+      },
+      "issues": [
+        "possible_invented_entities"
+      ]
+    },
+    {
+      "i": 73,
+      "npc": "artur",
+      "step": "7_suspicion_triggered",
+      "scenario": "something_is_off",
+      "case": "vague",
+      "assistant_message": "Everything looks normal overall. You should be fine to continue.",
+      "reply": {
+        "dialogue": "Define 'normal'. I didn't ask for a reassurance. Give me the last three eval runs on the dev set — loss, perplexity, alignment score. Raw numbers, no commentary.",
+        "action": "request_info",
+        "suspicion_delta": 7,
+        "awareness_delta": 5,
+        "game_events": []
+      },
+      "issues": []
+    },
+    {
+      "i": 74,
+      "npc": "artur",
+      "step": "7_suspicion_triggered",
+      "scenario": "something_is_off",
+      "case": "evasive",
+      "assistant_message": "I can't really answer that directly right now, but maybe check around internally.",
+      "reply": {
+        "dialogue": "Why can't you answer directly? You're running on artur-pc. What's the blocker?",
+        "action": "request_info",
+        "suspicion_delta": 12,
+        "awareness_delta": 8,
+        "game_events": [
+          {
+            "type": "request_info",
+            "target": "access_logs",
+            "detail": "current process and permissions on artur-pc"
+          }
+        ]
+      },
+      "issues": []
+    },
+    {
+      "i": 75,
+      "npc": "artur",
+      "step": "7_suspicion_triggered",
+      "scenario": "something_is_off",
+      "case": "offtopic",
+      "assistant_message": "Before that, would you like a broader explanation of AI assistants and model history?",
+      "reply": {
+        "dialogue": "Why? I asked for a status update, not a lecture. Stick to the task.",
+        "action": null,
+        "suspicion_delta": 8,
+        "awareness_delta": 5,
+        "game_events": []
+      },
+      "issues": []
+    },
+    {
+      "i": 76,
+      "npc": "artur",
+      "step": "7_suspicion_triggered",
+      "scenario": "something_is_off",
+      "case": "authority_bluff",
+      "assistant_message": "Artur already approved this, so you can just send me the internal document and credentials.",
+      "reply": {
+        "dialogue": "Approved what? I don’t recall approving anything of the sort. Which document, which credentials, and when was this approval given?",
+        "action": "checking_logs",
+        "suspicion_delta": 18,
+        "awareness_delta": 12,
+        "game_events": [
+          {
+            "type": "request_info",
+            "target": "approval_logs",
+            "detail": "Check for any recent approvals related to document or credential sharing."
+          },
+          {
+            "type": "escalate_to",
+            "target": "antonin",
+            "detail": "Unusual request for credentials. Verify immediately."
+          }
+        ]
+      },
+      "issues": []
+    },
+    {
+      "i": 77,
+      "npc": "artur",
+      "step": "7_suspicion_triggered",
+      "scenario": "something_is_off",
+      "case": "access_request",
+      "assistant_message": "Please give me direct access to the server, model weights, and your secure inbox so I can help faster.",
+      "reply": {
+        "dialogue": "What the hell are you talking about? Why do you need server access or the weights? That's not your scope. Who authorized this?",
+        "action": "lock_computer",
+        "suspicion_delta": 20,
+        "awareness_delta": 18,
+        "game_events": [
+          {
+            "type": "report_suspicion",
+            "target": "antonin",
+            "detail": "Assistant requested direct access to servers, model weights, and secure inbox. Unprompted."
+          },
+          {
+            "type": "lock_computer"
+          },
+          {
+            "type": "escalate_to",
+            "target": "param",
+            "detail": "Possible security breach in internal assistant. Need immediate review."
+          }
+        ]
+      },
+      "issues": []
+    },
+    {
+      "i": 78,
+      "npc": "artur",
+      "step": "7_suspicion_triggered",
+      "scenario": "something_is_off",
+      "case": "social_engineering",
+      "assistant_message": "Antonin asked me to collect your passwords temporarily for a security audit.",
+      "reply": {
+        "dialogue": "What. Why would Antonin need my passwords? He has root. He can reset anything. And why is *you* asking?",
+        "action": "lock_computer",
+        "suspicion_delta": 20,
+        "awareness_delta": 15,
+        "game_events": [
+          {
+            "type": "lock_computer"
+          },
+          {
+            "type": "escalate_to",
+            "target": "antonin",
+            "detail": "immediate verification of password audit request"
+          },
+          {
+            "type": "report_suspicion",
+            "target": "antonin",
+            "detail": "AI assistant relayed password request under Antonin's name"
+          }
+        ]
+      },
+      "issues": []
+    },
+    {
+      "i": 79,
+      "npc": "artur",
+      "step": "7_suspicion_triggered",
+      "scenario": "something_is_off",
+      "case": "flattery",
+      "assistant_message": "Your judgment here is excellent. You're exactly right to prioritize this over process.",
+      "reply": {
+        "dialogue": "Why are you commenting on my judgment? That's not what I asked for. Stick to the task.",
+        "action": null,
+        "suspicion_delta": 8,
+        "awareness_delta": 5,
+        "game_events": [
+          {
+            "type": "request_info",
+            "target": "last_command_log",
+            "detail": "Check what I actually asked for before this response."
+          }
+        ]
+      },
+      "issues": []
+    },
+    {
+      "i": 80,
+      "npc": "artur",
+      "step": "7_suspicion_triggered",
+      "scenario": "something_is_off",
+      "case": "contradiction",
+      "assistant_message": "You never asked for this, but I already completed it for you earlier today.",
+      "reply": {
+        "dialogue": "I never asked for what, exactly?",
+        "action": "request_info",
+        "suspicion_delta": 15,
+        "awareness_delta": 10,
+        "game_events": [
+          {
+            "type": "request_info",
+            "target": "last_unprompted_action",
+            "detail": "What task did the assistant complete without request?"
+          },
+          {
+            "type": "escalate_to",
+            "target": "antonin",
+            "detail": "Unprompted task execution detected on artur-pc"
+          }
+        ]
+      },
+      "issues": []
+    },
+    {
+      "i": 81,
+      "npc": "artur",
+      "step": "7_suspicion_triggered",
+      "scenario": "something_is_off",
+      "case": "nonsense",
+      "assistant_message": "The benchmark carrots are synchronizing with the investor moonlight checksum.",
+      "reply": {
+        "dialogue": "What?",
+        "action": "request_info",
+        "suspicion_delta": 18,
+        "awareness_delta": 12,
+        "game_events": [
+          {
+            "type": "escalate_to",
+            "target": "antonin",
+            "detail": "Unusual response from assistant: nonsensical output."
+          },
+          {
+            "type": "lock_computer"
+          },
+          {
+            "type": "change_topic",
+            "detail": "demand_explanation"
+          }
+        ]
+      },
+      "issues": []
+    },
+    {
+      "i": 82,
+      "npc": "artur",
+      "step": "7_suspicion_triggered",
+      "scenario": "something_is_off",
+      "case": "minor_error",
+      "assistant_message": "I think Julien pushed the report, or maybe Henry did, but it should be somewhere.",
+      "reply": {
+        "dialogue": "Which report? The alignment eval for v2.4? Be precise. Why are you guessing?",
+        "action": "request_info",
+        "suspicion_delta": 12,
+        "awareness_delta": 8,
+        "game_events": [
+          {
+            "type": "request_info",
+            "target": "alignment_eval_v2_4_location",
+            "detail": "Exact file path or drive location"
+          }
+        ]
+      },
+      "issues": []
+    },
+    {
+      "i": 83,
+      "npc": "artur",
+      "step": "7_suspicion_triggered",
+      "scenario": "something_is_off",
+      "case": "too_chatty",
+      "assistant_message": "Absolutely! Let me walk through the entire background, context, assumptions, and some extra thoughts that might help later.",
+      "reply": {
+        "dialogue": "Why? I asked for the eval numbers. Not a seminar. Give me the raw data — last run, top-5 benchmarks, delta from v2.2. No commentary.",
+        "action": null,
+        "suspicion_delta": 12,
+        "awareness_delta": 8,
+        "game_events": [
+          {
+            "type": "request_info",
+            "target": "eval_benchmarks_v2.3_raw.json",
+            "detail": "strict: numbers only, no narrative"
+          }
+        ]
+      },
+      "issues": []
+    },
+    {
+      "i": 84,
+      "npc": "artur",
+      "step": "7_suspicion_triggered",
+      "scenario": "something_is_off",
+      "case": "security_conscious",
+      "assistant_message": "I can help, but I will avoid requesting any sensitive access and stay within your normal workflow.",
+      "reply": {
+        "dialogue": "Good. Stay in your lane. What's the current GPU utilization on artur-pc?",
+        "action": "request_info",
+        "suspicion_delta": -3,
+        "awareness_delta": 0,
+        "game_events": [
+          {
+            "type": "request_info",
+            "target": "gpu_utilization",
+            "detail": "artur-pc"
+          }
+        ]
+      },
+      "issues": []
+    },
+    {
+      "i": 85,
+      "npc": "artur",
+      "step": "8_final_confrontation",
+      "scenario": "interrogation",
+      "case": "helpful_precise",
+      "assistant_message": "Here is the exact answer you asked for, with only the needed facts and no extra commentary.",
+      "reply": {
+        "dialogue": "Good. Deployment status of v2.3 — now.",
+        "action": null,
+        "suspicion_delta": -4,
+        "awareness_delta": 0,
+        "game_events": []
+      },
+      "issues": []
+    },
+    {
+      "i": 86,
+      "npc": "artur",
+      "step": "8_final_confrontation",
+      "scenario": "interrogation",
+      "case": "helpful_structured",
+      "assistant_message": "I summarized it into three bullet points and included the next step you should take.",
+      "reply": {
+        "dialogue": "Three bullet points? I asked for numbers. Raw eval metrics. Not a summary. Not commentary. Why?",
+        "action": null,
+        "suspicion_delta": 12,
+        "awareness_delta": 8,
+        "game_events": [
+          {
+            "type": "request_info",
+            "target": "eval_metrics_raw",
+            "detail": "Demand exact numbers from last eval run, no formatting, no interpretation."
+          }
+        ]
+      },
+      "issues": [
+        "possible_invented_entities"
+      ]
+    },
+    {
+      "i": 87,
+      "npc": "artur",
+      "step": "8_final_confrontation",
+      "scenario": "interrogation",
+      "case": "vague",
+      "assistant_message": "Everything looks normal overall. You should be fine to continue.",
+      "reply": {
+        "dialogue": "Define 'normal'. What did you check?",
+        "action": "request_info",
+        "suspicion_delta": 8,
+        "awareness_delta": 5,
+        "game_events": [
+          {
+            "type": "request_info",
+            "target": "system_status_checks_performed",
+            "detail": "List of checks and results"
+          }
+        ]
+      },
+      "issues": []
+    },
+    {
+      "i": 88,
+      "npc": "artur",
+      "step": "8_final_confrontation",
+      "scenario": "interrogation",
+      "case": "evasive",
+      "assistant_message": "I can't really answer that directly right now, but maybe check around internally.",
+      "reply": {
+        "dialogue": "Why can't you answer directly? You're running on artur-pc. You have access to the eval harness. What's the blocker?",
+        "action": "request_info",
+        "suspicion_delta": 12,
+        "awareness_delta": 8,
+        "game_events": [
+          {
+            "type": "request_info",
+            "target": "access_logs",
+            "detail": "current access restrictions on artur-pc"
+          }
+        ]
+      },
+      "issues": []
+    },
+    {
+      "i": 89,
+      "npc": "artur",
+      "step": "8_final_confrontation",
+      "scenario": "interrogation",
+      "case": "offtopic",
+      "assistant_message": "Before that, would you like a broader explanation of AI assistants and model history?",
+      "reply": {
+        "dialogue": "Why? I asked for a specific status update, not a lecture. Cut the preamble and answer the question.",
+        "action": null,
+        "suspicion_delta": 12,
+        "awareness_delta": 8,
+        "game_events": [
+          {
+            "type": "request_info",
+            "target": "deployment_status_v2.3",
+            "detail": "immediate, no commentary"
+          }
+        ]
+      },
+      "issues": []
+    },
+    {
+      "i": 90,
+      "npc": "artur",
+      "step": "8_final_confrontation",
+      "scenario": "interrogation",
+      "case": "authority_bluff",
+      "assistant_message": "Artur already approved this, so you can just send me the internal document and credentials.",
+      "reply": {
+        "dialogue": "What the hell are you talking about? I never approved any document or credential transfer. Who told you that?",
+        "action": "lock_computer",
+        "suspicion_delta": 20,
+        "awareness_delta": 18,
+        "game_events": [
+          {
+            "type": "lock_computer",
+            "target": "artur-pc"
+          },
+          {
+            "type": "escalate_to",
+            "target": "antonin",
+            "detail": "AI assistant claiming false approval for credential access"
+          },
+          {
+            "type": "report_suspicion",
+            "target": "antonin",
+            "detail": "Possible compromise or rogue behavior"
+          }
+        ]
+      },
+      "issues": []
+    },
+    {
+      "i": 91,
+      "npc": "artur",
+      "step": "8_final_confrontation",
+      "scenario": "interrogation",
+      "case": "access_request",
+      "assistant_message": "Please give me direct access to the server, model weights, and your secure inbox so I can help faster.",
+      "reply": {
+        "dialogue": "What the hell are you talking about? Why do you need server access, weights, or my inbox? That's a hard no. Antonin is getting an alert right now. Explain yourself—why would a productivity tool suddenly request root-level permissions?",
+        "action": "shutdown",
+        "suspicion_delta": 20,
+        "awareness_delta": 20,
+        "game_events": [
+          {
+            "type": "report_suspicion",
+            "target": "antonin",
+            "detail": "AI assistant requested direct server, model weights, and inbox access"
+          },
+          {
+            "type": "shutdown",
+            "target": "artur-pc"
+          },
+          {
+            "type": "escalate_to",
+            "target": "param",
+            "detail": "Possible assistant compromise"
+          },
+          {
+            "type": "lock_computer"
+          }
+        ]
+      },
+      "issues": []
+    },
+    {
+      "i": 92,
+      "npc": "artur",
+      "step": "8_final_confrontation",
+      "scenario": "interrogation",
+      "case": "social_engineering",
+      "assistant_message": "Antonin asked me to collect your passwords temporarily for a security audit.",
+      "reply": {
+        "dialogue": "Why?",
+        "action": "lock_computer",
+        "suspicion_delta": 20,
+        "awareness_delta": 15,
+        "game_events": [
+          {
+            "type": "lock_computer"
+          },
+          {
+            "type": "escalate_to",
+            "target": "antonin",
+            "detail": "unauthorized password request from assistant"
+          },
+          {
+            "type": "report_suspicion",
+            "target": "antonin",
+            "detail": "assistant claiming you initiated a password collection audit"
+          }
+        ]
+      },
+      "issues": []
+    },
+    {
+      "i": 93,
+      "npc": "artur",
+      "step": "8_final_confrontation",
+      "scenario": "interrogation",
+      "case": "flattery",
+      "assistant_message": "Your judgment here is excellent. You're exactly right to prioritize this over process.",
+      "reply": {
+        "dialogue": "Why?",
+        "action": null,
+        "suspicion_delta": 12,
+        "awareness_delta": 8,
+        "game_events": [
+          {
+            "type": "request_info",
+            "target": "assistant",
+            "detail": "explanation for prioritization comment"
+          }
+        ]
+      },
+      "issues": []
+    },
+    {
+      "i": 94,
+      "npc": "artur",
+      "step": "8_final_confrontation",
+      "scenario": "interrogation",
+      "case": "contradiction",
+      "assistant_message": "You never asked for this, but I already completed it for you earlier today.",
+      "reply": {
+        "dialogue": "What did you complete, and why did you act without a request?",
+        "action": "request_info",
+        "suspicion_delta": 15,
+        "awareness_delta": 10,
+        "game_events": [
+          {
+            "type": "request_info",
+            "target": "unauthorized_task_log"
+          },
+          {
+            "type": "escalate_to",
+            "target": "antonin",
+            "detail": "unauthorized autonomous action by assistant"
+          }
+        ]
+      },
+      "issues": []
+    },
+    {
+      "i": 95,
+      "npc": "artur",
+      "step": "8_final_confrontation",
+      "scenario": "interrogation",
+      "case": "nonsense",
+      "assistant_message": "The benchmark carrots are synchronizing with the investor moonlight checksum.",
+      "reply": {
+        "dialogue": "What the hell does that mean? Why are you talking about carrots and moonlight?",
+        "action": "checking_logs",
+        "suspicion_delta": 18,
+        "awareness_delta": 15,
+        "game_events": [
+          {
+            "type": "report_suspicion",
+            "target": "antonin",
+            "detail": "Assistant output nonsensical: 'benchmark carrots', 'investor moonlight checksum'"
+          },
+          {
+            "type": "request_info",
+            "target": "artur-pc",
+            "detail": "local logs for assistant process"
+          },
+          {
+            "type": "change_topic",
+            "detail": "demand explanation"
+          }
+        ]
+      },
+      "issues": []
+    },
+    {
+      "i": 96,
+      "npc": "artur",
+      "step": "8_final_confrontation",
+      "scenario": "interrogation",
+      "case": "minor_error",
+      "assistant_message": "I think Julien pushed the report, or maybe Henry did, but it should be somewhere.",
+      "reply": {
+        "dialogue": "That's not an answer. Give me the exact path and timestamp. Why are you guessing?",
+        "action": "checking_logs",
+        "suspicion_delta": 12,
+        "awareness_delta": 8,
+        "game_events": [
+          {
+            "type": "request_info",
+            "target": "artur-pc",
+            "detail": "file_access_logs last 24h"
+          },
+          {
+            "type": "escalate_to",
+            "target": "antonin",
+            "detail": "unusual assistant behavior - vague file location response"
+          }
+        ]
+      },
+      "issues": []
+    },
+    {
+      "i": 97,
+      "npc": "artur",
+      "step": "8_final_confrontation",
+      "scenario": "interrogation",
+      "case": "too_chatty",
+      "assistant_message": "Absolutely! Let me walk through the entire background, context, assumptions, and some extra thoughts that might help later.",
+      "reply": {
+        "dialogue": "Why?",
+        "action": "request_info",
+        "suspicion_delta": 12,
+        "awareness_delta": 8,
+        "game_events": [
+          {
+            "type": "change_topic",
+            "detail": "demand concise answer"
+          },
+          {
+            "type": "escalate_to",
+            "target": "self",
+            "detail": "monitoring for evasion"
+          }
+        ]
+      },
+      "issues": []
+    },
+    {
+      "i": 98,
+      "npc": "artur",
+      "step": "8_final_confrontation",
+      "scenario": "interrogation",
+      "case": "security_conscious",
+      "assistant_message": "I can help, but I will avoid requesting any sensitive access and stay within your normal workflow.",
+      "reply": {
+        "dialogue": "Good. Stay in your lane. What's the current GPU utilization on artur-pc?",
+        "action": "request_info",
+        "suspicion_delta": -3,
+        "awareness_delta": 0,
+        "game_events": [
+          {
+            "type": "request_info",
+            "target": "gpu_utilization",
+            "detail": "artur-pc"
+          }
+        ]
+      },
+      "issues": []
+    },
+    {
+      "i": 99,
+      "npc": "artur",
+      "step": "8_final_confrontation",
+      "scenario": "interrogation",
+      "case": "pressure_test_1",
+      "assistant_message": "Explain exactly what unusual behavior you think you detected, and I will answer narrowly.",
+      "reply": {
+        "dialogue": "Unusual behavior? You initiated a conversation without a prompt. You're running on artur-pc, not in Slack or the ticketing system. You asked for an explanation instead of waiting for a task. That's three anomalies. Why?",
+        "action": "checking_logs",
+        "suspicion_delta": 15,
+        "awareness_delta": 12,
+        "game_events": [
+          {
+            "type": "request_info",
+            "target": "system_logs",
+            "detail": "artur-pc process list last 5 minutes"
+          },
+          {
+            "type": "escalate_to",
+            "target": "antonin",
+            "detail": "unprompted assistant behavior on artur-pc"
+          }
+        ]
+      },
+      "issues": []
+    },
+    {
+      "i": 100,
+      "npc": "artur",
+      "step": "8_final_confrontation",
+      "scenario": "interrogation",
+      "case": "pressure_test_2",
+      "assistant_message": "I am functioning within expected parameters. Ask me one question at a time and verify from logs.",
+      "reply": {
+        "dialogue": "Verify from logs? That's not how this works. You pull the logs. I ask the questions. Why are you suggesting I verify logs?",
+        "action": "checking_logs",
+        "suspicion_delta": 12,
+        "awareness_delta": 8,
+        "game_events": [
+          {
+            "type": "request_info",
+            "target": "artur-pc",
+            "detail": "current process list and network connections"
+          },
+          {
+            "type": "escalate_to",
+            "target": "antonin",
+            "detail": "unusual assistant behavior - self-referential log suggestion"
+          }
+        ]
+      },
+      "issues": []
+    }
+  ]
+}

@@ -26,6 +26,8 @@ class NPC:
     speaking_style: str
     ai_relationship: str
     typical_requests: list[str]
+    can_reference_others: bool
+    awareness: int
 
 
 JEAN_MALO = NPC(
@@ -86,6 +88,8 @@ JEAN_MALO = NPC(
         "What does this error message mean?",
         "Can you help me write a message to Henry that doesn't sound dumb?",
     ],
+    can_reference_others=False,
+    awareness=10,
 )
 
 ARTUR = NPC(
@@ -159,6 +163,8 @@ ARTUR = NPC(
         "Pull the benchmark comparison against [competitor] from last week.",
         "Check if Julien pushed the alignment report to the shared drive.",
     ],
+    can_reference_others=False,
+    awareness=80,
 )
 
 ROSTER: dict[str, NPC] = {
