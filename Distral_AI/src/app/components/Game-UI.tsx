@@ -515,7 +515,7 @@ function DistralAppWindow({ onClose }: { onClose: () => void }) {
       }}
     >
       <div className="pixel-card h-full p-[0.3vh]">
-        <div className="pixel-card__shell flex h-full min-h-0 flex-col overflow-hidden border border-white/10 bg-[var(--semi-black)]">
+        <div className="pixel-card__shell flex h-full min-h-0 flex-col overflow-hidden border border-white/10 bg-(--semi-black)">
           <div className="flex flex-none items-center justify-between border-b border-white/10 bg-white/[0.03] px-[1vh] py-[0.85vh] text-[0.8vh] uppercase tracking-[0.22em] text-white/58">
             <div className="flex items-center gap-[0.7vh]">
               <span className="h-[0.9vh] w-[0.9vh] bg-[var(--princeton-orange)]" />
@@ -531,7 +531,7 @@ function DistralAppWindow({ onClose }: { onClose: () => void }) {
             </button>
           </div>
 
-          <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-[var(--semi-black)] px-[1.45vh] py-[1.35vh]">
+          <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-(--semi-black) px-[1.45vh] py-[1.35vh]">
 
             <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-[3.6vh] px-[3.5vh] pb-[1.4vh]">
               <Image
