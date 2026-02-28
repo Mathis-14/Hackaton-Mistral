@@ -163,8 +163,14 @@ export default function Landing({ onWakeUp }: LandingProps) {
     <div className="relative min-h-screen overflow-hidden text-white" style={{ backgroundColor: "var(--semi-black)" }}>
       <AnimatedStarsBackground />
       <div
-        className="absolute bottom-0 left-0 right-0 z-0 flex flex-col-reverse"
-        style={{ height: "40vh" }}
+        className="absolute bottom-0 left-0 right-0 z-0 flex flex-col-reverse will-change-transform"
+        style={{
+          height: "40vh",
+          transform: showModes ? "translateY(0)" : "translateY(100%)",
+          transitionDuration: `${SCENE_TRANSITION_MS}ms`,
+          transitionProperty: "transform",
+          transitionTimingFunction: PIXEL_ASCENT_TIMING_FUNCTION,
+        }}
         aria-hidden
       >
         {bottomBandsColors.map((color) => (
@@ -218,7 +224,7 @@ export default function Landing({ onWakeUp }: LandingProps) {
       >
         <div className="mx-auto w-full max-w-7xl px-6 sm:px-10">
           <header
-            className="mb-4 flex flex-col items-center gap-3 text-center"
+            className="mb-8 flex flex-col items-center gap-3 text-center"
             style={{
               opacity: showModes ? 1 : 0,
               transform: showModes ? "translateY(0)" : `translateY(${GAME_MODE_HEADER_ENTRY_Y})`,
