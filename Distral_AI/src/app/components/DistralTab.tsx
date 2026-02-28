@@ -170,7 +170,8 @@ function WindowActionButton({
 
 function DistralAppWindow({ onClose, onFocus }: { onClose: () => void; onFocus: () => void }) {
   const NPC_MESSAGE = "Remind me of the Population of France";
-  const CHAR_DELAY = 35;
+  const CHAR_DELAY_MIN = 60;
+  const CHAR_DELAY_MAX = 140;
   const START_DELAY = 800;
 
   const [phase, setPhase] = useState<"landing" | "chat">("landing");
@@ -188,24 +189,32 @@ function DistralAppWindow({ onClose, onFocus }: { onClose: () => void; onFocus: 
     const startTimeout = window.setTimeout(() => {
       if (cancelledRef.current) return;
 
-      // Start typing sound
-      const audio = new Audio("/sounds/music/game%20effect/typing-sound-1.wav");
-      audio.loop = true;
-      audio.volume = 0.6;
-      void audio.play().catch(() => { });
+      // Individual keystroke sounds extracted from typing-sound-1.wav
+      const keystrokeSounds = [
+        "/sounds/music/game%20effect/keystroke-1.wav",
+        "/sounds/music/game%20effect/keystroke-2.wav",
+        "/sounds/music/game%20effect/keystroke-3.wav",
+      ];
+
+      const playKeystroke = () => {
+        const src = keystrokeSounds[Math.floor(Math.random() * keystrokeSounds.length)];
+        const sfx = new Audio(src);
+        sfx.volume = 0.85 + Math.random() * 0.15;
+        void sfx.play().catch(() => { });
+      };
 
       let charIndex = 0;
       const typeNext = () => {
-        if (cancelledRef.current) {
-          audio.pause();
-          return;
-        }
+        if (cancelledRef.current) return;
         if (charIndex <= NPC_MESSAGE.length) {
+          if (charIndex > 0) playKeystroke();
           setNpcTypedText(NPC_MESSAGE.slice(0, charIndex));
           charIndex++;
-          window.setTimeout(typeNext, CHAR_DELAY);
+          // Random delay to mimic human hesitation
+          const delay = CHAR_DELAY_MIN + Math.random() * (CHAR_DELAY_MAX - CHAR_DELAY_MIN)
+            + (Math.random() < 0.12 ? 150 : 0); // occasional longer pause
+          window.setTimeout(typeNext, delay);
         } else {
-          audio.pause();
           // Pause then "send" the message
           window.setTimeout(() => {
             if (!cancelledRef.current) {
