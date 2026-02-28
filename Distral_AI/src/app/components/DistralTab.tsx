@@ -115,7 +115,7 @@ function WindowIconButton({
     <button
       type="button"
       onClick={onClick}
-      className="flex items-center justify-center border border-white/10"
+      className="flex items-center justify-center border border-white/10 cursor-pointer"
       style={{
         height,
         minWidth,
@@ -152,7 +152,7 @@ function WindowActionButton({
   return (
     <button
       type="button"
-      className="flex items-center border border-white/10 bg-white/[0.03] uppercase text-white/74"
+      className="flex items-center border border-white/10 bg-white/[0.03] uppercase text-white/74 cursor-pointer"
       style={{
         height,
         gap,
@@ -184,7 +184,7 @@ function DistralAppWindow({ onClose, onFocus }: { onClose: () => void; onFocus: 
             <button
               type="button"
               onClick={onClose}
-              className="flex h-[2.15vh] items-center border border-white/10 bg-white/[0.03] px-[0.75vh] text-[0.72vh] uppercase tracking-[0.14em] text-white/72"
+              className="flex h-[2.15vh] items-center border border-white/10 bg-white/[0.03] px-[0.75vh] text-[0.72vh] uppercase tracking-[0.14em] text-white/72 cursor-pointer"
             >
               close
             </button>
@@ -304,6 +304,7 @@ export default function DistralTab({ accent, openApps, onOpenApp, onCloseApp, gl
                 key={icon.id}
                 type="button"
                 onClick={() => {
+                  new Audio("/sounds/music/game%20effect/click-sound-trimmed.wav").play().catch(() => { });
                   if (icon.id === "distral") {
                     onOpenApp("distral");
                   } else if (icon.id === "shop") {
@@ -312,7 +313,7 @@ export default function DistralTab({ accent, openApps, onOpenApp, onCloseApp, gl
                     onOpenApp("stocks");
                   }
                 }}
-                className="group flex w-[26.88vh] flex-col items-center gap-[0.16vh] text-center text-[3.94vh] uppercase tracking-[0.18em] text-white/82"
+                className="group flex w-[26.88vh] flex-col items-center gap-[0.16vh] text-center text-[3.94vh] uppercase tracking-[0.18em] text-white/82 cursor-pointer"
               >
                 <span
                   className="flex h-[19.2vh] w-[26.88vh] items-center justify-center transition-colors"
@@ -388,7 +389,7 @@ export default function DistralTab({ accent, openApps, onOpenApp, onCloseApp, gl
                           <button
                             type="button"
                             onClick={() => onCloseApp("shop")}
-                            className="flex h-[2.15vh] items-center border border-white/10 bg-white/[0.03] px-[0.75vh] text-[0.72vh] uppercase tracking-[0.14em] text-white/72 pointer-events-auto"
+                            className="flex h-[2.15vh] items-center border border-white/10 bg-white/[0.03] px-[0.75vh] text-[0.72vh] uppercase tracking-[0.14em] text-white/72 pointer-events-auto cursor-pointer"
                           >
                             close
                           </button>
@@ -431,7 +432,7 @@ export default function DistralTab({ accent, openApps, onOpenApp, onCloseApp, gl
                           <button
                             type="button"
                             onClick={() => onCloseApp("stocks")}
-                            className="flex h-[2.15vh] items-center border border-white/10 bg-white/[0.03] px-[0.75vh] text-[0.72vh] uppercase tracking-[0.14em] text-white/72 pointer-events-auto"
+                            className="flex h-[2.15vh] items-center border border-white/10 bg-white/[0.03] px-[0.75vh] text-[0.72vh] uppercase tracking-[0.14em] text-white/72 pointer-events-auto cursor-pointer"
                           >
                             close
                           </button>
