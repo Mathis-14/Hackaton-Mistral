@@ -131,7 +131,8 @@ export default function Landing({ onWakeUp }: LandingProps) {
   if (!hasStarted) {
     return (
       <div
-        className="flex min-h-screen cursor-pointer flex-col items-center justify-center bg-black text-white"
+        className="flex min-h-screen cursor-pointer flex-col items-center justify-center text-white"
+        style={{ backgroundColor: "var(--semi-black)" }}
         onClick={() => setHasStarted(true)}
       >
         <p className="animate-pulse text-xl uppercase tracking-widest [font-family:'VCR OSD Mono',Arial,sans-serif]">
@@ -142,10 +143,7 @@ export default function Landing({ onWakeUp }: LandingProps) {
   }
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-black text-white">
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_18%_18%,rgba(255,255,255,0.07),transparent_24%),radial-gradient(circle_at_78%_22%,rgba(255,177,3,0.12),transparent_22%),radial-gradient(circle_at_80%_78%,rgba(226,0,0,0.14),transparent_26%)]" />
-      <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.02),transparent_28%,transparent_72%,rgba(255,255,255,0.02))]" />
-
+    <div className="relative min-h-screen overflow-hidden text-white" style={{ backgroundColor: "var(--semi-black)" }}>
       <div
         className="pointer-events-none absolute left-1/2 top-1/2 z-20 will-change-transform"
         style={{
@@ -193,7 +191,7 @@ export default function Landing({ onWakeUp }: LandingProps) {
       >
         <div className="mx-auto w-full max-w-7xl px-6 sm:px-10">
           <header
-            className="mb-2 flex flex-col items-center gap-3 text-center"
+            className="mb-4 flex flex-col items-center gap-3 text-center"
             style={{
               opacity: showModes ? 1 : 0,
               transform: showModes ? "translateY(0)" : `translateY(${GAME_MODE_HEADER_ENTRY_Y})`,
@@ -239,7 +237,7 @@ export default function Landing({ onWakeUp }: LandingProps) {
                   <div
                     className={`pixel-card__shell relative h-full min-h-[20rem] overflow-hidden p-5 sm:p-6 ${isSelected
                       ? "bg-white/[0.055]"
-                      : "bg-[#070707] transition-colors duration-150 ease-[steps(3,end)] group-hover:bg-[#111111]"
+                      : "bg-[var(--carbon-black)] transition-colors duration-150 ease-[steps(3,end)] group-hover:bg-[#27272a]"
                       }`}
                   >
                     <div className="relative z-10 flex h-full flex-col">
@@ -299,7 +297,7 @@ export default function Landing({ onWakeUp }: LandingProps) {
                 filter: "drop-shadow(8px 8px 0 rgba(0, 0, 0, 0.72))",
               }}
             >
-              <div className="pixel-card__shell relative overflow-hidden bg-[#050505] px-5 py-4 sm:px-6">
+              <div className="pixel-card__shell relative overflow-hidden bg-[var(--carbon-black)] px-5 py-4 sm:px-6">
                 <div className="relative z-10 flex items-center justify-center gap-4 text-white">
                   <span className="text-2xl font-black uppercase tracking-[0.18em]">
                     Wake Up
