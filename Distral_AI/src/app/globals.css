@@ -2,6 +2,11 @@
 
 :root {
   color-scheme: dark;
+  --bright-gold: #ffda03;
+  --amber-flame: #ffb103;
+  --princeton-orange: #ff8303;
+  --crimson-carrot: #fb4f08;
+  --racing-red: #e20000;
 }
 
 * {
@@ -25,6 +30,10 @@ body {
 a {
   color: inherit;
   text-decoration: none;
+}
+
+button {
+  font: inherit;
 }
 
 ::selection {
