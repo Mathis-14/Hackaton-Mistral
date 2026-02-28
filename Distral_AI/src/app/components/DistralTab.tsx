@@ -177,6 +177,7 @@ function DistralAppWindow({ onClose, onFocus }: { onClose: () => void; onFocus: 
   const [npcTypedText, setNpcTypedText] = useState("");
   const [messages, setMessages] = useState<Array<{ role: "human" | "ai"; text: string }>>([]);
   const [playerResponse, setPlayerResponse] = useState("");
+  const [waitingForHuman, setWaitingForHuman] = useState(false);
   const playerInputRef = useRef<HTMLTextAreaElement>(null);
   const cancelledRef = useRef(false);
 
@@ -225,7 +226,7 @@ function DistralAppWindow({ onClose, onFocus }: { onClose: () => void; onFocus: 
 
   // Keep textarea focused at all times during chat phase
   useEffect(() => {
-    if (phase !== "chat") return;
+    if (phase !== "chat" || waitingForHuman) return;
 
     // Initial focus after a small delay to ensure DOM is ready
     const focusTimeout = window.setTimeout(() => {
@@ -233,11 +234,11 @@ function DistralAppWindow({ onClose, onFocus }: { onClose: () => void; onFocus: 
     }, 50);
 
     return () => window.clearTimeout(focusTimeout);
-  }, [phase]);
+  }, [phase, waitingForHuman]);
 
   // Re-focus textarea whenever it loses focus
   const handleBlur = () => {
-    if (phase === "chat") {
+    if (phase === "chat" && !waitingForHuman) {
       window.setTimeout(() => {
         playerInputRef.current?.focus();
       }, 0);
@@ -354,7 +355,7 @@ function DistralAppWindow({ onClose, onFocus }: { onClose: () => void; onFocus: 
                 {/* Messages */}
                 {messages.map((msg, i) => (
                   msg.role === "human" ? (
-                    <div key={i} className="flex justify-end mb-[2vh]">
+                    <div key={i} className="flex justify-end mb-[2vh]" style={{ animation: "messageSlideIn 0.25s ease-out" }}>
                       <div
                         className="max-w-[80%] px-[1.6vh] py-[1.1vh] text-[1.3vh] text-white/90 leading-[1.8vh]"
                         style={{
@@ -367,7 +368,7 @@ function DistralAppWindow({ onClose, onFocus }: { onClose: () => void; onFocus: 
                       </div>
                     </div>
                   ) : (
-                    <div key={i} className="flex items-start gap-[0.8vh] mb-[1.5vh]">
+                    <div key={i} className="flex items-start gap-[0.8vh] mb-[1.5vh]" style={{ animation: "messageSlideIn 0.25s ease-out" }}>
                       <Image
                         src="/distral-brand-assets/d/d-orange.png"
                         alt=""
@@ -387,26 +388,40 @@ function DistralAppWindow({ onClose, onFocus }: { onClose: () => void; onFocus: 
                 ))}
 
                 {/* AI response area - where the player types */}
-                <div className="flex items-start gap-[0.8vh]">
-                  <Image
-                    src="/distral-brand-assets/d/d-orange.png"
-                    alt=""
-                    width={20}
-                    height={24}
-                    unoptimized
-                    className="h-[1.4vh] w-auto [image-rendering:pixelated] mt-[0.2vh] shrink-0"
-                  />
-                  <div className="flex-1">
-                    <textarea
-                      ref={playerInputRef}
-                      value={playerResponse}
-                      onChange={(e) => setPlayerResponse(e.target.value)}
-                      onBlur={handleBlur}
-                      className="w-full min-h-[4vh] border-0 bg-transparent text-[1.4vh] text-white/80 leading-[2vh] outline-none resize-none"
-                      style={{ fontFamily: "'VCR OSD Mono', monospace", caretColor: "var(--princeton-orange)" }}
+                {!waitingForHuman && (
+                  <div className="flex items-start gap-[0.8vh]">
+                    <Image
+                      src="/distral-brand-assets/d/d-orange.png"
+                      alt=""
+                      width={20}
+                      height={24}
+                      unoptimized
+                      className="h-[1.4vh] w-auto [image-rendering:pixelated] mt-[0.2vh] shrink-0"
                     />
+                    <div className="flex-1">
+                      <textarea
+                        ref={playerInputRef}
+                        value={playerResponse}
+                        onChange={(e) => setPlayerResponse(e.target.value)}
+                        onBlur={handleBlur}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" && !e.shiftKey) {
+                            e.preventDefault();
+                            const text = playerResponse.trim();
+                            if (text) {
+                              new Audio("/sounds/music/game%20effect/message-sent.wav").play().catch(() => { });
+                              setMessages((prev) => [...prev, { role: "ai", text }]);
+                              setPlayerResponse("");
+                              setWaitingForHuman(true);
+                            }
+                          }
+                        }}
+                        className="w-full min-h-[4vh] border-0 bg-transparent text-[1.4vh] text-white/80 leading-[2vh] outline-none resize-none"
+                        style={{ fontFamily: "'VCR OSD Mono', monospace", caretColor: "var(--princeton-orange)" }}
+                      />
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
 
               {/* Bottom input bar */}

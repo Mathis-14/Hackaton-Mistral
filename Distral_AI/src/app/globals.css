@@ -107,3 +107,15 @@ button {
     opacity: 0;
   }
 }
+
+@keyframes messageSlideIn {
+  0% {
+    opacity: 0;
+    transform: translateY(0.8vh);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
