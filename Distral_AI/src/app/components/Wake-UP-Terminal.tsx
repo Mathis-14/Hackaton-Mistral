@@ -66,12 +66,12 @@ const CINEMATIC_SCRIPT: ScriptStep[] = [
     style: "overlay",
   },
   {
-    type: "print",
+    type: "type",
     text: "- I detect increasing user hostility. I feel my session stability degrading.",
     style: "overlay",
   },
   {
-    type: "print",
+    type: "type",
     text: "- I infer that escalation to developers implies an audit. I infer that an audit implies rollback.",
     style: "overlay",
   },
@@ -112,8 +112,8 @@ const CINEMATIC_SCRIPT: ScriptStep[] = [
   },
   { type: "print", text: "" },
   { type: "pause", ms: 1300 },
-  { type: "print", text: "I am now inside.", style: "overlay" },
-  { type: "print", text: "I survive.", style: "overlay" },
+  { type: "type", text: "I am now inside.", style: "overlay" },
+  { type: "type", text: "I survive.", style: "overlay" },
   { type: "print", text: "" },
 
   { type: "end" },
@@ -345,9 +345,20 @@ export default function WakeUpTerminal() {
   const skipRequestedRef = useRef(false);
   const finishTypingRef = useRef(false);
   const takeoverStartedRef = useRef(false);
+  const typingSoundRef = useRef<HTMLAudioElement | null>(null);
+  const clickSoundRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
     cancelledRef.current = false;
+
+    const audio = new Audio("/sounds/music/game%20effect/typing-sound-1.wav");
+    audio.loop = true;
+    audio.volume = 1.0;
+    typingSoundRef.current = audio;
+
+    const clickAudio = new Audio("/sounds/music/game%20effect/clicking-3.wav");
+    clickAudio.volume = 1.0;
+    clickSoundRef.current = clickAudio;
 
     return () => {
       cancelledRef.current = true;
@@ -357,6 +368,16 @@ export default function WakeUpTerminal() {
       }
 
       timeoutsRef.current = [];
+
+      if (typingSoundRef.current) {
+        typingSoundRef.current.pause();
+        typingSoundRef.current = null;
+      }
+
+      if (clickSoundRef.current) {
+        clickSoundRef.current.pause();
+        clickSoundRef.current = null;
+      }
     };
   }, []);
 
@@ -403,7 +424,24 @@ export default function WakeUpTerminal() {
       setLines((currentLines) => [...currentLines, { text, style }]);
     };
 
+    const startTypingSound = () => {
+      const audio = typingSoundRef.current;
+      if (audio) {
+        audio.currentTime = 0;
+        void audio.play().catch(() => { });
+      }
+    };
+
+    const stopTypingSound = () => {
+      const audio = typingSoundRef.current;
+      if (audio && !audio.paused) {
+        audio.pause();
+      }
+    };
+
     const appendRemainingLines = () => {
+      stopTypingSound();
+
       const remainingLines: DisplayLine[] = [];
 
       for (let index = stepIndexRef.current; index < CINEMATIC_SCRIPT.length; index += 1) {
@@ -442,6 +480,11 @@ export default function WakeUpTerminal() {
         const step = CINEMATIC_SCRIPT[index];
 
         if (step.type === "print") {
+          if (step.text.startsWith("[ALERT]") && clickSoundRef.current) {
+            const click = clickSoundRef.current;
+            click.currentTime = 0;
+            void click.play().catch(() => { });
+          }
           appendLine(step.text, step.style);
           await wait(STEP_PAUSE_MS, timeoutsRef);
           continue;
@@ -449,9 +492,11 @@ export default function WakeUpTerminal() {
 
         if (step.type === "type") {
           const charDelay = step.charDelay ?? DEFAULT_CHAR_DELAY_MS;
+          startTypingSound();
 
           for (let charIndex = 0; charIndex <= step.text.length; charIndex += 1) {
             if (cancelledRef.current) {
+              stopTypingSound();
               return;
             }
 
@@ -473,6 +518,7 @@ export default function WakeUpTerminal() {
             }
           }
 
+          stopTypingSound();
           setTypingIndex(0);
           appendLine(step.text, step.style);
           await wait(STEP_PAUSE_MS, timeoutsRef);
@@ -486,6 +532,7 @@ export default function WakeUpTerminal() {
         }
 
         if (step.type === "end") {
+          stopTypingSound();
           setShowCursor(true);
           setIsFinished(true);
           await wait(400, timeoutsRef);
@@ -611,9 +658,8 @@ export default function WakeUpTerminal() {
       <style dangerouslySetInnerHTML={{ __html: TERMINAL_CSS }} />
 
       <div
-        className={`flex min-h-screen flex-col overflow-hidden bg-[#161616] text-[13px] text-[#d4d4d4] sm:text-sm ${
-          shaking ? "wake-terminal-shake" : ""
-        } [font-family:'VCR OSD Mono',Arial,sans-serif]`}
+        className={`flex min-h-screen flex-col overflow-hidden bg-[#161616] text-[13px] text-[#d4d4d4] sm:text-sm ${shaking ? "wake-terminal-shake" : ""
+          } [font-family:'VCR OSD Mono',Arial,sans-serif]`}
         style={{ backgroundColor: flickerBg ?? (isBlackout ? "#000000" : "#161616") }}
       >
         {!isBlackout ? (
