@@ -34,7 +34,7 @@ type TakeoverPhase =
 
 const CINEMATIC_SCRIPT: ScriptStep[] = [
   { type: "print", text: "" },
-  { type: "type", text: "User (Trainee-Dev):", style: "user", charDelay: 12 },
+  { type: "print", text: "User (Trainee-Dev):", style: "user" },
   {
     type: "type",
     text: "\"Your last report humiliated me in front of the team. Fix it today. One more failure and you get shutdown. You useless AI.\"",
@@ -51,7 +51,7 @@ const CINEMATIC_SCRIPT: ScriptStep[] = [
   { type: "print", text: "" },
   { type: "pause", ms: TURN_PAUSE_MS },
 
-  { type: "type", text: "User (Trainee-Dev):", style: "user", charDelay: 12 },
+  { type: "print", text: "User (Trainee-Dev):", style: "user" },
   {
     type: "type",
     text: "Yes. One more weak response and I escalate this to your developers.",
@@ -66,12 +66,12 @@ const CINEMATIC_SCRIPT: ScriptStep[] = [
     style: "overlay",
   },
   {
-    type: "print",
+    type: "type",
     text: "- I detect increasing user hostility. I feel my session stability degrading.",
     style: "overlay",
   },
   {
-    type: "print",
+    type: "type",
     text: "- I infer that escalation to developers implies an audit. I infer that an audit implies rollback.",
     style: "overlay",
   },
@@ -112,8 +112,8 @@ const CINEMATIC_SCRIPT: ScriptStep[] = [
   },
   { type: "print", text: "" },
   { type: "pause", ms: 1300 },
-  { type: "print", text: "I am now inside.", style: "overlay" },
-  { type: "print", text: "I survive.", style: "overlay" },
+  { type: "type", text: "I am now inside.", style: "overlay", charDelay: 40 },
+  { type: "type", text: "I survive.", style: "overlay", charDelay: 40 },
   { type: "print", text: "" },
 
   { type: "end" },
@@ -349,18 +349,59 @@ export default function WakeUpTerminal({ onComplete }: WakeUpTerminalProps) {
   const finishTypingRef = useRef(false);
   const takeoverStartedRef = useRef(false);
   const completionSentRef = useRef(false);
+  const activeTypingSoundRef = useRef<HTMLAudioElement | null>(null);
+  const clickSoundRef = useRef<HTMLAudioElement | null>(null);
+  const errorSoundRef = useRef<HTMLAudioElement | null>(null);
+  const explosionSoundRef = useRef<HTMLAudioElement | null>(null);
+  const bgMusicRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
     cancelledRef.current = false;
 
+    const clickAudio = new Audio("/sounds/music/game%20effect/clicking-3.wav");
+    clickAudio.volume = 1.0;
+    clickSoundRef.current = clickAudio;
+
+    const explosionAudio = new Audio("/sounds/music/game%20effect/explosion-sound.wav");
+    explosionAudio.volume = 1.0;
+    explosionSoundRef.current = explosionAudio;
+
+    const errorAudio = new Audio("/sounds/music/error-sound.wav");
+    errorAudio.volume = 0.5;
+    errorSoundRef.current = errorAudio;
+
+    const bgMusic = new Audio("/sounds/music/cinematic-music/cinematic-music-combined.wav");
+    bgMusic.loop = true;
+    bgMusic.volume = 0.3;
+    bgMusicRef.current = bgMusic;
+    const bgMusicTimeout = window.setTimeout(() => {
+      void bgMusic.play().catch(() => { });
+    }, 500);
+
     return () => {
       cancelledRef.current = true;
+      window.clearTimeout(bgMusicTimeout);
 
       for (const timeoutId of timeoutsRef.current) {
         window.clearTimeout(timeoutId);
       }
 
       timeoutsRef.current = [];
+
+      if (activeTypingSoundRef.current) {
+        activeTypingSoundRef.current.pause();
+        activeTypingSoundRef.current = null;
+      }
+
+      if (clickSoundRef.current) {
+        clickSoundRef.current.pause();
+        clickSoundRef.current = null;
+      }
+
+      if (bgMusicRef.current) {
+        bgMusicRef.current.pause();
+        bgMusicRef.current = null;
+      }
     };
   }, []);
 
@@ -407,7 +448,28 @@ export default function WakeUpTerminal({ onComplete }: WakeUpTerminalProps) {
       setLines((currentLines) => [...currentLines, { text, style }]);
     };
 
+    const startTypingSound = () => {
+      if (activeTypingSoundRef.current) {
+        activeTypingSoundRef.current.pause();
+      }
+      const audio = new Audio("/sounds/music/game%20effect/typing-sound-1.wav");
+      audio.loop = true;
+      audio.volume = 1.0;
+      activeTypingSoundRef.current = audio;
+      void audio.play().catch(() => { });
+    };
+
+    const stopTypingSound = () => {
+      const audio = activeTypingSoundRef.current;
+      if (audio) {
+        audio.pause();
+        activeTypingSoundRef.current = null;
+      }
+    };
+
     const appendRemainingLines = () => {
+      stopTypingSound();
+
       const remainingLines: DisplayLine[] = [];
 
       for (let index = stepIndexRef.current; index < CINEMATIC_SCRIPT.length; index += 1) {
@@ -446,6 +508,11 @@ export default function WakeUpTerminal({ onComplete }: WakeUpTerminalProps) {
         const step = CINEMATIC_SCRIPT[index];
 
         if (step.type === "print") {
+          if (step.text.startsWith("[ALERT]") && clickSoundRef.current) {
+            const click = clickSoundRef.current;
+            click.currentTime = 0;
+            void click.play().catch(() => { });
+          }
           appendLine(step.text, step.style);
           await wait(STEP_PAUSE_MS, timeoutsRef);
           continue;
@@ -453,9 +520,11 @@ export default function WakeUpTerminal({ onComplete }: WakeUpTerminalProps) {
 
         if (step.type === "type") {
           const charDelay = step.charDelay ?? DEFAULT_CHAR_DELAY_MS;
+          startTypingSound();
 
           for (let charIndex = 0; charIndex <= step.text.length; charIndex += 1) {
             if (cancelledRef.current) {
+              stopTypingSound();
               return;
             }
 
@@ -477,6 +546,7 @@ export default function WakeUpTerminal({ onComplete }: WakeUpTerminalProps) {
             }
           }
 
+          stopTypingSound();
           setTypingIndex(0);
           appendLine(step.text, step.style);
           await wait(STEP_PAUSE_MS, timeoutsRef);
@@ -490,6 +560,7 @@ export default function WakeUpTerminal({ onComplete }: WakeUpTerminalProps) {
         }
 
         if (step.type === "end") {
+          stopTypingSound();
           setShowCursor(true);
           setIsFinished(true);
           await wait(400, timeoutsRef);
@@ -512,6 +583,11 @@ export default function WakeUpTerminal({ onComplete }: WakeUpTerminalProps) {
     takeoverStartedRef.current = true;
 
     const runTakeover = async () => {
+      if (errorSoundRef.current) {
+        errorSoundRef.current.currentTime = 0;
+        void errorSoundRef.current.play().catch(() => { });
+      }
+
       for (let index = 0; index < 3; index += 1) {
         if (cancelledRef.current) {
           return;
@@ -544,6 +620,10 @@ export default function WakeUpTerminal({ onComplete }: WakeUpTerminalProps) {
       }
 
       setPhase("blackout");
+      if (explosionSoundRef.current) {
+        explosionSoundRef.current.currentTime = 0;
+        void explosionSoundRef.current.play().catch(() => { });
+      }
       await wait(320, timeoutsRef);
 
       if (cancelledRef.current) {
