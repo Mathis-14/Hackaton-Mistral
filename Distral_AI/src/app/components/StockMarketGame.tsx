@@ -186,6 +186,29 @@ export default function StockMarketGame({ onClose, embedded = false }: StockMark
     const historyRef = useRef<number[]>([INITIAL_PRICE]);
     const buyPointsRef = useRef<number[]>([]);
     const sellPointsRef = useRef<number[]>([]);
+    const tradeAudioRef = useRef<HTMLAudioElement | null>(null);
+    const closeAudioRef = useRef<HTMLAudioElement | null>(null);
+
+    useEffect(() => {
+        tradeAudioRef.current = new Audio("/sounds/music/game effect/place-a-trade.wav");
+        tradeAudioRef.current.volume = 0.5;
+        closeAudioRef.current = new Audio("/sounds/music/game effect/close-a-trade.mp3");
+        closeAudioRef.current.volume = 0.5;
+    }, []);
+
+    const playTradeSound = useCallback(() => {
+        if (tradeAudioRef.current) {
+            tradeAudioRef.current.currentTime = 0;
+            tradeAudioRef.current.play().catch(() => { });
+        }
+    }, []);
+
+    const playCloseSound = useCallback(() => {
+        if (closeAudioRef.current) {
+            closeAudioRef.current.currentTime = 0;
+            closeAudioRef.current.play().catch(() => { });
+        }
+    }, []);
 
     const currentPrice = priceHistory[priceHistory.length - 1];
     const portfolioValue = cash + shares * currentPrice;
@@ -238,7 +261,8 @@ export default function StockMarketGame({ onClose, embedded = false }: StockMark
         const pts = [...buyPointsRef.current, priceHistory.length - 1];
         buyPointsRef.current = pts;
         setBuyPoints(pts);
-    }, [cash, currentPrice, shares, avgBuyPrice, priceHistory.length]);
+        playTradeSound();
+    }, [cash, currentPrice, shares, avgBuyPrice, priceHistory.length, playTradeSound]);
 
     const handleShort = useCallback((all = false) => {
         const maxQty = Math.floor(cash / currentPrice);
@@ -258,7 +282,8 @@ export default function StockMarketGame({ onClose, embedded = false }: StockMark
         const pts = [...sellPointsRef.current, priceHistory.length - 1];
         sellPointsRef.current = pts;
         setSellPoints(pts);
-    }, [cash, currentPrice, shares, avgBuyPrice, priceHistory.length]);
+        playTradeSound();
+    }, [cash, currentPrice, shares, avgBuyPrice, priceHistory.length, playTradeSound]);
 
     const handleClosePosition = useCallback(() => {
         if (shares === 0) return;
@@ -279,7 +304,9 @@ export default function StockMarketGame({ onClose, embedded = false }: StockMark
             : [...buyPointsRef.current, priceHistory.length - 1];
         if (shares > 0) { sellPointsRef.current = pts; setSellPoints(pts); }
         else { buyPointsRef.current = pts; setBuyPoints(pts); }
-    }, [shares, currentPrice, priceHistory.length]);
+
+        playCloseSound();
+    }, [shares, currentPrice, priceHistory.length, playCloseSound]);
 
     const content = (
                 <div
