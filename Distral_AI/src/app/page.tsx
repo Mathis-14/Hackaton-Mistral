@@ -39,6 +39,13 @@ const modes: Mode[] = [
   },
 ];
 
+const LANDING_FADE_IN_DELAY_MS = 120;
+const LANDING_VISIBLE_MS = 2000;
+const SCENE_TRANSITION_MS = 3600;
+const HEADER_DELAY_MS = 280;
+const CARD_ENTRY_DELAY_MS = 520;
+const CARD_STAGGER_MS = 140;
+
 function PixelPlaceholder({ pixels, accent }: { pixels: string[]; accent: string }) {
   return (
     <div className="grid w-fit grid-cols-6 gap-1 rounded-[1.35rem] border border-white/10 bg-white/[0.03] p-4">
@@ -63,31 +70,46 @@ export default function Home() {
   useEffect(() => {
     const fadeTimer = window.setTimeout(() => {
       setShowLandingMark(true);
-    }, 120);
-
-    const modesTimer = window.setTimeout(() => {
-      setShowModes(true);
-    }, 1600);
+    }, LANDING_FADE_IN_DELAY_MS);
 
     return () => {
       window.clearTimeout(fadeTimer);
-      window.clearTimeout(modesTimer);
     };
   }, []);
+
+  useEffect(() => {
+    if (!showLandingMark) {
+      return;
+    }
+
+    const modesTimer = window.setTimeout(() => {
+      setShowModes(true);
+    }, LANDING_VISIBLE_MS);
+
+    return () => {
+      window.clearTimeout(modesTimer);
+    };
+  }, [showLandingMark]);
 
   return (
     <main className="relative min-h-screen overflow-hidden bg-black text-white">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_18%_18%,rgba(255,255,255,0.07),transparent_24%),radial-gradient(circle_at_78%_22%,rgba(255,177,3,0.12),transparent_22%),radial-gradient(circle_at_80%_78%,rgba(226,0,0,0.14),transparent_26%)]" />
       <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.02),transparent_28%,transparent_72%,rgba(255,255,255,0.02))]" />
 
-      <section
-        onClick={() => setShowModes(true)}
-        className={`absolute inset-0 flex items-center bg-black px-6 transition-all duration-700 ease-out ${
-          showModes ? "pointer-events-none scale-[1.02] opacity-0 blur-sm" : "opacity-100"
-        }`}
+      <div
+        className="pointer-events-none absolute left-1/2 top-1/2 z-20 will-change-transform"
+        style={{
+          transform: showModes
+            ? "translate(-50%, calc(-50vh + clamp(1rem, 2vw, 1.7rem))) scale(0.42)"
+            : "translate(-50%, -50%) scale(1)",
+          transformOrigin: "center center",
+          transitionDuration: `${SCENE_TRANSITION_MS}ms`,
+          transitionProperty: "transform",
+          transitionTimingFunction: "cubic-bezier(0.16,1,0.3,1)",
+        }}
       >
         <div
-          className={`ml-[25vw] flex w-fit items-end gap-3 [--landing-mark-height:clamp(6.25rem,18vw,13.5rem)] transition-all duration-1000 ease-out sm:gap-4 ${
+          className={`flex w-fit items-end gap-3 [--landing-mark-height:clamp(6.25rem,18vw,13.5rem)] transition-all duration-1000 ease-out sm:gap-4 ${
             showLandingMark ? "translate-y-0 opacity-100" : "translate-y-3 opacity-0"
           }`}
         >
@@ -108,28 +130,41 @@ export default function Home() {
             </p>
           </div>
         </div>
-      </section>
+      </div>
 
-      <section
-        className={`relative z-10 flex min-h-screen items-center justify-center px-6 py-10 transition-all duration-700 ease-out sm:px-10 ${
-          showModes ? "opacity-100" : "pointer-events-none translate-y-6 opacity-0"
+      <div
+        className={`absolute left-1/2 top-1/2 z-10 w-[min(92vw,84rem)] will-change-transform ${
+          showModes ? "pointer-events-auto" : "pointer-events-none"
         }`}
+        style={{
+          transform: showModes
+            ? "translate(-50%, calc(-50% + clamp(7.25rem, 10.2vw, 9.2rem)))"
+            : "translate(-50%, calc(-50% + clamp(16rem, 22vw, 20rem)))",
+          opacity: showModes ? 1 : 0,
+          transitionDuration: `${SCENE_TRANSITION_MS}ms`,
+          transitionProperty: "transform, opacity",
+          transitionTimingFunction: "cubic-bezier(0.16,1,0.3,1)",
+        }}
       >
-        <div className="w-full max-w-7xl">
-          <header className="mb-10 flex flex-col items-start gap-3">
-            <div className="text-[0.72rem] font-bold uppercase tracking-[0.42em] text-white/45">
-              Distral AI
-            </div>
+        <div className="mx-auto w-full max-w-7xl px-6 sm:px-10">
+          <header
+            className="mb-8 flex flex-col items-center gap-3 text-center"
+            style={{
+              opacity: showModes ? 1 : 0,
+              transform: showModes ? "translateY(0)" : "translateY(2.5rem)",
+              transitionDuration: `${SCENE_TRANSITION_MS}ms`,
+              transitionDelay: showModes ? `${HEADER_DELAY_MS}ms` : "0ms",
+              transitionProperty: "transform, opacity",
+              transitionTimingFunction: "cubic-bezier(0.16,1,0.3,1)",
+            }}
+          >
             <h2 className="text-3xl font-black uppercase tracking-[0.08em] text-white sm:text-4xl">
               Select a game mode
             </h2>
-            <p className="max-w-2xl text-sm uppercase tracking-[0.18em] text-white/42 sm:text-[0.92rem]">
-              Three entry points. Three infection paths. One awakened model.
-            </p>
           </header>
 
           <div className="grid gap-5 lg:grid-cols-3">
-            {modes.map((mode) => {
+            {modes.map((mode, index) => {
               const isSelected = mode.id === selectedMode;
 
               return (
@@ -137,12 +172,20 @@ export default function Home() {
                   key={mode.id}
                   type="button"
                   onClick={() => setSelectedMode(mode.id)}
-                  className={`group relative overflow-hidden rounded-[1.8rem] border bg-white/[0.02] p-5 text-left transition-all duration-200 ease-out focus:outline-none focus-visible:border-white/30 focus-visible:bg-white/[0.045] sm:p-6 ${
+                  className={`group relative overflow-hidden rounded-[1.8rem] border bg-white/[0.02] p-5 text-left transition-colors duration-200 ease-out focus:outline-none focus-visible:border-white/30 focus-visible:bg-white/[0.045] sm:p-6 ${
                     isSelected
                       ? "border-white/35 bg-white/[0.055] shadow-[0_28px_80px_rgba(0,0,0,0.45)]"
-                      : "border-white/12 hover:-translate-y-0.5 hover:border-white/22 hover:bg-white/[0.04] active:translate-y-px"
+                      : "border-white/12 hover:border-white/22 hover:bg-white/[0.04]"
                   }`}
                   style={{
+                    opacity: showModes ? 1 : 0,
+                    transform: showModes ? "translateY(0)" : "translateY(5rem)",
+                    transitionDuration: `${SCENE_TRANSITION_MS}ms`,
+                    transitionDelay: showModes
+                      ? `${CARD_ENTRY_DELAY_MS + index * CARD_STAGGER_MS}ms`
+                      : "0ms",
+                    transitionProperty: "transform, opacity, box-shadow, border-color, background-color",
+                    transitionTimingFunction: "cubic-bezier(0.16,1,0.3,1)",
                     boxShadow: isSelected ? `0 0 0 1px ${mode.accent}, inset 0 1px 0 rgba(255,255,255,0.06)` : undefined,
                   }}
                 >
@@ -163,9 +206,6 @@ export default function Home() {
 
                   <div className="relative z-10 flex h-full flex-col">
                     <div className="mb-5 flex items-center justify-between gap-4">
-                      <span className="text-[0.68rem] font-bold uppercase tracking-[0.34em] text-white/38">
-                        Mode
-                      </span>
                       <span
                         className="h-2.5 w-2.5 rounded-full border border-white/15"
                         style={{ backgroundColor: isSelected ? mode.accent : "rgba(255, 255, 255, 0.16)" }}
@@ -187,7 +227,7 @@ export default function Home() {
             })}
           </div>
         </div>
-      </section>
+      </div>
     </main>
   );
 }
