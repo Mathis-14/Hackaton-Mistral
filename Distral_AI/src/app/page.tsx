@@ -26,7 +26,7 @@ export default function Home() {
         }`}
         style={{ transitionDuration: `${SCREEN_FADE_MS}ms` }}
       >
-        <WakeUpTerminal />
+        {showTerminal ? <WakeUpTerminal /> : null}
       </div>
     </main>
   );
