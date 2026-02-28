@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 type LandingProps = {
   onWakeUp: () => void;
@@ -102,6 +102,7 @@ export default function Landing({ onWakeUp }: LandingProps) {
   const [hasStarted, setHasStarted] = useState(false);
   const [showModes, setShowModes] = useState(false);
   const [selectedMode, setSelectedMode] = useState(modes[0].id);
+  const mainMenuAudioRef = useRef<HTMLAudioElement | null>(null);
 
   const playClickSound = () => {
     new Audio("/sounds/music/game%20effect/clicking-2.wav").play().catch(() => { });
@@ -109,6 +110,12 @@ export default function Landing({ onWakeUp }: LandingProps) {
 
   const playStartSound = () => {
     new Audio("/sounds/music/game%20effect/clicking-3.wav").play().catch(() => { });
+
+    // Arrêter la musique principale
+    if (mainMenuAudioRef.current) {
+      mainMenuAudioRef.current.pause();
+      mainMenuAudioRef.current.currentTime = 0;
+    }
   };
 
   useEffect(() => {
@@ -121,7 +128,9 @@ export default function Landing({ onWakeUp }: LandingProps) {
     // Lancer la musique principale 0.3s après la fin du jingle de démarrage
     // SCENE_TRANSITION_MS correspond à la durée du jingle (3690ms)
     const mainMenuAudioDelay = window.setTimeout(() => {
-      new Audio("/sounds/music/main-menu-music.mp3").play().catch(() => { });
+      const audio = new Audio("/sounds/music/main-menu-music.mp3");
+      mainMenuAudioRef.current = audio;
+      audio.play().catch(() => { });
     }, SCENE_TRANSITION_MS + 300);
 
     return () => {
