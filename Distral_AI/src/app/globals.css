@@ -1,5 +1,12 @@
 @import "tailwindcss";
 
+@font-face {
+  font-family: "VCR OSD Mono";
+  src: url("/VCR_OSD_MONO_1.001.ttf") format("truetype");
+  font-weight: normal;
+  font-style: normal;
+}
+
 :root {
   color-scheme: dark;
   --bright-gold: #ffda03;
@@ -22,7 +29,7 @@ body {
   margin: 0;
   background: #000;
   color: #fff;
-  font-family: Arial, sans-serif;
+  font-family: "VCR OSD Mono", Arial, sans-serif;
   user-select: none;
   -webkit-user-select: none;
 }
@@ -34,6 +41,52 @@ a {
 
 button {
   font: inherit;
+}
+
+.pixel-card,
+.pixel-card__shell {
+  --pixel-cut: 14px;
+  --pixel-step: 5px;
+  clip-path: polygon(
+    var(--pixel-cut) 0,
+    calc(100% - var(--pixel-cut)) 0,
+    calc(100% - var(--pixel-cut)) var(--pixel-step),
+    calc(100% - var(--pixel-step)) var(--pixel-step),
+    calc(100% - var(--pixel-step)) var(--pixel-cut),
+    100% var(--pixel-cut),
+    100% calc(100% - var(--pixel-cut)),
+    calc(100% - var(--pixel-step)) calc(100% - var(--pixel-cut)),
+    calc(100% - var(--pixel-step)) calc(100% - var(--pixel-step)),
+    calc(100% - var(--pixel-cut)) calc(100% - var(--pixel-step)),
+    calc(100% - var(--pixel-cut)) 100%,
+    var(--pixel-cut) 100%,
+    var(--pixel-cut) calc(100% - var(--pixel-step)),
+    var(--pixel-step) calc(100% - var(--pixel-step)),
+    var(--pixel-step) calc(100% - var(--pixel-cut)),
+    0 calc(100% - var(--pixel-cut)),
+    0 var(--pixel-cut),
+    var(--pixel-step) var(--pixel-cut),
+    var(--pixel-step) var(--pixel-step),
+    var(--pixel-cut) var(--pixel-step)
+  );
+}
+
+.pixel-card {
+  border: 0;
+}
+
+.pixel-card__shell {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0) 18%),
+    #070707;
+}
+
+@media (max-width: 640px) {
+  .pixel-card,
+  .pixel-card__shell {
+    --pixel-cut: 10px;
+    --pixel-step: 4px;
+  }
 }
 
 ::selection {
