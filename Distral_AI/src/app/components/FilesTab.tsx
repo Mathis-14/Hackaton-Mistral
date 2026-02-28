@@ -48,12 +48,9 @@ const FILE_SYSTEM: FolderStructure = {
     { name: "mountains.jpg", type: "file", size: "3.4 MB", modified: "2026-02-10" },
   ],
   "/audio_files": [
-    { name: "whatsapp_audio_01.mp3", type: "audio", src: "/sounds/music/main-menu-music.mp3", size: "312 KB", modified: "2026-02-26" },
-    { name: "whatsapp_audio_02.mp3", type: "audio", src: "/sounds/music/main-menu-music.mp3", size: "287 KB", modified: "2026-02-25" },
-    { name: "whatsapp_audio_03.mp3", type: "audio", src: "/sounds/music/main-menu-music.mp3", size: "445 KB", modified: "2026-02-24" },
-    { name: "whatsapp_audio_04.mp3", type: "audio", src: "/sounds/music/main-menu-music.mp3", size: "198 KB", modified: "2026-02-23" },
-    { name: "whatsapp_audio_05.mp3", type: "audio", src: "/sounds/music/main-menu-music.mp3", size: "356 KB", modified: "2026-02-22" },
-    { name: "whatsapp_audio_06.mp3", type: "audio", src: "/sounds/music/main-menu-music.mp3", size: "521 KB", modified: "2026-02-21" },
+    { name: "whatsapp_audio_01.m4a", type: "audio", src: "/audio-clone/Record 1.m4a", size: "312 KB", modified: "2026-02-26" },
+    { name: "whatsapp_audio_02.m4a", type: "audio", src: "/audio-clone/Record 2.m4a", size: "287 KB", modified: "2026-02-25" },
+    { name: "whatsapp_audio_03.m4a", type: "audio", src: "/audio-clone/Record 3.m4a", size: "445 KB", modified: "2026-02-24" },
   ],
   "/system": [
     { name: "kernel.sys", type: "file", size: "128 KB", modified: "2026-01-01" },
@@ -314,7 +311,7 @@ export default function FilesTab({ embedded = false }: FilesTabProps) {
               {entries.map((entry) => (
                 <tr
                   key={entry.name}
-                  className="border-b border-white/5 transition-colors hover:bg-white/[0.04]"
+                  className="border-b border-white/5 transition-colors hover:bg-white/4"
                   style={{
                     cursor: entry.type === "folder" || entry.type === "audio" ? "pointer" : "default",
                     background: entry.type === "audio" && selectedFiles.has(entry.name) ? "rgba(0,170,255,0.08)" : undefined,
@@ -322,11 +319,13 @@ export default function FilesTab({ embedded = false }: FilesTabProps) {
                   draggable={entry.type === "audio"}
                   onDragStart={(event) => {
                     if (entry.type !== "audio") return;
+                    const encode = (e: FileEntry) => `${e.name}::${e.src || ""}`;
                     if (!selectedFiles.has(entry.name)) {
                       setSelectedFiles(new Set([entry.name]));
-                      event.dataTransfer.setData("text/plain", entry.name);
+                      event.dataTransfer.setData("text/plain", encode(entry));
                     } else {
-                      event.dataTransfer.setData("text/plain", [...selectedFiles].join(","));
+                      const selectedEntries = audioEntries.filter((e) => selectedFiles.has(e.name));
+                      event.dataTransfer.setData("text/plain", selectedEntries.map(encode).join(","));
                     }
                     event.dataTransfer.effectAllowed = "copy";
                   }}
@@ -423,7 +422,7 @@ function SidebarFolder({ name, path, currentPath, depth, onNavigate }: { name: s
       <button
         type="button"
         onClick={() => onNavigate(path)}
-        className="flex w-full items-center gap-1.5 px-2 py-1 text-left text-[10px] transition-colors hover:bg-white/[0.04]"
+        className="flex w-full items-center gap-1.5 px-2 py-1 text-left text-[10px] transition-colors hover:bg-white/4"
         style={{ paddingLeft: `${depth * 12 + 8}px`, color: isActive ? GOLD : isAncestor ? "#bbb" : "#888", background: isActive ? "rgba(255,210,0,0.06)" : "transparent" }}
       >
         <FolderIcon />

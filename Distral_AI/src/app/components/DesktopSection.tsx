@@ -17,7 +17,7 @@ type DesktopSectionProps = {
 export default function DesktopSection({ profileName, accent, openApps, onOpenApp, onCloseApp, globalCash, setGlobalCash, inventory, setInventory }: DesktopSectionProps) {
   return (
     <section className="pixel-card h-full min-h-0 p-[0.35vh]">
-      <div className="pixel-card__shell flex h-full min-h-0 flex-col overflow-hidden border border-white/10 bg-[var(--carbon-black)]">
+      <div className="pixel-card__shell flex h-full min-h-0 flex-col overflow-hidden border border-white/10 bg-(--carbon-black)">
         <div className="flex flex-none items-center border-b border-white/10 px-[1.6vh] py-[1.35vh]">
           <div>
             <div className="text-[0.92vh] uppercase tracking-[0.3em] text-white/42">Desktop</div>

@@ -6,12 +6,18 @@ export async function POST(request: NextRequest) {
   const formData = await request.formData();
   const action = formData.get("action") as string;
 
+  console.log("[voice-clone] action:", action, "| API key present:", !!ELEVENLABS_API_KEY);
+
   if (action === "clone") {
     const name = formData.get("name") as string;
     const files = formData.getAll("files") as File[];
 
+    console.log("[voice-clone] clone request:", { name, fileCount: files.length, fileSizes: files.map((f) => ({ name: f.name, size: f.size, type: f.type })) });
+
     const elevenLabsForm = new FormData();
     elevenLabsForm.append("name", name);
+    elevenLabsForm.append("description", "22 year-old French male speaking English with a French accent");
+    elevenLabsForm.append("labels", JSON.stringify({ language: "en", accent: "french", gender: "male", age: "young" }));
     elevenLabsForm.append("remove_background_noise", "true");
     for (const file of files) {
       elevenLabsForm.append("files", file);
@@ -25,6 +31,7 @@ export async function POST(request: NextRequest) {
 
     if (!response.ok) {
       const errorText = await response.text();
+      console.error("[voice-clone] ElevenLabs error:", response.status, errorText);
       return NextResponse.json({ error: errorText }, { status: response.status });
     }
 

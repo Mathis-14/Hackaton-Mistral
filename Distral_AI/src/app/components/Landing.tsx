@@ -49,7 +49,7 @@ const modes: Mode[] = [
 ];
 
 const SCENE_TRANSITION_MS = 3690;   
-const LANDING_MARK_ASCENT_STEPS = 64;
+const LANDING_MARK_ASCENT_STEPS = 56;
 const LANDING_MARK_ASCENT_STEP_VH = 0.875;
 const LANDING_MARK_ASCENT_SCALE = 0.42;
 const LANDING_MARK_ASCENT_NUDGE = "clamp(0.12rem, 0.40vw, 0.35rem)";
@@ -158,11 +158,11 @@ export default function Landing({ onWakeUp }: LandingProps) {
         <AnimatedStarsBackground />
         <div
           className="absolute bottom-0 left-0 right-0 z-0 flex flex-col-reverse"
-          style={{ height: "40vh" }}
+          style={{ height: "35vh" }}
           aria-hidden
         >
           {bottomBandsColors.map((color) => (
-            <div key={color} style={{ height: "8vh", backgroundColor: color }} />
+            <div key={color} style={{ height: "7vh", backgroundColor: color }} />
           ))}
         </div>
         <p className="relative z-10 animate-pulse text-xl uppercase tracking-widest [font-family:'VCR OSD Mono',Arial,sans-serif]">
@@ -177,20 +177,20 @@ export default function Landing({ onWakeUp }: LandingProps) {
       <AnimatedStarsBackground />
       <div
         className="absolute bottom-0 left-0 right-0 z-0 flex flex-col-reverse"
-        style={{ height: "40vh" }}
+        style={{ height: "35vh" }}
         aria-hidden
       >
         {bottomBandsColors.map((color) => (
-          <div key={color} style={{ height: "8vh", backgroundColor: color }} />
+          <div key={color} style={{ height: "7vh", backgroundColor: color }} />
         ))}
       </div>
       <div
-        className="pointer-events-none absolute left-1/2 top-1/2 z-20 will-change-transform"
+        className="pointer-events-none absolute left-1/2 top-2/5 z-20 will-change-transform"
         style={{
           opacity: logoVisible ? 1 : 0,
           transform: showModes
             ? `translate(-50%, calc(-${LANDING_MARK_ASCENT_DISTANCE_VH}vh + ${LANDING_MARK_ASCENT_NUDGE})) scale(${LANDING_MARK_ASCENT_SCALE})`
-            : "translate(-50%, -50%) scale(1)",
+            : "translate(-50%, -40%) scale(1)",
           transformOrigin: "center center",
           transitionDuration: showModes ? `${SCENE_TRANSITION_MS}ms` : "600ms",
           transitionProperty: "transform, opacity",

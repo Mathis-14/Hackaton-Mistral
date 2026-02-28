@@ -197,15 +197,13 @@ function SidebarPanel({ title, children }: { title: string; children: React.Reac
 export default function TelemetrySidebar({ profile, metrics, globalCash, inventory }: TelemetrySidebarProps) {
   const voiceClonerUnlocked = (inventory["voice-cloner"] || 0) > 0;
 
-  const [draggedFiles, setDraggedFiles] = useState<string[]>([]);
+  const [draggedFiles, setDraggedFiles] = useState<{ name: string; src: string }[]>([]);
   const [dropZoneActive, setDropZoneActive] = useState(false);
   const [cloneStatus, setCloneStatus] = useState<"idle" | "cloning" | "done" | "error">("idle");
   const [clonedVoiceId, setClonedVoiceId] = useState<string | null>(null);
-  const [sampleText, setSampleText] = useState("Hello, this is my cloned voice speaking.");
+  const [sampleText, setSampleText] = useState("Good morning everyone, welcome to the quarterly review. I'd like to start by going over last month's performance numbers and discuss our roadmap for the next quarter.");
   const [sampleStatus, setSampleStatus] = useState<"idle" | "generating" | "playing">("idle");
   const sampleAudioRef = useRef<HTMLAudioElement | null>(null);
-
-  const audioSource = "/sounds/music/main-menu-music.mp3";
 
   const handleDropOnCloner = useCallback((event: React.DragEvent) => {
     event.preventDefault();
@@ -215,12 +213,15 @@ export default function TelemetrySidebar({ profile, metrics, globalCash, invento
     const raw = event.dataTransfer.getData("text/plain");
     if (!raw) return;
 
-    const fileNames = raw.split(",").filter((name) => name.endsWith(".mp3"));
-    if (fileNames.length === 0) return;
+    const entries = raw.split(",").map((token) => {
+      const [name, src] = token.split("::");
+      return { name, src: src || "" };
+    }).filter(({ name }) => name.endsWith(".mp3") || name.endsWith(".m4a") || name.endsWith(".wav"));
+    if (entries.length === 0) return;
 
     setDraggedFiles((prev) => {
-      const combined = new Set([...prev, ...fileNames]);
-      return [...combined];
+      const existing = new Set(prev.map((f) => f.name));
+      return [...prev, ...entries.filter((e) => !existing.has(e.name))];
     });
   }, [voiceClonerUnlocked]);
 
@@ -232,10 +233,10 @@ export default function TelemetrySidebar({ profile, metrics, globalCash, invento
     formData.append("action", "clone");
     formData.append("name", "cloned-voice-" + Date.now());
 
-    for (const fileName of draggedFiles) {
-      const response = await fetch(audioSource);
+    for (const file of draggedFiles) {
+      const response = await fetch(file.src);
       const blob = await response.blob();
-      formData.append("files", blob, fileName);
+      formData.append("files", blob, file.name);
     }
 
     const result = await fetch("/api/voice-clone", { method: "POST", body: formData });
@@ -282,7 +283,7 @@ export default function TelemetrySidebar({ profile, metrics, globalCash, invento
 
   return (
     <aside className="pixel-card h-full min-h-0 p-[0.35vh]">
-      <div className="pixel-card__shell flex h-full min-h-0 flex-col overflow-hidden overflow-y-auto border border-white/10 bg-[var(--carbon-black)] p-[1.6vh]">
+      <div className="pixel-card__shell flex h-full min-h-0 flex-col overflow-hidden overflow-y-auto border border-white/10 bg-(--carbon-black) p-[1.6vh]">
         <div className="mb-[0.35vh] text-[0.92vh] uppercase tracking-[0.32em] text-white/42">Telemetry</div>
         <div className="text-[2.3vh] uppercase tracking-[0.08em] text-white">Host Snapshot</div>
 
@@ -308,7 +309,7 @@ export default function TelemetrySidebar({ profile, metrics, globalCash, invento
         <Separator />
 
         <SidebarPanel title="Profile">
-          <div className="border border-white/10 bg-white/[0.03] px-[1vh] py-[0.95vh]">
+          <div className="border border-white/10 bg-white/3 px-[1vh] py-[0.95vh]">
             <PixelMeter label="Awareness" value={metrics.awareness} accent={AWARENESS_COLOR} />
             <div className="my-[1vh] h-px bg-white/10" />
             <div className="space-y-[0.7vh] text-[0.95vh] leading-[1.45] text-white/74">
@@ -372,7 +373,7 @@ export default function TelemetrySidebar({ profile, metrics, globalCash, invento
             </div>
 
             {!voiceClonerUnlocked ? (
-              <div className="text-[0.85vh] leading-[1.5]" style={{ color: "#555" }}>
+              <div className="text-[0.85vh] leading-normal" style={{ color: "#555" }}>
                 Buy Voice Cloner ($500) in the Shop to unlock. Drag WhatsApp audios from Files to clone a voice.
               </div>
             ) : (
@@ -392,10 +393,10 @@ export default function TelemetrySidebar({ profile, metrics, globalCash, invento
                     <span className="text-[0.8vh]" style={{ color: DIM }}>Drag audio files here</span>
                   ) : (
                     <div className="flex flex-col gap-[0.3vh] w-full px-[0.5vh]">
-                      {draggedFiles.map((fileName) => (
-                        <div key={fileName} className="flex items-center justify-between text-[0.8vh]" style={{ color: CYAN }}>
-                          <span className="truncate">{fileName}</span>
-                          <button type="button" onClick={() => setDraggedFiles((prev) => prev.filter((f) => f !== fileName))} style={{ color: "#E76E6E", background: "none", border: "none", cursor: "pointer", fontSize: "0.8vh" }}>x</button>
+                      {draggedFiles.map((file) => (
+                        <div key={file.name} className="flex items-center justify-between text-[0.8vh]" style={{ color: CYAN }}>
+                          <span className="truncate">{file.name}</span>
+                          <button type="button" onClick={() => setDraggedFiles((prev) => prev.filter((f) => f.name !== file.name))} style={{ color: "#E76E6E", background: "none", border: "none", cursor: "pointer", fontSize: "0.8vh" }}>x</button>
                         </div>
                       ))}
                     </div>
@@ -426,7 +427,7 @@ export default function TelemetrySidebar({ profile, metrics, globalCash, invento
                     <textarea
                       value={sampleText}
                       onChange={(event) => setSampleText(event.target.value)}
-                      rows={2}
+                      rows={4}
                       className="w-full resize-none px-[0.5vh] py-[0.4vh] text-[0.8vh] outline-none"
                       style={{ background: "#111", border: "1px solid #333", color: "#ccc" }}
                     />

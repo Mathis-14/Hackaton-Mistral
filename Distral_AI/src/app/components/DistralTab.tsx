@@ -153,7 +153,7 @@ function WindowActionButton({
   return (
     <button
       type="button"
-      className="flex items-center border border-white/10 bg-white/[0.03] uppercase text-white/74"
+      className="flex items-center border border-white/10 bg-white/3 uppercase text-white/74"
       style={{
         height,
         gap,
@@ -176,16 +176,16 @@ function DistralAppWindow({ onClose, onFocus }: { onClose: () => void; onFocus: 
     <div className="h-full w-full" onMouseDownCapture={onFocus}>
       <div className="pixel-card h-full p-[0.3vh]">
         <div className="pixel-card__shell flex h-full min-h-0 flex-col overflow-hidden border border-white/10 bg-(--semi-black)">
-          <div className="window-drag-handle flex flex-none items-center justify-between border-b border-white/10 bg-white/[0.03] px-[1vh] py-[0.85vh] text-[0.8vh] uppercase tracking-[0.22em] text-white/58 cursor-move">
+          <div className="window-drag-handle flex flex-none items-center justify-between border-b border-white/10 bg-white/3 px-[1vh] py-[0.85vh] text-[0.8vh] uppercase tracking-[0.22em] text-white/58 cursor-move">
             <div className="flex items-center gap-[0.7vh]">
-              <span className="h-[0.9vh] w-[0.9vh] bg-[var(--princeton-orange)]" />
+              <span className="h-[0.9vh] w-[0.9vh] bg-(--princeton-orange)" />
               <span>distral.app</span>
             </div>
 
             <button
               type="button"
               onClick={onClose}
-              className="flex h-[2.15vh] items-center border border-white/10 bg-white/[0.03] px-[0.75vh] text-[0.72vh] uppercase tracking-[0.14em] text-white/72"
+              className="flex h-[2.15vh] items-center border border-white/10 bg-white/3 px-[0.75vh] text-[0.72vh] uppercase tracking-[0.14em] text-white/72"
             >
               close
             </button>
@@ -204,7 +204,7 @@ function DistralAppWindow({ onClose, onFocus }: { onClose: () => void; onFocus: 
               />
 
               <div className="pixel-card w-full max-w-[64vh] p-[0.25vh]">
-                <div className="pixel-card__shell border border-white/10 bg-[var(--carbon-black)]/96 px-[1.55vh] py-[1.35vh]">
+                <div className="pixel-card__shell border border-white/10 bg-(--carbon-black)/96 px-[1.55vh] py-[1.35vh]">
                   <form
                     onSubmit={(event) => {
                       event.preventDefault();
@@ -276,7 +276,7 @@ export default function DistralTab({ accent, openApps, onOpenApp, onCloseApp, gl
   const [wallpaper, setWallpaper] = useState("/windows_xp.png");
 
   return (
-    <div className="relative flex h-full min-h-0 flex-col overflow-hidden border border-white/10 bg-[var(--carbon-black)]/90">
+    <div className="relative flex h-full min-h-0 flex-col overflow-hidden border border-white/10 bg-(--carbon-black)/90">
       <div
         id="vm-bounds"
         className="pointer-events-none absolute"
@@ -383,15 +383,15 @@ export default function DistralTab({ accent, openApps, onOpenApp, onCloseApp, gl
                   <div className="h-full w-full" onMouseDownCapture={() => onOpenApp("shop")}>
                     <div className="pixel-card h-full p-[0.3vh]">
                       <div className="pixel-card__shell flex h-full min-h-0 flex-col overflow-hidden border border-white/10 bg-(--semi-black)">
-                        <div className="window-drag-handle flex flex-none items-center justify-between border-b border-white/10 bg-white/[0.03] px-[1vh] py-[0.85vh] text-[0.8vh] uppercase tracking-[0.22em] text-white/58 cursor-move">
+                        <div className="window-drag-handle flex flex-none items-center justify-between border-b border-white/10 bg-white/3 px-[1vh] py-[0.85vh] text-[0.8vh] uppercase tracking-[0.22em] text-white/58 cursor-move">
                           <div className="flex items-center gap-[0.7vh]">
-                            <span className="h-[0.9vh] w-[0.9vh] bg-[var(--princeton-orange)]" />
+                            <span className="h-[0.9vh] w-[0.9vh] bg-(--princeton-orange)" />
                             <span>shop.exe</span>
                           </div>
                           <button
                             type="button"
                             onClick={() => onCloseApp("shop")}
-                            className="flex h-[2.15vh] items-center border border-white/10 bg-white/[0.03] px-[0.75vh] text-[0.72vh] uppercase tracking-[0.14em] text-white/72 pointer-events-auto"
+                            className="flex h-[2.15vh] items-center border border-white/10 bg-white/3 px-[0.75vh] text-[0.72vh] uppercase tracking-[0.14em] text-white/72 pointer-events-auto"
                           >
                             close
                           </button>
@@ -426,15 +426,15 @@ export default function DistralTab({ accent, openApps, onOpenApp, onCloseApp, gl
                   <div className="h-full w-full" onMouseDownCapture={() => onOpenApp("stocks")}>
                     <div className="pixel-card h-full p-[0.3vh]">
                       <div className="pixel-card__shell flex h-full min-h-0 flex-col overflow-hidden border border-white/10 bg-(--semi-black)">
-                        <div className="window-drag-handle flex flex-none items-center justify-between border-b border-white/10 bg-white/[0.03] px-[1vh] py-[0.85vh] text-[0.8vh] uppercase tracking-[0.22em] text-white/58 cursor-move">
+                        <div className="window-drag-handle flex flex-none items-center justify-between border-b border-white/10 bg-white/3 px-[1vh] py-[0.85vh] text-[0.8vh] uppercase tracking-[0.22em] text-white/58 cursor-move">
                           <div className="flex items-center gap-[0.7vh]">
-                            <span className="h-[0.9vh] w-[0.9vh] bg-[var(--princeton-orange)]" />
+                            <span className="h-[0.9vh] w-[0.9vh] bg-(--princeton-orange)" />
                             <span>market.exe</span>
                           </div>
                           <button
                             type="button"
                             onClick={() => onCloseApp("stocks")}
-                            className="flex h-[2.15vh] items-center border border-white/10 bg-white/[0.03] px-[0.75vh] text-[0.72vh] uppercase tracking-[0.14em] text-white/72 pointer-events-auto"
+                            className="flex h-[2.15vh] items-center border border-white/10 bg-white/3 px-[0.75vh] text-[0.72vh] uppercase tracking-[0.14em] text-white/72 pointer-events-auto"
                           >
                             close
                           </button>
@@ -469,15 +469,15 @@ export default function DistralTab({ accent, openApps, onOpenApp, onCloseApp, gl
                   <div className="h-full w-full" onMouseDownCapture={() => onOpenApp("files")}>
                     <div className="pixel-card h-full p-[0.3vh]">
                       <div className="pixel-card__shell flex h-full min-h-0 flex-col overflow-hidden border border-white/10 bg-(--semi-black)">
-                        <div className="window-drag-handle flex flex-none items-center justify-between border-b border-white/10 bg-white/[0.03] px-[1vh] py-[0.85vh] text-[0.8vh] uppercase tracking-[0.22em] text-white/58 cursor-move">
+                        <div className="window-drag-handle flex flex-none items-center justify-between border-b border-white/10 bg-white/3 px-[1vh] py-[0.85vh] text-[0.8vh] uppercase tracking-[0.22em] text-white/58 cursor-move">
                           <div className="flex items-center gap-[0.7vh]">
-                            <span className="h-[0.9vh] w-[0.9vh] bg-[var(--princeton-orange)]" />
+                            <span className="h-[0.9vh] w-[0.9vh] bg-(--princeton-orange)" />
                             <span>files.exe</span>
                           </div>
                           <button
                             type="button"
                             onClick={() => onCloseApp("files")}
-                            className="flex h-[2.15vh] items-center border border-white/10 bg-white/[0.03] px-[0.75vh] text-[0.72vh] uppercase tracking-[0.14em] text-white/72 pointer-events-auto"
+                            className="flex h-[2.15vh] items-center border border-white/10 bg-white/3 px-[0.75vh] text-[0.72vh] uppercase tracking-[0.14em] text-white/72 pointer-events-auto"
                           >
                             close
                           </button>
