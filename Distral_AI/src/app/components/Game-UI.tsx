@@ -650,7 +650,7 @@ function DesktopTab({
   return (
     <div className="relative flex h-full min-h-0 flex-col overflow-hidden border border-white/10 bg-[var(--carbon-black)]/90">
       <div
-        className="absolute inset-0 bg-center bg-cover bg-no-repeat"
+        className="pointer-events-none absolute inset-0 bg-cover bg-center bg-no-repeat"
         style={{
           backgroundImage: "url('/windows_xp.png')",
         }}

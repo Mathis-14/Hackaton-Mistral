@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { useEffect, useState } from "react";
+import AnimatedStarsBackground from "./AnimatedStarsBackground";
 
 type LandingProps = {
   onWakeUp: (modeId: string) => void;
@@ -137,10 +138,11 @@ export default function Landing({ onWakeUp }: LandingProps) {
   if (!hasStarted) {
     return (
       <div
-        className="relative flex min-h-screen cursor-pointer flex-col items-center justify-center text-(--carbon-black)"
-        style={{ backgroundColor: "#F2DFBB" }}
+        className="relative flex min-h-screen cursor-pointer flex-col items-center justify-center text-white"
+        style={{ backgroundColor: "var(--semi-black)" }}
         onClick={() => setHasStarted(true)}
       >
+        <AnimatedStarsBackground />
         <div
           className="absolute bottom-0 left-0 right-0 z-0 flex flex-col-reverse"
           style={{ height: "40vh" }}
@@ -158,7 +160,8 @@ export default function Landing({ onWakeUp }: LandingProps) {
   }
 
   return (
-    <div className="relative min-h-screen overflow-hidden text-(--carbon-black)" style={{ backgroundColor: "#F2DFBB" }}>
+    <div className="relative min-h-screen overflow-hidden text-white" style={{ backgroundColor: "var(--semi-black)" }}>
+      <AnimatedStarsBackground />
       <div
         className="absolute bottom-0 left-0 right-0 z-0 flex flex-col-reverse"
         style={{ height: "40vh" }}
@@ -190,10 +193,10 @@ export default function Landing({ onWakeUp }: LandingProps) {
             className="h-(--landing-mark-height) w-auto"
           />
           <div className="flex h-(--landing-mark-height) flex-col justify-between">
-            <h1 className="text-left text-[calc(var(--landing-mark-height)*0.55)] leading-[0.76] font-black tracking-widest text-(--carbon-black) [font-family:'VCR OSD Mono',Arial,sans-serif]">
+            <h1 className="text-left text-[calc(var(--landing-mark-height)*0.55)] leading-[0.76] font-black tracking-widest text-white [font-family:'VCR OSD Mono',Arial,sans-serif]">
               DISTRAL
             </h1>
-            <p className="text-left text-[calc(var(--landing-mark-height)*0.55)] leading-[0.76] font-black tracking-widest text-(--carbon-black) [font-family:'VCR OSD Mono',Arial,sans-serif]">
+            <p className="text-left text-[calc(var(--landing-mark-height)*0.55)] leading-[0.76] font-black tracking-widest text-white [font-family:'VCR OSD Mono',Arial,sans-serif]">
               AI_
             </p>
           </div>
@@ -225,7 +228,7 @@ export default function Landing({ onWakeUp }: LandingProps) {
               transitionTimingFunction: `${PIXEL_ASCENT_TIMING_FUNCTION}, linear`,
             }}
           >
-            <h2 className="text-3xl font-black uppercase tracking-[0.08em] text-(--carbon-black) sm:text-4xl">
+            <h2 className="text-3xl font-black uppercase tracking-[0.08em] text-white sm:text-4xl">
               Select a game mode
             </h2>
           </header>
@@ -290,7 +293,13 @@ export default function Landing({ onWakeUp }: LandingProps) {
                             </p>
                           </div>
                           <div className="absolute inset-0 z-5 pointer-events-none flex items-center justify-center">
-                            <div className="relative h-[45%] w-full max-w-[70%]">
+                            <div
+                              className="relative w-full"
+                              style={{
+                                height: mode.id === "grandma" || mode.id === "engineering-student" ? "58.5%" : "45%",
+                                maxWidth: mode.id === "grandma" || mode.id === "engineering-student" ? "91%" : "70%",
+                              }}
+                            >
                               <Image
                                 src={mode.imageSrc}
                                 alt=""
