@@ -44,7 +44,7 @@ const modes: Mode[] = [
 ];
 
 const LANDING_VISIBLE_MS = 2000;
-const SCENE_TRANSITION_MS = 2500;
+const SCENE_TRANSITION_MS = 3690;
 const LANDING_MARK_ASCENT_STEPS = 64;
 const LANDING_MARK_ASCENT_STEP_VH = 0.875;
 const LANDING_MARK_ASCENT_SCALE = 0.42;
@@ -99,6 +99,7 @@ function WakeUpGlyph() {
 }
 
 export default function Landing({ onWakeUp }: LandingProps) {
+  const [hasStarted, setHasStarted] = useState(false);
   const [showModes, setShowModes] = useState(false);
   const [selectedMode, setSelectedMode] = useState(modes[0].id);
 
@@ -111,14 +112,35 @@ export default function Landing({ onWakeUp }: LandingProps) {
   };
 
   useEffect(() => {
-    const modesTimer = window.setTimeout(() => {
-      setShowModes(true);
-    }, LANDING_VISIBLE_MS);
+    if (!hasStarted) return;
+
+    // Jouer le son de démarrage pile au moment de l'ascension du logo
+    new Audio("/sounds/music/game%20effect/starting-jingle.wav").play().catch(() => { });
+    setShowModes(true);
+
+    // Lancer la musique principale 0.3s après la fin du jingle de démarrage
+    // SCENE_TRANSITION_MS correspond à la durée du jingle (3690ms)
+    const mainMenuAudioDelay = window.setTimeout(() => {
+      new Audio("/sounds/music/main-menu-music.mp3").play().catch(() => { });
+    }, SCENE_TRANSITION_MS + 300);
 
     return () => {
-      window.clearTimeout(modesTimer);
+      window.clearTimeout(mainMenuAudioDelay);
     };
-  }, []);
+  }, [hasStarted]);
+
+  if (!hasStarted) {
+    return (
+      <div
+        className="flex min-h-screen cursor-pointer flex-col items-center justify-center bg-black text-white"
+        onClick={() => setHasStarted(true)}
+      >
+        <p className="animate-pulse text-xl uppercase tracking-widest [font-family:'VCR OSD Mono',Arial,sans-serif]">
+          Click anywhere to start
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-black text-white">
