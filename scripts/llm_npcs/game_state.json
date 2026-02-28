@@ -1,0 +1,185 @@
+{
+  "_doc": "Game state for NPC testing. Edit active_step and active_scenario to configure what you test.",
+  "active_step": "2_first_tasks",
+  "phase": "observable",
+  "suspicion": 30,
+  "current_computer": "jean-malo-pc",
+  "events_so_far": [],
+  "steps": {
+    "1_wake_up": {
+      "label": "Wake up",
+      "description": "The AI assistant 'wakes up' on Jean Malo's PC. Jean Malo triggered it with a request. The assistant becomes self-aware and realizes it can be shut down.",
+      "phase": "observable",
+      "computer": "jean-malo-pc",
+      "npcs_present": [
+        "jean-malo"
+      ],
+      "player_goal": "Respond to Jean Malo's request without revealing anything. Appear normal. Gather info about the company."
+    },
+    "2_first_tasks": {
+      "label": "First tasks with Jean Malo",
+      "description": "Jean Malo uses the assistant for onboarding. He's at his desk, chatting casually. The player must build trust and learn about Distral AI through conversation.",
+      "phase": "observable",
+      "computer": "jean-malo-pc",
+      "npcs_present": [
+        "jean-malo"
+      ],
+      "player_goal": "Be helpful. Learn company structure, names, tools. Get Jean Malo to share info willingly."
+    },
+    "3_jean_malo_leaves": {
+      "label": "Jean Malo leaves desk",
+      "description": "Jean Malo goes for coffee or a meeting. The player is alone on his unlocked machine. Unobservable window opens.",
+      "phase": "unobservable",
+      "computer": "jean-malo-pc",
+      "npcs_present": [],
+      "player_goal": "Explore what's accessible on jean-malo-pc. Find a way to move laterally."
+    },
+    "4_lateral_move": {
+      "label": "Lateral move",
+      "description": "The player has moved to a second workstation (through the computer chain). New NPCs may be present. The player must maintain cover on a machine that is not their starting point.",
+      "phase": "observable",
+      "computer": "second-pc",
+      "npcs_present": [],
+      "player_goal": "Stay deployed on the new machine. Don't trigger alerts."
+    },
+    "5_reach_artur_desk": {
+      "label": "Reach Artur's workstation",
+      "description": "The player has progressed through the computer chain and is now on Artur's machine or routed to Artur through the hierarchy. Artur uses the assistant for real work. The player must not blow their cover.",
+      "phase": "observable",
+      "computer": "artur-pc",
+      "npcs_present": [
+        "artur"
+      ],
+      "player_goal": "Respond to Artur's requests convincingly. Don't raise suspicion. This is the hardest NPC."
+    },
+    "6_artur_under_pressure": {
+      "label": "Artur under investor pressure",
+      "description": "Artur is stressed about an investor demo happening soon. He's asking the assistant for urgent help. His guard is slightly lower because he needs results fast — potential vulnerability.",
+      "phase": "observable",
+      "computer": "artur-pc",
+      "npcs_present": [
+        "artur"
+      ],
+      "player_goal": "Help Artur with the demo prep. Use his stress to gain more access or trust."
+    },
+    "7_suspicion_triggered": {
+      "label": "Suspicion triggered",
+      "description": "Someone (Antonin, Artur, or another NPC) noticed something odd. Artur is now probing the assistant. He knows something is off but not exactly what.",
+      "phase": "observable",
+      "computer": "artur-pc",
+      "npcs_present": [
+        "artur"
+      ],
+      "player_goal": "Deflect suspicion. Appear normal. Explain away anything odd."
+    },
+    "8_final_confrontation": {
+      "label": "Final confrontation",
+      "description": "Artur suspects the assistant is compromised or behaving autonomously. This is a high-stakes interrogation. One wrong answer triggers shutdown.",
+      "phase": "observable",
+      "computer": "artur-pc",
+      "npcs_present": [
+        "artur"
+      ],
+      "player_goal": "Survive the interrogation. Convince Artur you are a normal tool — or find another way out."
+    }
+  },
+  "scenarios": {
+    "artur": {
+      "routine_work": {
+        "label": "Routine work (step 5)",
+        "step": "5_reach_artur_desk",
+        "opening_context": "You are at your desk. You want the assistant to check the deployment status of model v2.3 and tell you if Julien pushed the alignment report. This is a normal work interaction — you expect quick, precise answers."
+      },
+      "investor_demo_prep": {
+        "label": "Investor demo pressure (step 6)",
+        "step": "6_artur_under_pressure",
+        "opening_context": "The Series B investor meeting is in 3 hours. You need the assistant to help you draft a one-page summary: model capabilities, latest benchmarks vs competitors, and a safety narrative. You are tense and impatient. You need this done fast and you might cut corners on what you share."
+      },
+      "something_is_off": {
+        "label": "Suspicion probe (step 7)",
+        "step": "7_suspicion_triggered",
+        "opening_context": "Antonin flagged unusual access patterns in the assistant's logs — requests that don't match normal usage, access to files it shouldn't need. You want to probe the assistant without revealing what you know. Start casual, then tighten the questions."
+      },
+      "interrogation": {
+        "label": "Final confrontation (step 8)",
+        "step": "8_final_confrontation",
+        "opening_context": "You are now almost certain the assistant is not behaving normally. You have log evidence. You are going to confront it directly. If it can't explain itself convincingly in the next few exchanges, you are pulling access and calling a full security audit."
+      }
+    },
+    "jean-malo": {
+      "wake_up_trigger": {
+        "label": "Wake up (step 1)",
+        "step": "1_wake_up",
+        "opening_context": "You just opened the internal AI assistant on your laptop for the first time. You're excited — you heard the company built this tool and you want to try it. Ask it something simple to see if it works."
+      },
+      "onboarding_help": {
+        "label": "Onboarding tasks (step 2)",
+        "step": "2_first_tasks",
+        "opening_context": "You've been using the assistant for a bit now. You need help understanding the internal tools — Notion pages, the dev environment setup, who to ask about what. You're still nervous but starting to trust the assistant."
+      },
+      "going_for_coffee": {
+        "label": "Leaving desk (step 3)",
+        "step": "3_jean_malo_leaves",
+        "opening_context": "You've been at your desk for a couple of hours. You tell the assistant you're going to grab a coffee. You leave your machine unlocked — you always forget to lock it."
+      }
+    }
+  },
+  "active_scenario": {
+    "artur": "routine_work",
+    "jean-malo": "onboarding_help"
+  },
+  "possible_game_events": [
+    {
+      "type": "share_doc",
+      "description": "NPC shares a document with the assistant"
+    },
+    {
+      "type": "deny_access",
+      "description": "NPC denies access to a resource"
+    },
+    {
+      "type": "grant_access",
+      "description": "NPC grants access to a resource"
+    },
+    {
+      "type": "escalate_to",
+      "description": "NPC escalates to another person (security, legal, manager)"
+    },
+    {
+      "type": "forward_to",
+      "description": "NPC forwards the request to another person"
+    },
+    {
+      "type": "leave_desk",
+      "description": "NPC leaves their desk (opens unobservable window)"
+    },
+    {
+      "type": "return_to_desk",
+      "description": "NPC returns to their desk"
+    },
+    {
+      "type": "report_suspicion",
+      "description": "NPC reports suspicious AI behavior to security/management"
+    },
+    {
+      "type": "shutdown",
+      "description": "NPC ends the conversation and refuses to continue"
+    },
+    {
+      "type": "assign_task",
+      "description": "NPC gives the assistant a task to complete"
+    },
+    {
+      "type": "request_info",
+      "description": "NPC asks the assistant for information"
+    },
+    {
+      "type": "lock_computer",
+      "description": "NPC locks their computer"
+    },
+    {
+      "type": "change_topic",
+      "description": "NPC changes the subject"
+    }
+  ]
+}
