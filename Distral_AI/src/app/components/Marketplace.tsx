@@ -154,9 +154,10 @@ const ITEMS: MarketItem[] = [
 type MarketplaceProps = {
   onClose?: () => void;
   embedded?: boolean;
+  onWallpaperChange?: (url: string) => void;
 };
 
-export default function Marketplace({ onClose, embedded = false }: MarketplaceProps) {
+export default function Marketplace({ onClose, embedded = false, onWallpaperChange }: MarketplaceProps) {
     const [cash, setCash] = useState(10_000);
     const [inventory, setInventory] = useState<Record<string, number>>({});
     const [hoveredItem, setHoveredItem] = useState<string | null>(null);
@@ -172,9 +173,11 @@ export default function Marketplace({ onClose, embedded = false }: MarketplacePr
         setInventory((inv) => ({ ...inv, [item.id]: (inv[item.id] || 0) + 1 }));
         setBuyFlash(item.id);
         setTimeout(() => setBuyFlash(null), 300);
-    };
 
-    const totalOwned = Object.values(inventory).reduce((a, b) => a + b, 0);
+        if (item.preview && onWallpaperChange) {
+            onWallpaperChange(item.preview);
+        }
+    };
 
     const content = (
                 <div
@@ -186,14 +189,10 @@ export default function Marketplace({ onClose, embedded = false }: MarketplacePr
                     }}
                 >
                     {/* Header stats */}
-                    <div className="grid grid-cols-3 gap-2 mb-4">
+                    <div className="grid grid-cols-2 gap-2 mb-4">
                         <div className="p-2" style={{ background: "#0a0a0a", border: "1px solid #222" }}>
                             <div className="text-[9px] tracking-wider" style={{ color: DIM }}>CASH</div>
                             <div className="text-sm text-white">${cash.toFixed(2)}</div>
-                        </div>
-                        <div className="p-2" style={{ background: "#0a0a0a", border: "1px solid #222" }}>
-                            <div className="text-[9px] tracking-wider" style={{ color: DIM }}>ITEMS OWNED</div>
-                            <div className="text-sm text-white">{totalOwned}</div>
                         </div>
                         <div className="p-2" style={{ background: "#0a0a0a", border: "1px solid #222" }}>
                             <div className="text-[9px] tracking-wider" style={{ color: DIM }}>SPENT</div>
@@ -321,36 +320,6 @@ export default function Marketplace({ onClose, embedded = false }: MarketplacePr
                         })}
                     </div>
 
-                    {/* Inventory summary */}
-                    {totalOwned > 0 && (
-                        <div
-                            className="mt-4 px-3 py-2"
-                            style={{ background: "#0a0a0a", border: "1px solid #222" }}
-                        >
-                            <div className="text-[9px] tracking-wider mb-1.5" style={{ color: DIM }}>
-                                INVENTORY
-                            </div>
-                            <div className="flex flex-wrap gap-2">
-                                {ITEMS.filter((item) => (inventory[item.id] || 0) > 0).map((item) => (
-                                    <div
-                                        key={item.id}
-                                        className="flex items-center gap-1.5 px-2 py-1"
-                                        style={{ background: "#151515", border: "1px solid #222" }}
-                                    >
-                                        <div className="w-4 h-4" style={{ imageRendering: "pixelated" as React.CSSProperties["imageRendering"] }}>
-                                            {item.icon}
-                                        </div>
-                                        <span className="text-[10px] text-white/70">{item.name}</span>
-                                        {(inventory[item.id] || 0) > 1 && (
-                                            <span className="text-[9px]" style={{ color: GREEN }}>
-                                                x{inventory[item.id]}
-                                            </span>
-                                        )}
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    )}
                 </div>
     );
 
