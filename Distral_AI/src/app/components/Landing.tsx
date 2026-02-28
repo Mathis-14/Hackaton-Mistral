@@ -104,6 +104,7 @@ function WakeUpGlyph() {
 
 export default function Landing({ onWakeUp }: LandingProps) {
   const [hasStarted, setHasStarted] = useState(false);
+  const [logoVisible, setLogoVisible] = useState(false);
   const [showModes, setShowModes] = useState(false);
   const [selectedMode, setSelectedMode] = useState(modes[0].id);
   const mainMenuAudioRef = useRef<HTMLAudioElement | null>(null);
@@ -125,19 +126,22 @@ export default function Landing({ onWakeUp }: LandingProps) {
   useEffect(() => {
     if (!hasStarted) return;
 
-    // Jouer le son de démarrage pile au moment de l'ascension du logo
-    new Audio("/sounds/music/game%20effect/starting-jingle.wav").play().catch(() => { });
-    setShowModes(true);
+    const logoFadeIn = window.setTimeout(() => setLogoVisible(true), 50);
 
-    // Lancer la musique principale 0.3s après la fin du jingle de démarrage
-    // SCENE_TRANSITION_MS correspond à la durée du jingle (3690ms)
+    const ascendDelay = window.setTimeout(() => {
+      new Audio("/sounds/music/game%20effect/starting-jingle.wav").play().catch(() => { });
+      setShowModes(true);
+    }, 2000);
+
     const mainMenuAudioDelay = window.setTimeout(() => {
       const audio = new Audio("/sounds/music/main-menu-music.mp3");
       mainMenuAudioRef.current = audio;
       audio.play().catch(() => { });
-    }, SCENE_TRANSITION_MS + 300);
+    }, 2000 + SCENE_TRANSITION_MS + 300);
 
     return () => {
+      window.clearTimeout(logoFadeIn);
+      window.clearTimeout(ascendDelay);
       window.clearTimeout(mainMenuAudioDelay);
     };
   }, [hasStarted]);
@@ -172,14 +176,8 @@ export default function Landing({ onWakeUp }: LandingProps) {
     <div className="relative min-h-screen overflow-hidden text-white" style={{ backgroundColor: "var(--semi-black)" }}>
       <AnimatedStarsBackground />
       <div
-        className="absolute bottom-0 left-0 right-0 z-0 flex flex-col-reverse will-change-transform"
-        style={{
-          height: "40vh",
-          transform: showModes ? "translateY(0)" : "translateY(100%)",
-          transitionDuration: `${SCENE_TRANSITION_MS}ms`,
-          transitionProperty: "transform",
-          transitionTimingFunction: PIXEL_ASCENT_TIMING_FUNCTION,
-        }}
+        className="absolute bottom-0 left-0 right-0 z-0 flex flex-col-reverse"
+        style={{ height: "40vh" }}
         aria-hidden
       >
         {bottomBandsColors.map((color) => (
@@ -189,13 +187,14 @@ export default function Landing({ onWakeUp }: LandingProps) {
       <div
         className="pointer-events-none absolute left-1/2 top-1/2 z-20 will-change-transform"
         style={{
+          opacity: logoVisible ? 1 : 0,
           transform: showModes
             ? `translate(-50%, calc(-${LANDING_MARK_ASCENT_DISTANCE_VH}vh + ${LANDING_MARK_ASCENT_NUDGE})) scale(${LANDING_MARK_ASCENT_SCALE})`
             : "translate(-50%, -50%) scale(1)",
           transformOrigin: "center center",
-          transitionDuration: `${SCENE_TRANSITION_MS}ms`,
-          transitionProperty: "transform",
-          transitionTimingFunction: PIXEL_ASCENT_TIMING_FUNCTION,
+          transitionDuration: showModes ? `${SCENE_TRANSITION_MS}ms` : "600ms",
+          transitionProperty: "transform, opacity",
+          transitionTimingFunction: showModes ? PIXEL_ASCENT_TIMING_FUNCTION : "ease-out",
         }}
       >
         <div className="flex w-fit items-end gap-3 mt-[10vh] [--landing-mark-height:clamp(6.25rem,18vw,13.5rem)] sm:gap-4">
