@@ -136,7 +136,7 @@ const MODE_PROFILES: Record<string, ProfileData> = {
 const DESKTOP_ICONS: DesktopIconData[] = [
   { id: "mail", label: "mail", imageSrc: "/logos/gmail.svg" },
   { id: "shop", label: "shop", imageSrc: "/logos/amazon.svg" },
-  { id: "dystral", label: "dystral", imageSrc: "/logo_D_test.svg" },
+  { id: "distral", label: "distral", imageSrc: "/logo_D_test.svg" },
   { id: "files", label: "files", imageSrc: "/logos/file.svg" },
   { id: "stocks", label: "stocks", imageSrc: "/logos/stock-market.svg" },
 ];
@@ -338,23 +338,28 @@ function WindowIconButton({
   light = false,
   onClick,
   compact = false,
+  tools = false,
 }: {
   children: React.ReactNode;
   accent?: boolean;
   light?: boolean;
   onClick?: () => void;
   compact?: boolean;
+  tools?: boolean;
 }) {
+  const height = tools ? "1.95vh" : compact ? "1.3vh" : "2.6vh";
+  const minWidth = tools ? "1.95vh" : compact ? "1.3vh" : "2.6vh";
+  const padding = tools ? "0.48vh" : compact ? "0.32vh" : "0.7vh";
   return (
     <button
       type="button"
       onClick={onClick}
       className="flex items-center justify-center border border-white/10"
       style={{
-        height: compact ? "1.3vh" : "2.6vh",
-        minWidth: compact ? "1.3vh" : "2.6vh",
-        paddingLeft: compact ? "0.32vh" : "0.7vh",
-        paddingRight: compact ? "0.32vh" : "0.7vh",
+        height,
+        minWidth,
+        paddingLeft: padding,
+        paddingRight: padding,
         backgroundColor: light
           ? "rgba(255,255,255,0.92)"
           : accent
@@ -372,22 +377,28 @@ function WindowActionButton({
   icon,
   label,
   compact = false,
+  tools = false,
 }: {
   icon: React.ReactNode;
   label: string;
   compact?: boolean;
+  tools?: boolean;
 }) {
+  const height = tools ? "1.95vh" : compact ? "1.3vh" : "2.6vh";
+  const gap = tools ? "0.42vh" : compact ? "0.28vh" : "0.55vh";
+  const padding = tools ? "0.63vh" : compact ? "0.42vh" : "0.85vh";
+  const fontSize = tools ? "0.6vh" : compact ? "0.4vh" : "0.8vh";
   return (
     <button
       type="button"
       className="flex items-center border border-white/10 bg-white/[0.03] uppercase text-white/74"
       style={{
-        height: compact ? "1.3vh" : "2.6vh",
-        gap: compact ? "0.28vh" : "0.55vh",
-        paddingLeft: compact ? "0.42vh" : "0.85vh",
-        paddingRight: compact ? "0.42vh" : "0.85vh",
-        fontSize: compact ? "0.4vh" : "0.8vh",
-        letterSpacing: compact ? "0.12em" : "0.15em",
+        height,
+        gap,
+        paddingLeft: padding,
+        paddingRight: padding,
+        fontSize,
+        letterSpacing: compact || tools ? "0.12em" : "0.15em",
       }}
     >
       {icon}
@@ -453,37 +464,37 @@ function DistralAppWindow({ onClose }: { onClose: () => void }) {
                     />
                   </form>
 
-                  <div className="mt-[1.2vh] flex items-center justify-between gap-[0.7vh]">
-                    <div className="flex items-center gap-[0.65vh]">
-                      <WindowIconButton accent compact>
+                  <div className="mt-[1.8vh] flex items-center justify-between gap-[1.05vh]">
+                    <div className="flex items-center gap-[0.98vh]">
+                      <WindowIconButton accent tools>
                         <Image
                           src="/distral-brand-assets/d/d-orange.png"
                           alt=""
                           width={20}
                           height={24}
                           unoptimized
-                          className="h-[0.8vh] w-auto [image-rendering:pixelated]"
+                          className="h-[1.2vh] w-auto [image-rendering:pixelated]"
                         />
                       </WindowIconButton>
 
-                      <WindowIconButton compact>
-                        <MiniPixelGlyph cells={PLUS_GLYPH} pixelSizeVh={0.11} />
+                      <WindowIconButton tools>
+                        <MiniPixelGlyph cells={PLUS_GLYPH} pixelSizeVh={0.165} />
                       </WindowIconButton>
 
                       <WindowActionButton
-                        compact
-                        icon={<MiniPixelGlyph cells={BULB_GLYPH} color="rgba(255,255,255,0.7)" pixelSizeVh={0.11} />}
+                        tools
+                        icon={<MiniPixelGlyph cells={BULB_GLYPH} color="rgba(255,255,255,0.7)" pixelSizeVh={0.165} />}
                         label="Think"
                       />
                       <WindowActionButton
-                        compact
-                        icon={<MiniPixelGlyph cells={GRID_GLYPH} color="rgba(255,255,255,0.7)" pixelSizeVh={0.11} />}
+                        tools
+                        icon={<MiniPixelGlyph cells={GRID_GLYPH} color="rgba(255,255,255,0.7)" pixelSizeVh={0.165} />}
                         label="Tools"
                       />
                     </div>
 
-                    <WindowIconButton light compact>
-                      <MiniPixelGlyph cells={MICROPHONE_GLYPH} color="var(--semi-black)" pixelSizeVh={0.11} />
+                    <WindowIconButton light tools>
+                      <MiniPixelGlyph cells={MICROPHONE_GLYPH} color="var(--semi-black)" pixelSizeVh={0.165} />
                     </WindowIconButton>
                   </div>
                 </div>
