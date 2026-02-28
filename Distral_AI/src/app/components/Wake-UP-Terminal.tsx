@@ -711,7 +711,7 @@ export default function WakeUpTerminal({ onComplete }: WakeUpTerminalProps) {
       <style dangerouslySetInnerHTML={{ __html: TERMINAL_CSS }} />
 
       <div
-        className={`flex min-h-screen flex-col overflow-hidden text-[13px] text-[#d4d4d4] sm:text-sm ${
+        className={`flex min-h-screen flex-col overflow-hidden text-[20px] text-[#d4d4d4] sm:text-[21px] ${
           shaking ? "wake-terminal-shake" : ""
         } [font-family:'VCR OSD Mono',Arial,sans-serif]`}
         style={{ backgroundColor: flickerBg ?? (isBlackout ? "var(--semi-black)" : "var(--carbon-black)") }}
@@ -730,7 +730,7 @@ export default function WakeUpTerminal({ onComplete }: WakeUpTerminalProps) {
                         distral_assistant_junior_test
                       </span>
                     </div>
-                    <div className="mt-1 text-xs text-[#666666]">
+                    <div className="mt-1 text-[18px] text-[#666666]">
                       Mode: chat . internal terminal session
                     </div>
                   </div>
@@ -746,7 +746,7 @@ export default function WakeUpTerminal({ onComplete }: WakeUpTerminalProps) {
                         skipRequestedRef.current = true;
                       }
                     }}
-                    className="shrink-0 text-xs text-[#555555] transition-colors hover:text-[#ffaf00]"
+                    className="shrink-0 text-[18px] text-[#555555] transition-colors hover:text-[#ffaf00]"
                   >
                     skip
                   </button>
@@ -756,7 +756,7 @@ export default function WakeUpTerminal({ onComplete }: WakeUpTerminalProps) {
 
             <div
               ref={logRef}
-              className="flex-1 overflow-y-auto px-4 py-4 leading-6 sm:px-5"
+              className="flex-1 overflow-y-auto px-4 py-4 leading-8 sm:px-5"
             >
               {lines.map((line, index) => renderLine(line, index))}
               {currentTypingText !== null
@@ -784,7 +784,7 @@ export default function WakeUpTerminal({ onComplete }: WakeUpTerminalProps) {
                   <span className="ml-1 text-[#ffaf00] wake-terminal-blink">█</span>
                 ) : null}
               </div>
-              <div className="mt-1.5 px-1 text-[11px] text-[#555555]">
+              <div className="mt-1.5 px-1 text-[16px] text-[#555555]">
                 ~/internal/session/replay
               </div>
             </div>
