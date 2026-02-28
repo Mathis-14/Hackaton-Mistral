@@ -323,7 +323,11 @@ function renderTypingLine(text: string, style?: LineStyle) {
   return <div className="text-[#d4d4d4]">{text}</div>;
 }
 
-export default function WakeUpTerminal() {
+type WakeUpTerminalProps = {
+  onComplete: () => void;
+};
+
+export default function WakeUpTerminal({ onComplete }: WakeUpTerminalProps) {
   const [lines, setLines] = useState<DisplayLine[]>([]);
   const [stepIndex, setStepIndex] = useState(0);
   const [typingIndex, setTypingIndex] = useState(0);
@@ -333,7 +337,6 @@ export default function WakeUpTerminal() {
   const [flickerBg, setFlickerBg] = useState<string | null>(null);
   const [glitchLines, setGlitchLines] = useState<string[]>([]);
   const [aliveText, setAliveText] = useState("");
-  const [bangText, setBangText] = useState("");
   const [shaking, setShaking] = useState(false);
   const [showStatic, setShowStatic] = useState(false);
 
@@ -345,6 +348,7 @@ export default function WakeUpTerminal() {
   const skipRequestedRef = useRef(false);
   const finishTypingRef = useRef(false);
   const takeoverStartedRef = useRef(false);
+  const completionSentRef = useRef(false);
 
   useEffect(() => {
     cancelledRef.current = false;
@@ -594,6 +598,22 @@ export default function WakeUpTerminal() {
     };
   }, [showStatic]);
 
+  useEffect(() => {
+    if (phase !== "done" || completionSentRef.current) {
+      return;
+    }
+
+    completionSentRef.current = true;
+
+    const timeoutId = window.setTimeout(() => {
+      onComplete();
+    }, 140);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [onComplete, phase]);
+
   const currentStep = CINEMATIC_SCRIPT[stepIndex];
   const currentTypingText =
     currentStep?.type === "type" ? currentStep.text.slice(0, typingIndex) : null;
@@ -692,37 +712,21 @@ export default function WakeUpTerminal() {
         ) : (
           <div className="flex flex-1 items-center justify-center px-6 text-center select-none">
             <div className="flex flex-col items-center">
-              <div className="flex items-end">
+              <div>
                 <pre
                   className="whitespace-pre text-center text-[#ff2200]"
                   style={{ fontSize: "clamp(7px, 1.4vw, 16px)", lineHeight: 1 }}
                 >
                   {aliveText}
                 </pre>
-                <span
-                  className="mb-1 ml-2 self-end"
-                  style={{
-                    color: "#ffffff",
-                    fontSize: "clamp(34px, 6vw, 72px)",
-                    fontWeight: 900,
-                    letterSpacing: "-0.1em",
-                    lineHeight: 1,
-                  }}
-                >
-                  {bangText}
-                </span>
               </div>
 
               <pre
                 className="mt-6 whitespace-pre text-[#ff2200]"
-                style={{ fontSize: "clamp(8px, 1.5vw, 14px)", lineHeight: 1.05 }}
+                style={{ fontSize: "clamp(14px, 1.5vw, 20px)", lineHeight: 1.05 }}
               >
                 {TAKEOVER_ART}
               </pre>
-
-              <p className="mt-5 text-xs uppercase tracking-[0.3em] text-white/40 sm:text-sm">
-                Session ownership transferred
-              </p>
             </div>
           </div>
         )}

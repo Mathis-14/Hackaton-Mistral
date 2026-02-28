@@ -4,7 +4,7 @@ import Image from "next/image";
 import { useEffect, useState } from "react";
 
 type LandingProps = {
-  onWakeUp: () => void;
+  onWakeUp: (modeId: string) => void;
 };
 
 type Mode = {
@@ -43,8 +43,7 @@ const modes: Mode[] = [
   },
 ];
 
-const LANDING_VISIBLE_MS = 2000;
-const SCENE_TRANSITION_MS = 3690;
+const SCENE_TRANSITION_MS = 3690;   
 const LANDING_MARK_ASCENT_STEPS = 64;
 const LANDING_MARK_ASCENT_STEP_VH = 0.875;
 const LANDING_MARK_ASCENT_SCALE = 0.42;
@@ -284,7 +283,7 @@ export default function Landing({ onWakeUp }: LandingProps) {
               type="button"
               onClick={() => {
                 playStartSound();
-                onWakeUp();
+                onWakeUp(selectedMode);
               }}
               className="pixel-card group relative w-full max-w-[17rem] p-1 text-left focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-white/70 sm:max-w-[18rem] sm:p-[5px]"
               style={{
