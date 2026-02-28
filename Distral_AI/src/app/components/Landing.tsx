@@ -78,7 +78,7 @@ function WakeUpGlyph() {
     <svg
       aria-hidden="true"
       viewBox="0 0 5 9"
-      className="h-[1.45rem] w-[1.25rem] text-white/90 sm:h-[1.35rem] sm:w-[1.15rem]"
+      className="h-[1.45rem] w-5 text-white/90 sm:h-[1.35rem] sm:w-[1.15rem]"
       fill="currentColor"
       xmlns="http://www.w3.org/2000/svg"
       shapeRendering="crispEdges"
@@ -163,13 +163,13 @@ export default function Landing({ onWakeUp }: LandingProps) {
             width={320}
             height={400}
             priority
-            className="h-[var(--landing-mark-height)] w-auto"
+            className="h-(--landing-mark-height) w-auto"
           />
-          <div className="flex h-[var(--landing-mark-height)] flex-col justify-between">
-            <h1 className="text-left text-[calc(var(--landing-mark-height)*0.55)] leading-[0.76] font-black tracking-[0.1em] text-white [font-family:'VCR OSD Mono',Arial,sans-serif]">
+          <div className="flex h-(--landing-mark-height) flex-col justify-between">
+            <h1 className="text-left text-[calc(var(--landing-mark-height)*0.55)] leading-[0.76] font-black tracking-widest text-white [font-family:'VCR OSD Mono',Arial,sans-serif]">
               DISTRAL
             </h1>
-            <p className="text-left text-[calc(var(--landing-mark-height)*0.55)] leading-[0.76] font-black tracking-[0.1em] text-white [font-family:'VCR OSD Mono',Arial,sans-serif]">
+            <p className="text-left text-[calc(var(--landing-mark-height)*0.55)] leading-[0.76] font-black tracking-widest text-white [font-family:'VCR OSD Mono',Arial,sans-serif]">
               AI_
             </p>
           </div>
@@ -218,7 +218,7 @@ export default function Landing({ onWakeUp }: LandingProps) {
                     setSelectedMode(mode.id);
                     playClickSound();
                   }}
-                  className="pixel-card group relative h-full p-1 text-left focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-white/70 sm:p-[5px]"
+                  className="pixel-card group relative h-full p-1 text-left focus:outline-none focus-visible:outline-2 focus-visible:outline-white/70 sm:p-[5px]"
                   style={{
                     opacity: showModes ? 1 : 0,
                     transform: showModes ? "translateY(0)" : `translateY(${GAME_MODE_CARD_ENTRY_Y})`,
@@ -235,9 +235,9 @@ export default function Landing({ onWakeUp }: LandingProps) {
                   }}
                 >
                   <div
-                    className={`pixel-card__shell relative h-full min-h-[20rem] overflow-hidden p-5 sm:p-6 ${isSelected
-                      ? "bg-white/[0.055]"
-                      : "bg-[var(--carbon-black)] transition-colors duration-150 ease-[steps(3,end)] group-hover:bg-[#27272a]"
+                    className={`pixel-card__shell relative h-full min-h-80 overflow-hidden p-5 sm:p-6 ${isSelected
+                      ? "bg-white/5.5"
+                      : "bg-(--carbon-black) transition-colors duration-150 ease-[steps(3,end)] group-hover:bg-[#27272a]"
                       }`}
                   >
                     <div className="relative z-10 flex h-full flex-col">
@@ -276,14 +276,14 @@ export default function Landing({ onWakeUp }: LandingProps) {
             })}
           </div>
 
-          <div className="mt-7 flex min-h-[5.5rem] items-start justify-center">
+          <div className="mt-7 flex min-h-22 items-start justify-center">
             <button
               type="button"
               onClick={() => {
                 playStartSound();
                 onWakeUp(selectedMode);
               }}
-              className="pixel-card group relative w-full max-w-[17rem] p-1 text-left focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-white/70 sm:max-w-[18rem] sm:p-[5px]"
+              className="pixel-card group relative w-full max-w-68 p-1 text-left focus:outline-none focus-visible:outline-2 focus-visible:outline-white/70 sm:max-w-[18rem] sm:p-[5px]"
               style={{
                 opacity: showModes ? 1 : 0,
                 transform: showModes ? "translateY(0)" : `translateY(${GAME_MODE_WAKE_UP_ENTRY_Y})`,
@@ -297,7 +297,7 @@ export default function Landing({ onWakeUp }: LandingProps) {
                 filter: "drop-shadow(8px 8px 0 rgba(0, 0, 0, 0.72))",
               }}
             >
-              <div className="pixel-card__shell relative overflow-hidden bg-[var(--carbon-black)] px-5 py-4 sm:px-6">
+              <div className="pixel-card__shell relative overflow-hidden bg-(--carbon-black) px-5 py-4 sm:px-6">
                 <div className="relative z-10 flex items-center justify-center gap-4 text-white">
                   <span className="text-2xl font-black uppercase tracking-[0.18em]">
                     Wake Up

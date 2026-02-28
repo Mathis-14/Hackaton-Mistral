@@ -698,7 +698,7 @@ export default function WakeUpTerminal({ onComplete }: WakeUpTerminalProps) {
             </div>
 
             <div className="shrink-0 border-t border-white/10 px-4 py-3 sm:px-5">
-              <div className="flex items-center rounded border border-white/15 bg-[var(--carbon-black)]/70 px-3 py-2">
+              <div className="flex items-center rounded border border-white/15 bg-(--carbon-black)/70 px-3 py-2">
                 <span className="text-[#ffaf00]">&gt;</span>
                 {showCursor && phase === "idle" ? (
                   <span className="ml-1 text-[#ffaf00] wake-terminal-blink">█</span>
