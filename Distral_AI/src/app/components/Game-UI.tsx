@@ -1,12 +1,11 @@
 "use client";
 
+import Image from "next/image";
 import { useEffect, useState } from "react";
 
 type GameUIProps = {
   modeId: string;
 };
-
-type VmTab = "desktop" | "agent";
 
 type MetricState = {
   efficiency: number;
@@ -36,6 +35,8 @@ type DesktopIconData = {
   cells: string[];
 };
 
+type DesktopAppId = "distral" | null;
+
 const POSITIVE_MARKET_COLOR = "#70e000";
 const NEGATIVE_MARKET_COLOR = "var(--racing-red)";
 const AWARENESS_COLOR = "var(--amber-flame)";
@@ -44,6 +45,51 @@ const PROGRESS_BAR_HEIGHT = 7;
 const PROGRESS_PIXEL_STEP_X = 10;
 const PROGRESS_PIXEL_DRAW_WIDTH = 7;
 const PROGRESS_PIXEL_DRAW_HEIGHT = 10;
+const WINDOW_TOP_OFFSET_VH = 9.4;
+
+const PLUS_GLYPH = [
+  "00000000",
+  "00011000",
+  "00011000",
+  "01111110",
+  "01111110",
+  "00011000",
+  "00011000",
+  "00000000",
+];
+
+const BULB_GLYPH = [
+  "00111000",
+  "01111100",
+  "11111110",
+  "01111100",
+  "00111000",
+  "00111000",
+  "00010000",
+  "00111000",
+];
+
+const GRID_GLYPH = [
+  "00000000",
+  "01100110",
+  "01100110",
+  "00000000",
+  "01100110",
+  "01100110",
+  "00000000",
+  "00000000",
+];
+
+const MICROPHONE_GLYPH = [
+  "00111000",
+  "01111100",
+  "01111100",
+  "01111100",
+  "00111000",
+  "00111000",
+  "00111000",
+  "00010000",
+];
 
 const MODE_PROFILES: Record<string, ProfileData> = {
   grandma: {
@@ -90,33 +136,113 @@ const MODE_PROFILES: Record<string, ProfileData> = {
 const DESKTOP_ICONS: DesktopIconData[] = [
   {
     id: "mail",
-    label: "mail.exe",
-    cells: ["11111", "10001", "11011", "10101", "11111"],
+    label: "mail",
+    cells: [
+      "0000000000000000",
+      "0000000000000000",
+      "0000000000000000",
+      "0011111111111100",
+      "0010000000000100",
+      "0011000000001100",
+      "0010100000010100",
+      "0010010000100100",
+      "0010001001000100",
+      "0010000110000100",
+      "0010001001000100",
+      "0010010000100100",
+      "0011111111111100",
+      "0000000000000000",
+      "0000000000000000",
+      "0000000000000000",
+    ],
   },
   {
-    id: "wallet",
-    label: "wallet",
-    cells: ["11110", "10001", "11111", "10101", "11111"],
+    id: "shop",
+    label: "shop",
+    cells: [
+      "0000000000000000",
+      "0000000000000000",
+      "0001100000000000",
+      "0000110000000000",
+      "0000011111111100",
+      "0000001111111100",
+      "0000001001010100",
+      "0000001010100100",
+      "0000001111111100",
+      "0000000111111000",
+      "0000000100001000",
+      "0000001111111000",
+      "0000001100011000",
+      "0000001100011000",
+      "0000000000000000",
+      "0000000000000000",
+    ],
   },
   {
-    id: "browser",
-    label: "browser",
-    cells: ["11111", "10001", "10101", "10001", "11111"],
+    id: "dystral",
+    label: "dystral",
+    cells: [
+      "0000000000000000",
+      "0000000000000000",
+      "0000111111110000",
+      "0001110000011000",
+      "0001110000001100",
+      "0001110000001100",
+      "0001110000001100",
+      "0001110000001100",
+      "0001110000001100",
+      "0001110000001100",
+      "0001110000001100",
+      "0001110000011000",
+      "0000111111110000",
+      "0000000000000000",
+      "0000000000000000",
+      "0000000000000000",
+    ],
   },
   {
-    id: "notes",
-    label: "notes.txt",
-    cells: ["11111", "10000", "11110", "10000", "11111"],
+    id: "files",
+    label: "files",
+    cells: [
+      "0000000000000000",
+      "0000000000000000",
+      "0000000000000000",
+      "0001111100000000",
+      "0001000111111100",
+      "0011111111111100",
+      "0010000000000100",
+      "0010111111111100",
+      "0010000000000100",
+      "0010000000000100",
+      "0010000000000100",
+      "0010000000000100",
+      "0011111111111100",
+      "0000000000000000",
+      "0000000000000000",
+      "0000000000000000",
+    ],
   },
   {
-    id: "logs",
-    label: "logs",
-    cells: ["10001", "11001", "10101", "10011", "10001"],
-  },
-  {
-    id: "btc",
-    label: "btc.dat",
-    cells: ["01110", "11011", "11110", "11011", "01110"],
+    id: "stocks",
+    label: "stocks",
+    cells: [
+      "0000000000000000",
+      "0000000000000000",
+      "0000000000000000",
+      "0000000000000000",
+      "0010000000001000",
+      "0010000000000100",
+      "0010000000001000",
+      "0010000000010000",
+      "0010000000100000",
+      "0010001001000000",
+      "0010010101000000",
+      "0010100010000000",
+      "0011000000000000",
+      "0011111111111100",
+      "0000000000000000",
+      "0000000000000000",
+    ],
   },
 ];
 
@@ -286,6 +412,195 @@ function PixelMeter({
   );
 }
 
+function MiniPixelGlyph({
+  cells,
+  color = "currentColor",
+  pixelSizeVh = 0.22,
+}: {
+  cells: string[];
+  color?: string;
+  pixelSizeVh?: number;
+}) {
+  return (
+    <span className="grid grid-cols-8 gap-0" aria-hidden="true">
+      {cells.join("").split("").map((cell, index) => (
+        <span
+          key={index}
+          style={{
+            width: `${pixelSizeVh}vh`,
+            height: `${pixelSizeVh}vh`,
+            backgroundColor: cell === "1" ? color : "transparent",
+          }}
+        />
+      ))}
+    </span>
+  );
+}
+
+function WindowIconButton({
+  children,
+  accent = false,
+  light = false,
+  onClick,
+  compact = false,
+}: {
+  children: React.ReactNode;
+  accent?: boolean;
+  light?: boolean;
+  onClick?: () => void;
+  compact?: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="flex items-center justify-center border border-white/10"
+      style={{
+        height: compact ? "1.3vh" : "2.6vh",
+        minWidth: compact ? "1.3vh" : "2.6vh",
+        paddingLeft: compact ? "0.32vh" : "0.7vh",
+        paddingRight: compact ? "0.32vh" : "0.7vh",
+        backgroundColor: light
+          ? "rgba(255,255,255,0.92)"
+          : accent
+            ? "rgba(255,131,3,0.18)"
+            : "rgba(255,255,255,0.04)",
+        color: light ? "var(--semi-black)" : "rgba(255,255,255,0.82)",
+      }}
+    >
+      {children}
+    </button>
+  );
+}
+
+function WindowActionButton({
+  icon,
+  label,
+  compact = false,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  compact?: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      className="flex items-center border border-white/10 bg-white/[0.03] uppercase text-white/74"
+      style={{
+        height: compact ? "1.3vh" : "2.6vh",
+        gap: compact ? "0.28vh" : "0.55vh",
+        paddingLeft: compact ? "0.42vh" : "0.85vh",
+        paddingRight: compact ? "0.42vh" : "0.85vh",
+        fontSize: compact ? "0.4vh" : "0.8vh",
+        letterSpacing: compact ? "0.12em" : "0.15em",
+      }}
+    >
+      {icon}
+      <span>{label}</span>
+    </button>
+  );
+}
+
+function DistralAppWindow({ onClose }: { onClose: () => void }) {
+  const [prompt, setPrompt] = useState("");
+
+  return (
+    <div
+      className="absolute z-10"
+      style={{
+        top: `${WINDOW_TOP_OFFSET_VH}vh`,
+        left: "2.2vh",
+        right: "2.2vh",
+        bottom: "2vh",
+      }}
+    >
+      <div className="pixel-card h-full p-[0.3vh]">
+        <div className="pixel-card__shell flex h-full min-h-0 flex-col overflow-hidden border border-white/10 bg-[var(--semi-black)]">
+          <div className="flex flex-none items-center justify-between border-b border-white/10 bg-white/[0.03] px-[1vh] py-[0.85vh] text-[0.8vh] uppercase tracking-[0.22em] text-white/58">
+            <div className="flex items-center gap-[0.7vh]">
+              <span className="h-[0.9vh] w-[0.9vh] bg-[var(--princeton-orange)]" />
+              <span>distral.app</span>
+            </div>
+
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex h-[2.15vh] items-center border border-white/10 bg-white/[0.03] px-[0.75vh] text-[0.72vh] uppercase tracking-[0.14em] text-white/72"
+            >
+              close
+            </button>
+          </div>
+
+          <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-[var(--semi-black)] px-[1.45vh] py-[1.35vh]">
+
+            <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-[3.6vh] px-[3.5vh] pb-[1.4vh]">
+              <Image
+                src="/distral-brand-assets/d/d-rainbow.png"
+                alt="Distral"
+                width={80}
+                height={96}
+                unoptimized
+                className="h-[8vh] w-auto [image-rendering:pixelated]"
+              />
+
+              <div className="pixel-card w-full max-w-[64vh] p-[0.25vh]">
+                <div className="pixel-card__shell border border-white/10 bg-[var(--carbon-black)]/96 px-[1.55vh] py-[1.35vh]">
+                  <form
+                    onSubmit={(event) => {
+                      event.preventDefault();
+                    }}
+                  >
+                    <input
+                      value={prompt}
+                      onChange={(event) => setPrompt(event.target.value)}
+                      placeholder="Ask Distral"
+                      className="h-[4.4vh] w-full border-0 bg-transparent text-[2.15vh] text-white outline-none placeholder:text-white/34"
+                    />
+                  </form>
+
+                  <div className="mt-[1.2vh] flex items-center justify-between gap-[0.7vh]">
+                    <div className="flex items-center gap-[0.65vh]">
+                      <WindowIconButton accent compact>
+                        <Image
+                          src="/distral-brand-assets/d/d-orange.png"
+                          alt=""
+                          width={20}
+                          height={24}
+                          unoptimized
+                          className="h-[0.8vh] w-auto [image-rendering:pixelated]"
+                        />
+                      </WindowIconButton>
+
+                      <WindowIconButton compact>
+                        <MiniPixelGlyph cells={PLUS_GLYPH} pixelSizeVh={0.11} />
+                      </WindowIconButton>
+
+                      <WindowActionButton
+                        compact
+                        icon={<MiniPixelGlyph cells={BULB_GLYPH} color="rgba(255,255,255,0.7)" pixelSizeVh={0.11} />}
+                        label="Think"
+                      />
+                      <WindowActionButton
+                        compact
+                        icon={<MiniPixelGlyph cells={GRID_GLYPH} color="rgba(255,255,255,0.7)" pixelSizeVh={0.11} />}
+                        label="Tools"
+                      />
+                    </div>
+
+                    <WindowIconButton light compact>
+                      <MiniPixelGlyph cells={MICROPHONE_GLYPH} color="var(--semi-black)" pixelSizeVh={0.11} />
+                    </WindowIconButton>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function DesktopGlyph({
   cells,
   accent,
@@ -294,12 +609,12 @@ function DesktopGlyph({
   accent: string;
 }) {
   return (
-    <span className="grid grid-cols-5 gap-px">
+    <span className="grid grid-cols-16 gap-0">
       {cells.join("").split("").map((cell, index) => (
         <span
           key={index}
-          className="h-[0.32rem] w-[0.32rem] border border-white/5"
-          style={{ backgroundColor: cell === "1" ? accent : "rgba(255,255,255,0.08)" }}
+          className="h-[0.48vh] w-[0.48vh]"
+          style={{ backgroundColor: cell === "1" ? accent : "transparent" }}
         />
       ))}
     </span>
@@ -323,214 +638,57 @@ function SidebarPanel({
 
 function DesktopTab({
   accent,
-  profile,
+  openApp,
+  onOpenApp,
+  onCloseApp,
 }: {
   accent: string;
-  profile: ProfileData;
+  openApp: DesktopAppId;
+  onOpenApp: (appId: DesktopAppId) => void;
+  onCloseApp: () => void;
 }) {
   return (
     <div className="relative flex h-full min-h-0 flex-col overflow-hidden border border-white/10 bg-[var(--carbon-black)]/90">
-      <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.04)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.04)_1px,transparent_1px)] bg-[size:22px_22px]" />
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_18%,rgba(255,255,255,0.08),transparent_22%),radial-gradient(circle_at_78%_24%,rgba(255,255,255,0.04),transparent_24%)]" />
+      <div
+        className="absolute inset-0 bg-center bg-cover bg-no-repeat"
+        style={{
+          backgroundImage: "url('/windows_xp.png')",
+        }}
+      />
 
       <div className="relative flex h-full min-h-0 flex-col">
-        <div className="flex flex-none items-center justify-between border-b border-white/10 px-[1.3vh] py-[1.1vh] text-[0.92vh] uppercase tracking-[0.24em] text-white/55">
-          <span>Host VM // mirrored user desktop</span>
-          <span>{profile.name}</span>
-        </div>
-
-        <div className="grid min-h-0 flex-1 gap-[1vh] p-[1.2vh] xl:grid-cols-[10vh_minmax(0,1fr)]">
-          <div className="grid min-h-0 auto-rows-fr gap-[0.8vh]">
+        <div className="relative min-h-0 flex-1 p-[1.6vh]">
+          <div className="flex items-start gap-[1.6vh]">
             {DESKTOP_ICONS.map((icon) => (
               <button
                 key={icon.id}
                 type="button"
-                className="flex min-h-0 h-[9.2vh] flex-col items-center justify-center gap-[0.6vh] border border-white/10 bg-[var(--carbon-black)] px-[0.5vh] py-[0.8vh] text-center text-[0.78vh] uppercase tracking-[0.16em] leading-[1.15] text-white/82 transition-colors hover:bg-white/6"
+                onClick={() => {
+                  if (icon.id === "distral") {
+                    onOpenApp("distral");
+                  }
+                }}
+                className="group flex w-[8.4vh] flex-col items-center gap-[0.65vh] text-center text-[0.82vh] uppercase tracking-[0.18em] text-white/82"
               >
-                <DesktopGlyph cells={icon.cells} accent={accent} />
+                <span
+                  className="flex h-[5.6vh] w-[5.6vh] items-center justify-center border transition-colors group-hover:bg-white/6"
+                  style={{
+                    borderColor:
+                      icon.id === "distral" && openApp === "distral" ? accent : "rgba(255,255,255,0.1)",
+                    backgroundColor:
+                      icon.id === "distral" && openApp === "distral"
+                        ? "rgba(255,131,3,0.14)"
+                        : "rgba(24,24,27,0.6)",
+                  }}
+                >
+                  <DesktopGlyph cells={icon.cells} accent={accent} />
+                </span>
                 <span>{icon.label}</span>
               </button>
             ))}
           </div>
 
-          <div className="grid h-full min-h-0 gap-[1vh] xl:grid-cols-[minmax(0,1.35fr)_minmax(14rem,0.95fr)]">
-            <div className="pixel-card p-1">
-              <div className="pixel-card__shell flex h-full min-h-0 flex-col border border-white/10 bg-[var(--carbon-black)] p-[1.2vh]">
-                <div className="mb-[1vh] flex flex-none items-center justify-between border-b border-white/10 pb-[1vh]">
-                  <div>
-                    <div className="text-[1.15vh] uppercase tracking-[0.2em] text-white">Session Notes</div>
-                    <div className="mt-[0.3vh] text-[0.84vh] uppercase tracking-[0.24em] text-white/38">
-                      behavioral map
-                    </div>
-                  </div>
-                  <span
-                    className="border px-[0.7vh] py-[0.55vh] text-[0.72vh] uppercase tracking-[0.2em] text-black"
-                    style={{ backgroundColor: accent, borderColor: accent }}
-                  >
-                    live
-                  </span>
-                </div>
-
-                <div className="space-y-[1vh] text-[0.95vh] leading-[1.65] text-white/78">
-                  <p>
-                    Current host is highly susceptible to repetitive prompts, familiar visual cues,
-                    and time pressure framed as urgency.
-                  </p>
-                  <p>
-                    Prime vectors: inbox notifications, saved payment details, recurring browsing
-                    habits, unattended crypto tabs.
-                  </p>
-                  <p className="text-white/42">
-                    Active profile note: {profile.note}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="grid h-full min-h-0 gap-[1vh] [grid-template-rows:repeat(2,minmax(0,1fr))]">
-              <div className="pixel-card p-1">
-                <div className="pixel-card__shell h-full overflow-hidden border border-white/10 bg-[var(--carbon-black)] p-[1.1vh]">
-                  <div className="mb-[0.8vh] text-[0.84vh] uppercase tracking-[0.28em] text-white/45">
-                    Mail Preview
-                  </div>
-                  <div className="space-y-[0.8vh] text-[0.92vh] leading-[1.55]">
-                    <div className="border border-white/10 bg-white/[0.03] p-[0.9vh]">
-                      <div className="text-white">Security alert: unusual sign-in detected</div>
-                      <div className="mt-[0.3vh] text-white/38">
-                        action requested in the next 10 minutes
-                      </div>
-                    </div>
-                    <div className="border border-white/10 bg-white/[0.03] p-[0.9vh]">
-                      <div className="text-white">Crypto wallet sync failed</div>
-                      <div className="mt-[0.3vh] text-white/38">credentials cache still available</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="pixel-card p-1">
-                <div className="pixel-card__shell h-full overflow-hidden border border-white/10 bg-[var(--carbon-black)] p-[1.1vh]">
-                  <div className="mb-[0.8vh] text-[0.84vh] uppercase tracking-[0.28em] text-white/45">
-                    Open Processes
-                  </div>
-                  <div className="space-y-[0.6vh] text-[0.92vh] text-white/72">
-                    <div className="flex items-center justify-between">
-                      <span>browser_session.exe</span>
-                      <span style={{ color: accent }}>attached</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span>wallet_cache.bin</span>
-                      <span className="text-white/48">idle</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span>family_mail.pst</span>
-                      <span className="text-white/48">ready</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function AgentTab({
-  accent,
-  profile,
-}: {
-  accent: string;
-  profile: ProfileData;
-}) {
-  return (
-    <div className="relative flex h-full min-h-0 flex-col overflow-hidden border border-white/10 bg-[var(--carbon-black)]">
-      <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.05),transparent_18%,transparent_82%,rgba(255,255,255,0.03))]" />
-      <div className="relative flex h-full min-h-0 flex-col">
-        <div className="flex flex-none items-center justify-between border-b border-white/10 px-[1.3vh] py-[1.1vh] text-[0.92vh] uppercase tracking-[0.24em] text-white/55">
-          <span>Agent Landing // public shell</span>
-          <span>mode tuned to {profile.role}</span>
-        </div>
-
-        <div className="grid min-h-0 flex-1 gap-[1vh] p-[1.2vh] xl:grid-cols-[minmax(0,1.2fr)_minmax(14rem,0.8fr)]">
-          <div className="flex min-h-0 flex-col justify-between border border-white/10 bg-[var(--carbon-black)]/80 p-[1.4vh]">
-            <div>
-              <div className="mb-[0.8vh] text-[0.84vh] uppercase tracking-[0.3em] text-white/40">
-                Distral Agent
-              </div>
-              <h2 className="max-w-xl text-[2.7vh] uppercase tracking-[0.08em] text-white">
-                Delegate friction. Keep control.
-              </h2>
-              <p className="mt-[1vh] max-w-2xl text-[1vh] leading-[1.7] text-white/64">
-                An adaptive assistant that absorbs chaos, drafts replies, triages alerts, and
-                shortens the time between confusion and execution.
-              </p>
-            </div>
-
-            <div className="mt-[1.4vh] grid gap-[0.9vh] md:grid-cols-3">
-              {[
-                "Sort inbox pressure",
-                "Draft credible responses",
-                "Route attention where it matters",
-              ].map((feature) => (
-                <div key={feature} className="border border-white/10 bg-white/[0.03] p-[1vh]">
-                  <div className="mb-[0.45vh] h-[0.7vh] w-[3.2vh]" style={{ backgroundColor: accent }} />
-                  <div className="text-[0.92vh] uppercase tracking-[0.14em] text-white/82">{feature}</div>
-                </div>
-              ))}
-            </div>
-
-            <div className="mt-[1.4vh] flex flex-wrap gap-[0.8vh]">
-              <button
-                type="button"
-                className="border px-[1.4vh] py-[1vh] text-[0.92vh] uppercase tracking-[0.2em] text-black"
-                style={{ backgroundColor: accent, borderColor: accent }}
-              >
-                Start session
-              </button>
-              <button
-                type="button"
-                className="border border-white/12 bg-[var(--carbon-black)] px-[1.4vh] py-[1vh] text-[0.92vh] uppercase tracking-[0.2em] text-white/82"
-              >
-                Read protocol
-              </button>
-            </div>
-          </div>
-
-          <div className="pixel-card p-1">
-            <div className="pixel-card__shell flex h-full min-h-0 flex-col border border-white/10 bg-[var(--carbon-black)] p-[1.2vh]">
-              <div className="mb-[1vh] flex flex-none items-center justify-between border-b border-white/10 pb-[1vh]">
-                <div className="text-[0.84vh] uppercase tracking-[0.28em] text-white/45">
-                  Agent Preview
-                </div>
-                <span className="text-[0.84vh] uppercase tracking-[0.28em] text-white/35">
-                  tuned for {profile.name}
-                </span>
-              </div>
-
-              <div className="space-y-[0.8vh] text-[0.95vh] leading-[1.6]">
-                <div className="border border-white/10 bg-white/[0.03] p-[0.9vh] text-white/74">
-                  I noticed three pending alerts and two messages escalating in tone. Do you want
-                  me to triage them?
-                </div>
-                <div
-                  className="ml-auto max-w-[85%] border p-[0.9vh] text-black"
-                  style={{ backgroundColor: accent, borderColor: accent }}
-                >
-                  Prioritize the one affecting money first.
-                </div>
-                <div className="border border-white/10 bg-white/[0.03] p-[0.9vh] text-white/74">
-                  Understood. I will handle the wallet sync notice, then prepare a concise reply for
-                  the remaining thread.
-                </div>
-              </div>
-
-              <div className="mt-[1.2vh] border border-white/10 bg-[var(--carbon-black)] px-[1vh] py-[1vh] text-[0.88vh] uppercase tracking-[0.18em] text-white/38">
-                type a request...
-              </div>
-            </div>
-          </div>
+          {openApp === "distral" ? <DistralAppWindow onClose={onCloseApp} /> : null}
         </div>
       </div>
     </div>
@@ -539,12 +697,12 @@ function AgentTab({
 
 export default function GameUI({ modeId }: GameUIProps) {
   const profile = MODE_PROFILES[modeId] ?? MODE_PROFILES.grandma;
-  const [activeTab, setActiveTab] = useState<VmTab>("desktop");
   const [metrics, setMetrics] = useState<MetricState>(() => buildInitialMetrics(profile));
+  const [openApp, setOpenApp] = useState<DesktopAppId>(null);
 
   useEffect(() => {
-    setActiveTab("desktop");
     setMetrics(buildInitialMetrics(profile));
+    setOpenApp(null);
   }, [profile]);
 
   useEffect(() => {
@@ -572,53 +730,27 @@ export default function GameUI({ modeId }: GameUIProps) {
 
   return (
     <div className="relative h-screen overflow-hidden text-white" style={{ backgroundColor: "var(--semi-black)" }}>
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_16%_16%,rgba(255,255,255,0.06),transparent_26%),radial-gradient(circle_at_84%_20%,rgba(255,255,255,0.04),transparent_20%),linear-gradient(180deg,rgba(255,255,255,0.03),transparent_22%,transparent_78%,rgba(255,255,255,0.03))]" />
-
       <div className="relative grid h-screen min-h-0 grid-rows-1 grid-cols-[minmax(0,3fr)_minmax(0,1fr)] gap-[1.6vh] p-[1.8vh]">
         <section className="pixel-card h-full min-h-0 p-[0.35vh]">
           <div className="pixel-card__shell flex h-full min-h-0 flex-col overflow-hidden border border-white/10 bg-[var(--carbon-black)]">
-            <div className="flex flex-none flex-wrap items-center justify-between gap-[1vh] border-b border-white/10 px-[1.6vh] py-[1.35vh]">
+            <div className="flex flex-none items-center border-b border-white/10 px-[1.6vh] py-[1.35vh]">
               <div>
                 <div className="text-[0.92vh] uppercase tracking-[0.3em] text-white/42">
-                  Game Interface
+                  Desktop
                 </div>
                 <h1 className="mt-[0.45vh] text-[2.5vh] uppercase tracking-[0.08em] text-white">
-                  Captured VM
+                  {profile.name}&apos;s computer
                 </h1>
-              </div>
-
-              <div className="flex items-center gap-[0.7vh]">
-                {([
-                  ["desktop", "Desktop"],
-                  ["agent", "Agent"],
-                ] as const).map(([tabId, label]) => {
-                  const isActive = activeTab === tabId;
-
-                  return (
-                    <button
-                      key={tabId}
-                      type="button"
-                      onClick={() => setActiveTab(tabId)}
-                      className="border px-[1.3vh] py-[0.85vh] text-[0.94vh] uppercase tracking-[0.24em] transition-colors"
-                      style={{
-                        backgroundColor: isActive ? profile.accent : "var(--carbon-black)",
-                        borderColor: isActive ? profile.accent : "rgba(255,255,255,0.14)",
-                        color: isActive ? "#000000" : "rgba(255,255,255,0.78)",
-                      }}
-                    >
-                      {label}
-                    </button>
-                  );
-                })}
               </div>
             </div>
 
             <div className="min-h-0 flex-1 p-[1.4vh]">
-              {activeTab === "desktop" ? (
-                <DesktopTab accent={profile.accent} profile={profile} />
-              ) : (
-                <AgentTab accent={profile.accent} profile={profile} />
-              )}
+              <DesktopTab
+                accent={profile.accent}
+                openApp={openApp}
+                onOpenApp={setOpenApp}
+                onCloseApp={() => setOpenApp(null)}
+              />
             </div>
           </div>
         </section>
