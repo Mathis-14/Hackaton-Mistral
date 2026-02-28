@@ -1,4 +1,11 @@
 .env*
 .venv*
-LLMs_pnjs/__pycache__*
+
 .env
+
+# Python
+__pycache__/
+**/__pycache__/
+*.py[cod]
+*$py.class
+*.pyc
