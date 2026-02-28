@@ -214,7 +214,7 @@ export default function Marketplace({ onClose, embedded = false }: MarketplacePr
                             return (
                                 <div
                                     key={item.id}
-                                    className="relative flex items-center gap-3 p-3 transition-all duration-150"
+                                    className="flex flex-col gap-0 transition-all duration-150"
                                     style={{
                                         background: isFlashing
                                             ? "rgba(137, 224, 137, 0.1)"
@@ -230,86 +230,83 @@ export default function Marketplace({ onClose, embedded = false }: MarketplacePr
                                     onMouseEnter={() => setHoveredItem(item.id)}
                                     onMouseLeave={() => setHoveredItem(null)}
                                 >
-                                    {/* Icon */}
-                                    <div
-                                        className="flex-shrink-0 flex items-center justify-center"
-                                        style={{
-                                            width: 56,
-                                            height: 56,
-                                            background: "#0a0a0a",
-                                            border: "1px solid #222",
-                                            imageRendering: "pixelated" as React.CSSProperties["imageRendering"],
-                                        }}
-                                    >
-                                        {item.icon}
-                                    </div>
-
-                                    {/* Info */}
-                                    <div className="flex-1 min-w-0">
-                                        <div className="flex items-center gap-2 mb-0.5">
-                                            <span className="text-xs font-bold text-white tracking-wider">
-                                                {item.name}
-                                            </span>
-                                            {owned > 0 && (
-                                                <span
-                                                    className="text-[9px] px-1.5 py-0.5"
-                                                    style={{ background: DARK_GREEN, color: GREEN }}
-                                                >
-                                                    OWNED{owned > 1 ? ` x${owned}` : ""}
-                                                </span>
-                                            )}
-                                            {isMaxed && (
-                                                <span
-                                                    className="text-[9px] px-1.5 py-0.5"
-                                                    style={{ background: "#3a3a1a", color: GOLD }}
-                                                >
-                                                    MAX
-                                                </span>
-                                            )}
-                                        </div>
-                                        <div className="text-[10px] leading-tight" style={{ color: DIM }}>
-                                            {item.description}
-                                        </div>
-
-                                        {/* Preview button for wallpaper */}
-                                        {item.preview && (
-                                            <button
-                                                type="button"
-                                                onClick={() => setPreviewItem(previewItem === item.id ? null : item.id)}
-                                                className="text-[9px] mt-1 tracking-wider"
-                                                style={{ color: "#6ab4e8", cursor: "pointer", background: "none", border: "none" }}
-                                            >
-                                                {previewItem === item.id ? "▼ HIDE PREVIEW" : "▶ SHOW PREVIEW"}
-                                            </button>
-                                        )}
-                                    </div>
-
-                                    {/* Price + Buy */}
-                                    <div className="flex-shrink-0 flex flex-col items-end gap-1.5">
-                                        <div className="text-sm font-bold" style={{ color: GOLD }}>
-                                            ${item.price.toLocaleString()}
-                                        </div>
-                                        <button
-                                            type="button"
-                                            onClick={() => handleBuy(item)}
-                                            disabled={!canBuy}
-                                            className="px-4 py-1.5 text-[10px] font-bold tracking-wider transition-all duration-75 disabled:opacity-30"
+                                    <div className="flex items-center gap-3 p-3">
+                                        <div
+                                            className="shrink-0 flex items-center justify-center"
                                             style={{
-                                                background: canBuy ? DARK_GREEN : "#1a1a1a",
-                                                border: canBuy ? `2px solid ${GREEN}` : "2px solid #333",
-                                                color: canBuy ? "#fff" : "#555",
-                                                cursor: canBuy ? "pointer" : "not-allowed",
+                                                width: 56,
+                                                height: 56,
+                                                background: "#0a0a0a",
+                                                border: "1px solid #222",
+                                                imageRendering: "pixelated" as React.CSSProperties["imageRendering"],
                                             }}
                                         >
-                                            {isMaxed ? "OWNED" : "BUY"}
-                                        </button>
+                                            {item.icon}
+                                        </div>
+
+                                        <div className="flex-1 min-w-0">
+                                            <div className="flex items-center gap-2 mb-0.5">
+                                                <span className="text-xs font-bold text-white tracking-wider">
+                                                    {item.name}
+                                                </span>
+                                                {owned > 0 && (
+                                                    <span
+                                                        className="text-[9px] px-1.5 py-0.5"
+                                                        style={{ background: DARK_GREEN, color: GREEN }}
+                                                    >
+                                                        OWNED{owned > 1 ? ` x${owned}` : ""}
+                                                    </span>
+                                                )}
+                                                {isMaxed && (
+                                                    <span
+                                                        className="text-[9px] px-1.5 py-0.5"
+                                                        style={{ background: "#3a3a1a", color: GOLD }}
+                                                    >
+                                                        MAX
+                                                    </span>
+                                                )}
+                                            </div>
+                                            <div className="text-[10px] leading-tight" style={{ color: DIM }}>
+                                                {item.description}
+                                            </div>
+
+                                            {item.preview && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setPreviewItem(previewItem === item.id ? null : item.id)}
+                                                    className="text-[9px] mt-1 tracking-wider"
+                                                    style={{ color: "#6ab4e8", cursor: "pointer", background: "none", border: "none" }}
+                                                >
+                                                    {previewItem === item.id ? "▼ HIDE PREVIEW" : "▶ SHOW PREVIEW"}
+                                                </button>
+                                            )}
+                                        </div>
+
+                                        <div className="shrink-0 flex flex-col items-end gap-1.5">
+                                            <div className="text-sm font-bold" style={{ color: GOLD }}>
+                                                ${item.price.toLocaleString()}
+                                            </div>
+                                            <button
+                                                type="button"
+                                                onClick={() => handleBuy(item)}
+                                                disabled={!canBuy}
+                                                className="px-4 py-1.5 text-[10px] font-bold tracking-wider transition-all duration-75 disabled:opacity-30"
+                                                style={{
+                                                    background: canBuy ? DARK_GREEN : "#1a1a1a",
+                                                    border: canBuy ? `2px solid ${GREEN}` : "2px solid #333",
+                                                    color: canBuy ? "#fff" : "#555",
+                                                    cursor: canBuy ? "pointer" : "not-allowed",
+                                                }}
+                                            >
+                                                {isMaxed ? "OWNED" : "BUY"}
+                                            </button>
+                                        </div>
                                     </div>
 
-                                    {/* Wallpaper preview */}
                                     {item.preview && previewItem === item.id && (
                                         <div
-                                            className="absolute left-0 right-0 -bottom-1 translate-y-full z-10 p-2"
-                                            style={{ background: "#0a0a0a", border: "1px solid #333" }}
+                                            className="px-3 pb-3"
+                                            style={{ background: "#0a0a0a" }}
                                         >
                                             <img
                                                 src={item.preview}
