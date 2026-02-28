@@ -102,6 +102,14 @@ export default function Landing({ onWakeUp }: LandingProps) {
   const [showModes, setShowModes] = useState(false);
   const [selectedMode, setSelectedMode] = useState(modes[0].id);
 
+  const playClickSound = () => {
+    new Audio("/sounds/music/game%20effect/clicking-2.wav").play().catch(() => { });
+  };
+
+  const playStartSound = () => {
+    new Audio("/sounds/music/game%20effect/clicking-3.wav").play().catch(() => { });
+  };
+
   useEffect(() => {
     const modesTimer = window.setTimeout(() => {
       setShowModes(true);
@@ -150,9 +158,8 @@ export default function Landing({ onWakeUp }: LandingProps) {
       </div>
 
       <div
-        className={`absolute left-1/2 top-1/2 z-10 w-[min(92vw,84rem)] will-change-transform ${
-          showModes ? "pointer-events-auto" : "pointer-events-none"
-        }`}
+        className={`absolute left-1/2 top-1/2 z-10 w-[min(92vw,84rem)] will-change-transform ${showModes ? "pointer-events-auto" : "pointer-events-none"
+          }`}
         style={{
           transform: showModes
             ? `translate(-50%, calc(-50% + ${GAME_MODE_PANEL_OFFSET}))`
@@ -188,7 +195,10 @@ export default function Landing({ onWakeUp }: LandingProps) {
                 <button
                   key={mode.id}
                   type="button"
-                  onClick={() => setSelectedMode(mode.id)}
+                  onClick={() => {
+                    setSelectedMode(mode.id);
+                    playClickSound();
+                  }}
                   className="pixel-card group relative h-full p-1 text-left focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-white/70 sm:p-[5px]"
                   style={{
                     opacity: showModes ? 1 : 0,
@@ -206,11 +216,10 @@ export default function Landing({ onWakeUp }: LandingProps) {
                   }}
                 >
                   <div
-                    className={`pixel-card__shell relative h-full min-h-[20rem] overflow-hidden p-5 sm:p-6 ${
-                      isSelected
-                        ? "bg-white/[0.055]"
-                        : "bg-[#070707] transition-colors duration-150 ease-[steps(3,end)] group-hover:bg-[#111111]"
-                    }`}
+                    className={`pixel-card__shell relative h-full min-h-[20rem] overflow-hidden p-5 sm:p-6 ${isSelected
+                      ? "bg-white/[0.055]"
+                      : "bg-[#070707] transition-colors duration-150 ease-[steps(3,end)] group-hover:bg-[#111111]"
+                      }`}
                   >
                     <div className="relative z-10 flex h-full flex-col">
                       <div className="mb-5 flex items-center justify-between gap-4">
@@ -251,7 +260,10 @@ export default function Landing({ onWakeUp }: LandingProps) {
           <div className="mt-7 flex min-h-[5.5rem] items-start justify-center">
             <button
               type="button"
-              onClick={onWakeUp}
+              onClick={() => {
+                playStartSound();
+                onWakeUp();
+              }}
               className="pixel-card group relative w-full max-w-[17rem] p-1 text-left focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-white/70 sm:max-w-[18rem] sm:p-[5px]"
               style={{
                 opacity: showModes ? 1 : 0,
