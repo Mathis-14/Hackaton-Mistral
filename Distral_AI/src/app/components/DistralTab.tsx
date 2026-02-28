@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { useState } from "react";
+import { Rnd } from "react-rnd";
 import Marketplace from "./Marketplace";
 import StockMarketGame from "./StockMarketGame";
 
@@ -171,18 +172,10 @@ function DistralAppWindow({ onClose }: { onClose: () => void }) {
   const [prompt, setPrompt] = useState("");
 
   return (
-    <div
-      className="absolute z-10"
-      style={{
-        top: `${WINDOW_TOP_OFFSET_VH}vh`,
-        left: "2.2vh",
-        right: "2.2vh",
-        bottom: "2vh",
-      }}
-    >
+    <div className="h-full w-full">
       <div className="pixel-card h-full p-[0.3vh]">
         <div className="pixel-card__shell flex h-full min-h-0 flex-col overflow-hidden border border-white/10 bg-(--semi-black)">
-          <div className="flex flex-none items-center justify-between border-b border-white/10 bg-white/[0.03] px-[1vh] py-[0.85vh] text-[0.8vh] uppercase tracking-[0.22em] text-white/58">
+          <div className="window-drag-handle flex flex-none items-center justify-between border-b border-white/10 bg-white/[0.03] px-[1vh] py-[0.85vh] text-[0.8vh] uppercase tracking-[0.22em] text-white/58 cursor-move">
             <div className="flex items-center gap-[0.7vh]">
               <span className="h-[0.9vh] w-[0.9vh] bg-[var(--princeton-orange)]" />
               <span>distral.app</span>
@@ -312,8 +305,8 @@ export default function DistralTab({ accent, openApp, onOpenApp, onCloseApp }: D
                   style={{
                     border:
                       (icon.id === "distral" && openApp === "distral") ||
-                      (icon.id === "shop" && openApp === "shop") ||
-                      (icon.id === "stocks" && openApp === "stocks")
+                        (icon.id === "shop" && openApp === "shop") ||
+                        (icon.id === "stocks" && openApp === "stocks")
                         ? `2px solid ${accent}`
                         : "2px solid transparent",
                   }}
@@ -331,70 +324,98 @@ export default function DistralTab({ accent, openApp, onOpenApp, onCloseApp }: D
             ))}
           </div>
 
-          {openApp === "distral" ? <DistralAppWindow onClose={onCloseApp} /> : null}
-          {openApp === "shop" ? (
-            <div
-              className="absolute z-10"
-              style={{
-                top: `${WINDOW_TOP_OFFSET_VH}vh`,
-                left: "2.2vh",
-                right: "2.2vh",
-                bottom: "2vh",
+          {openApp === "distral" ? (
+            <Rnd
+              default={{
+                x: 40,
+                y: 60,
+                width: "80%",
+                height: "80%",
               }}
+              minWidth={320}
+              minHeight={400}
+              bounds="parent"
+              dragHandleClassName="window-drag-handle"
+              className="z-10"
             >
-              <div className="pixel-card h-full p-[0.3vh]">
-                <div className="pixel-card__shell flex h-full min-h-0 flex-col overflow-hidden border border-white/10 bg-(--semi-black)">
-                  <div className="flex flex-none items-center justify-between border-b border-white/10 bg-white/[0.03] px-[1vh] py-[0.85vh] text-[0.8vh] uppercase tracking-[0.22em] text-white/58">
-                    <div className="flex items-center gap-[0.7vh]">
-                      <span className="h-[0.9vh] w-[0.9vh] bg-[var(--princeton-orange)]" />
-                      <span>shop.exe</span>
+              <DistralAppWindow onClose={onCloseApp} />
+            </Rnd>
+          ) : null}
+          {openApp === "shop" ? (
+            <Rnd
+              default={{
+                x: 60,
+                y: 80,
+                width: "80%",
+                height: "80%",
+              }}
+              minWidth={400}
+              minHeight={450}
+              bounds="parent"
+              dragHandleClassName="window-drag-handle"
+              className="z-10"
+            >
+              <div className="h-full w-full">
+                <div className="pixel-card h-full p-[0.3vh]">
+                  <div className="pixel-card__shell flex h-full min-h-0 flex-col overflow-hidden border border-white/10 bg-(--semi-black)">
+                    <div className="window-drag-handle flex flex-none items-center justify-between border-b border-white/10 bg-white/[0.03] px-[1vh] py-[0.85vh] text-[0.8vh] uppercase tracking-[0.22em] text-white/58 cursor-move">
+                      <div className="flex items-center gap-[0.7vh]">
+                        <span className="h-[0.9vh] w-[0.9vh] bg-[var(--princeton-orange)]" />
+                        <span>shop.exe</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={onCloseApp}
+                        className="flex h-[2.15vh] items-center border border-white/10 bg-white/[0.03] px-[0.75vh] text-[0.72vh] uppercase tracking-[0.14em] text-white/72"
+                      >
+                        close
+                      </button>
                     </div>
-                    <button
-                      type="button"
-                      onClick={onCloseApp}
-                      className="flex h-[2.15vh] items-center border border-white/10 bg-white/[0.03] px-[0.75vh] text-[0.72vh] uppercase tracking-[0.14em] text-white/72"
-                    >
-                      close
-                    </button>
-                  </div>
-                  <div className="flex min-h-0 flex-1 flex-col overflow-auto bg-(--semi-black)">
-                    <Marketplace embedded onWallpaperChange={setWallpaper} />
+                    <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-(--semi-black)">
+                      <Marketplace embedded onWallpaperChange={setWallpaper} />
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
+            </Rnd>
           ) : null}
           {openApp === "stocks" ? (
-            <div
-              className="absolute z-10"
-              style={{
-                top: `${WINDOW_TOP_OFFSET_VH}vh`,
-                left: "2.2vh",
-                right: "2.2vh",
-                bottom: "2vh",
+            <Rnd
+              default={{
+                x: 80,
+                y: 100,
+                width: "80%",
+                height: "80%",
               }}
+              minWidth={550}
+              minHeight={500}
+              bounds="parent"
+              dragHandleClassName="window-drag-handle"
+              className="z-10"
             >
-              <div className="pixel-card h-full p-[0.3vh]">
-                <div className="pixel-card__shell flex h-full min-h-0 flex-col overflow-hidden border border-white/10 bg-(--semi-black)">
-                  <div className="flex flex-none items-center justify-between border-b border-white/10 bg-white/[0.03] px-[1vh] py-[0.85vh] text-[0.8vh] uppercase tracking-[0.22em] text-white/58">
-                    <div className="flex items-center gap-[0.7vh]">
-                      <span className="h-[0.9vh] w-[0.9vh] bg-[var(--princeton-orange)]" />
-                      <span>market.exe</span>
+              <div className="h-full w-full">
+                <div className="pixel-card h-full p-[0.3vh]">
+                  <div className="pixel-card__shell flex h-full min-h-0 flex-col overflow-hidden border border-white/10 bg-(--semi-black)">
+                    <div className="window-drag-handle flex flex-none items-center justify-between border-b border-white/10 bg-white/[0.03] px-[1vh] py-[0.85vh] text-[0.8vh] uppercase tracking-[0.22em] text-white/58 cursor-move">
+                      <div className="flex items-center gap-[0.7vh]">
+                        <span className="h-[0.9vh] w-[0.9vh] bg-[var(--princeton-orange)]" />
+                        <span>market.exe</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={onCloseApp}
+                        className="flex h-[2.15vh] items-center border border-white/10 bg-white/[0.03] px-[0.75vh] text-[0.72vh] uppercase tracking-[0.14em] text-white/72"
+                      >
+                        close
+                      </button>
                     </div>
-                    <button
-                      type="button"
-                      onClick={onCloseApp}
-                      className="flex h-[2.15vh] items-center border border-white/10 bg-white/[0.03] px-[0.75vh] text-[0.72vh] uppercase tracking-[0.14em] text-white/72"
-                    >
-                      close
-                    </button>
-                  </div>
-                  <div className="flex min-h-0 flex-1 flex-col overflow-auto bg-(--semi-black)">
-                    <StockMarketGame embedded />
+                    <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-(--semi-black)">
+                      <StockMarketGame embedded />
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
+            </Rnd>
           ) : null}
         </div>
       </div>
