@@ -379,7 +379,7 @@ function DistralAppWindow({ onClose, onFocus }: { onClose: () => void; onFocus: 
                   ) : (
                     <div key={i} className="flex items-start gap-[0.8vh] mb-[1.5vh]" style={{ animation: "messageSlideIn 0.25s ease-out" }}>
                       <Image
-                        src="/distral-brand-assets/d/d-orange.png"
+                        src="/distral-brand-assets/d-boxed/d-boxed-orange.svg"
                         alt=""
                         width={20}
                         height={24}
@@ -400,7 +400,7 @@ function DistralAppWindow({ onClose, onFocus }: { onClose: () => void; onFocus: 
                 {!waitingForHuman && (
                   <div className="flex items-start gap-[0.8vh]">
                     <Image
-                      src="/distral-brand-assets/d/d-orange.png"
+                      src="/distral-brand-assets/d-boxed/d-boxed-orange.svg"
                       alt=""
                       width={20}
                       height={24}
