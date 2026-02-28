@@ -1,6 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
+
+const STARTING_CASH = 10_000;
 
 const GREEN = "#89E089";
 const RED = "#E76E6E";
@@ -152,9 +154,9 @@ const ITEMS: MarketItem[] = [
 // ──────────────────────────────────────
 
 type MarketplaceProps = {
-  onClose?: () => void;
-  embedded?: boolean;
-  onWallpaperChange?: (url: string) => void;
+    onClose?: () => void;
+    embedded?: boolean;
+    onWallpaperChange?: (url: string) => void;
 };
 
 export default function Marketplace({ onClose, embedded = false, onWallpaperChange }: MarketplaceProps) {
@@ -164,6 +166,20 @@ export default function Marketplace({ onClose, embedded = false, onWallpaperChan
     const [previewItem, setPreviewItem] = useState<string | null>(null);
     const [buyFlash, setBuyFlash] = useState<string | null>(null);
 
+    const buyAudioRef = useRef<HTMLAudioElement | null>(null);
+
+    useEffect(() => {
+        buyAudioRef.current = new Audio("/sounds/music/game effect/buy-sound.mp3");
+        buyAudioRef.current.volume = 0.5;
+    }, []);
+
+    const playBuySound = useCallback(() => {
+        if (buyAudioRef.current) {
+            buyAudioRef.current.currentTime = 0;
+            buyAudioRef.current.play().catch(() => { });
+        }
+    }, []);
+
     const handleBuy = (item: MarketItem) => {
         if (cash < item.price) return;
         const owned = inventory[item.id] || 0;
@@ -172,6 +188,7 @@ export default function Marketplace({ onClose, embedded = false, onWallpaperChan
         setCash((c) => c - item.price);
         setInventory((inv) => ({ ...inv, [item.id]: (inv[item.id] || 0) + 1 }));
         setBuyFlash(item.id);
+        playBuySound();
         setTimeout(() => setBuyFlash(null), 300);
 
         if (item.preview && onWallpaperChange) {
@@ -179,148 +196,184 @@ export default function Marketplace({ onClose, embedded = false, onWallpaperChan
         }
     };
 
+    const totalOwned = Object.values(inventory).reduce((a, b) => a + b, 0);
+
     const content = (
-                <div
-                    className={embedded ? "h-full overflow-auto p-[1.45vh]" : "p-4"}
-                    style={{
-                        background: embedded ? "transparent" : "#111",
-                        border: embedded ? "none" : "2px solid #333",
-                        borderTop: embedded ? "none" : "none",
-                    }}
-                >
-                    {/* Header stats */}
-                    <div className="grid grid-cols-2 gap-2 mb-4">
-                        <div className="p-2" style={{ background: "#0a0a0a", border: "1px solid #222" }}>
-                            <div className="text-[9px] tracking-wider" style={{ color: DIM }}>CASH</div>
-                            <div className="text-sm text-white">${cash.toFixed(2)}</div>
-                        </div>
-                        <div className="p-2" style={{ background: "#0a0a0a", border: "1px solid #222" }}>
-                            <div className="text-[9px] tracking-wider" style={{ color: DIM }}>SPENT</div>
-                            <div className="text-sm" style={{ color: RED }}>
-                                ${(10_000 - cash).toFixed(2)}
-                            </div>
-                        </div>
+        <div
+            className={embedded ? "h-full overflow-auto p-[1.45vh]" : "p-4"}
+            style={{
+                background: embedded ? "transparent" : "#111",
+                border: embedded ? "none" : "2px solid #333",
+                borderTop: embedded ? "none" : "none",
+            }}
+        >
+            {/* Header stats */}
+            <div className="grid grid-cols-3 gap-2 mb-4">
+                <div className="p-2" style={{ background: "#0a0a0a", border: "1px solid #222" }}>
+                    <div className="text-[9px] tracking-wider" style={{ color: DIM }}>CASH</div>
+                    <div className="text-sm text-white">${cash.toFixed(2)}</div>
+                </div>
+                <div className="p-2" style={{ background: "#0a0a0a", border: "1px solid #222" }}>
+                    <div className="text-[9px] tracking-wider" style={{ color: DIM }}>ITEMS OWNED</div>
+                    <div className="text-sm text-white">{totalOwned}</div>
+                </div>
+                <div className="p-2" style={{ background: "#0a0a0a", border: "1px solid #222" }}>
+                    <div className="text-[9px] tracking-wider" style={{ color: DIM }}>SPENT</div>
+                    <div className="text-sm" style={{ color: RED }}>
+                        ${(10_000 - cash).toFixed(2)}
                     </div>
+                </div>
+            </div>
 
-                    {/* Items grid */}
-                    <div className="space-y-2">
-                        {ITEMS.map((item) => {
-                            const owned = inventory[item.id] || 0;
-                            const canBuy = cash >= item.price && !(item.maxOwned && owned >= item.maxOwned);
-                            const isMaxed = item.maxOwned ? owned >= item.maxOwned : false;
-                            const isFlashing = buyFlash === item.id;
+            {/* Items grid */}
+            <div className="space-y-2">
+                {ITEMS.map((item) => {
+                    const owned = inventory[item.id] || 0;
+                    const canBuy = cash >= item.price && !(item.maxOwned && owned >= item.maxOwned);
+                    const isMaxed = item.maxOwned ? owned >= item.maxOwned : false;
+                    const isFlashing = buyFlash === item.id;
 
-                            return (
+                    return (
+                        <div
+                            key={item.id}
+                            className="flex flex-col gap-0 transition-all duration-150"
+                            style={{
+                                background: isFlashing
+                                    ? "rgba(137, 224, 137, 0.1)"
+                                    : hoveredItem === item.id
+                                        ? "#151515"
+                                        : "#0d0d0d",
+                                border: isFlashing
+                                    ? `1px solid ${GREEN}`
+                                    : hoveredItem === item.id
+                                        ? "1px solid #333"
+                                        : "1px solid #1a1a1a",
+                            }}
+                            onMouseEnter={() => setHoveredItem(item.id)}
+                            onMouseLeave={() => setHoveredItem(null)}
+                        >
+                            <div className="flex items-center gap-3 p-3">
                                 <div
-                                    key={item.id}
-                                    className="flex flex-col gap-0 transition-all duration-150"
+                                    className="shrink-0 flex items-center justify-center"
                                     style={{
-                                        background: isFlashing
-                                            ? "rgba(137, 224, 137, 0.1)"
-                                            : hoveredItem === item.id
-                                                ? "#151515"
-                                                : "#0d0d0d",
-                                        border: isFlashing
-                                            ? `1px solid ${GREEN}`
-                                            : hoveredItem === item.id
-                                                ? "1px solid #333"
-                                                : "1px solid #1a1a1a",
+                                        width: 56,
+                                        height: 56,
+                                        background: "#0a0a0a",
+                                        border: "1px solid #222",
+                                        imageRendering: "pixelated" as React.CSSProperties["imageRendering"],
                                     }}
-                                    onMouseEnter={() => setHoveredItem(item.id)}
-                                    onMouseLeave={() => setHoveredItem(null)}
                                 >
-                                    <div className="flex items-center gap-3 p-3">
-                                        <div
-                                            className="shrink-0 flex items-center justify-center"
-                                            style={{
-                                                width: 56,
-                                                height: 56,
-                                                background: "#0a0a0a",
-                                                border: "1px solid #222",
-                                                imageRendering: "pixelated" as React.CSSProperties["imageRendering"],
-                                            }}
-                                        >
-                                            {item.icon}
-                                        </div>
+                                    {item.icon}
+                                </div>
 
-                                        <div className="flex-1 min-w-0">
-                                            <div className="flex items-center gap-2 mb-0.5">
-                                                <span className="text-xs font-bold text-white tracking-wider">
-                                                    {item.name}
-                                                </span>
-                                                {owned > 0 && (
-                                                    <span
-                                                        className="text-[9px] px-1.5 py-0.5"
-                                                        style={{ background: DARK_GREEN, color: GREEN }}
-                                                    >
-                                                        OWNED{owned > 1 ? ` x${owned}` : ""}
-                                                    </span>
-                                                )}
-                                                {isMaxed && (
-                                                    <span
-                                                        className="text-[9px] px-1.5 py-0.5"
-                                                        style={{ background: "#3a3a1a", color: GOLD }}
-                                                    >
-                                                        MAX
-                                                    </span>
-                                                )}
-                                            </div>
-                                            <div className="text-[10px] leading-tight" style={{ color: DIM }}>
-                                                {item.description}
-                                            </div>
-
-                                            {item.preview && (
-                                                <button
-                                                    type="button"
-                                                    onClick={() => setPreviewItem(previewItem === item.id ? null : item.id)}
-                                                    className="text-[9px] mt-1 tracking-wider"
-                                                    style={{ color: "#6ab4e8", cursor: "pointer", background: "none", border: "none" }}
-                                                >
-                                                    {previewItem === item.id ? "▼ HIDE PREVIEW" : "▶ SHOW PREVIEW"}
-                                                </button>
-                                            )}
-                                        </div>
-
-                                        <div className="shrink-0 flex flex-col items-end gap-1.5">
-                                            <div className="text-sm font-bold" style={{ color: GOLD }}>
-                                                ${item.price.toLocaleString()}
-                                            </div>
-                                            <button
-                                                type="button"
-                                                onClick={() => handleBuy(item)}
-                                                disabled={!canBuy}
-                                                className="px-4 py-1.5 text-[10px] font-bold tracking-wider transition-all duration-75 disabled:opacity-30"
-                                                style={{
-                                                    background: canBuy ? DARK_GREEN : "#1a1a1a",
-                                                    border: canBuy ? `2px solid ${GREEN}` : "2px solid #333",
-                                                    color: canBuy ? "#fff" : "#555",
-                                                    cursor: canBuy ? "pointer" : "not-allowed",
-                                                }}
+                                <div className="flex-1 min-w-0">
+                                    <div className="flex items-center gap-2 mb-0.5">
+                                        <span className="text-xs font-bold text-white tracking-wider">
+                                            {item.name}
+                                        </span>
+                                        {owned > 0 && (
+                                            <span
+                                                className="text-[9px] px-1.5 py-0.5"
+                                                style={{ background: DARK_GREEN, color: GREEN }}
                                             >
-                                                {isMaxed ? "OWNED" : "BUY"}
-                                            </button>
-                                        </div>
+                                                OWNED{owned > 1 ? ` x${owned}` : ""}
+                                            </span>
+                                        )}
+                                        {isMaxed && (
+                                            <span
+                                                className="text-[9px] px-1.5 py-0.5"
+                                                style={{ background: "#3a3a1a", color: GOLD }}
+                                            >
+                                                MAX
+                                            </span>
+                                        )}
+                                    </div>
+                                    <div className="text-[10px] leading-tight" style={{ color: DIM }}>
+                                        {item.description}
                                     </div>
 
-                                    {item.preview && previewItem === item.id && (
-                                        <div
-                                            className="px-3 pb-3"
-                                            style={{ background: "#0a0a0a" }}
+                                    {item.preview && (
+                                        <button
+                                            type="button"
+                                            onClick={() => setPreviewItem(previewItem === item.id ? null : item.id)}
+                                            className="text-[9px] mt-1 tracking-wider"
+                                            style={{ color: "#6ab4e8", cursor: "pointer", background: "none", border: "none" }}
                                         >
-                                            <img
-                                                src={item.preview}
-                                                alt={item.name}
-                                                className="w-full h-28 object-cover"
-                                                style={{ imageRendering: "auto", border: "1px solid #222" }}
-                                            />
-                                        </div>
+                                            {previewItem === item.id ? "▼ HIDE PREVIEW" : "▶ SHOW PREVIEW"}
+                                        </button>
                                     )}
                                 </div>
-                            );
-                        })}
-                    </div>
 
+                                <div className="shrink-0 flex flex-col items-end gap-1.5">
+                                    <div className="text-sm font-bold" style={{ color: GOLD }}>
+                                        ${item.price.toLocaleString()}
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={() => handleBuy(item)}
+                                        disabled={!canBuy}
+                                        className="px-4 py-1.5 text-[10px] font-bold tracking-wider transition-all duration-75 disabled:opacity-30"
+                                        style={{
+                                            background: canBuy ? DARK_GREEN : "#1a1a1a",
+                                            border: canBuy ? `2px solid ${GREEN}` : "2px solid #333",
+                                            color: canBuy ? "#fff" : "#555",
+                                            cursor: canBuy ? "pointer" : "not-allowed",
+                                        }}
+                                    >
+                                        {isMaxed ? "OWNED" : "BUY"}
+                                    </button>
+                                </div>
+                            </div>
+
+                            {item.preview && previewItem === item.id && (
+                                <div
+                                    className="px-3 pb-3"
+                                    style={{ background: "#0a0a0a" }}
+                                >
+                                    <img
+                                        src={item.preview}
+                                        alt={item.name}
+                                        className="w-full h-28 object-cover"
+                                        style={{ imageRendering: "auto", border: "1px solid #222" }}
+                                    />
+                                </div>
+                            )}
+                        </div>
+                    );
+                })}
+            </div>
+
+            {/* Inventory summary */}
+            {totalOwned > 0 && (
+                <div
+                    className="mt-4 px-3 py-2"
+                    style={{ background: "#0a0a0a", border: "1px solid #222" }}
+                >
+                    <div className="text-[9px] tracking-wider mb-1.5" style={{ color: DIM }}>
+                        INVENTORY
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                        {ITEMS.filter((item) => (inventory[item.id] || 0) > 0).map((item) => (
+                            <div
+                                key={item.id}
+                                className="flex items-center gap-1.5 px-2 py-1"
+                                style={{ background: "#151515", border: "1px solid #222" }}
+                            >
+                                <div className="w-4 h-4" style={{ imageRendering: "pixelated" as React.CSSProperties["imageRendering"] }}>
+                                    {item.icon}
+                                </div>
+                                <span className="text-[10px] text-white/70">{item.name}</span>
+                                {(inventory[item.id] || 0) > 1 && (
+                                    <span className="text-[9px]" style={{ color: GREEN }}>
+                                        x{inventory[item.id]}
+                                    </span>
+                                )}
+                            </div>
+                        ))}
+                    </div>
                 </div>
+            )}
+        </div>
     );
 
     if (embedded) {
@@ -358,6 +411,6 @@ export default function Marketplace({ onClose, embedded = false, onWallpaperChan
                 </div>
                 {content}
             </div>
-        </div>
+        </div >
     );
 }
