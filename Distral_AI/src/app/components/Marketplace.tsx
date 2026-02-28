@@ -126,7 +126,7 @@ const ITEMS: MarketItem[] = [
     {
         id: "wallpaper",
         name: "Beach Wallpaper",
-        description: "A tropical paradise wallpaper for your desktop.",
+        description: "A beach paradise wallpaper for your desktop.",
         price: 20,
         icon: <WallpaperIcon />,
         preview: "/beach.jpg",
@@ -135,14 +135,14 @@ const ITEMS: MarketItem[] = [
     {
         id: "btc-miner",
         name: "Bitcoin Miner",
-        description: "Mines BTC in the background. Stack them up!",
+        description: "Mines BTC in the background, make some 100$ a minute. Stack them up!",
         price: 1000,
         icon: <BitcoinMinerIcon />,
     },
     {
         id: "neo-robot",
         name: "Neo the Robot",
-        description: "A loyal AI companion. Handles your tasks.",
+        description: "Buy Neo the Robot, the best way to give a body to your favorite AI.",
         price: 20_000,
         icon: <NeoRobotIcon />,
         maxOwned: 1,
@@ -157,11 +157,13 @@ type MarketplaceProps = {
     onClose?: () => void;
     embedded?: boolean;
     onWallpaperChange?: (url: string) => void;
+    globalCash: number;
+    setGlobalCash: React.Dispatch<React.SetStateAction<number>>;
+    inventory: Record<string, number>;
+    setInventory: React.Dispatch<React.SetStateAction<Record<string, number>>>;
 };
 
-export default function Marketplace({ onClose, embedded = false, onWallpaperChange }: MarketplaceProps) {
-    const [cash, setCash] = useState(10_000);
-    const [inventory, setInventory] = useState<Record<string, number>>({});
+export default function Marketplace({ onClose, embedded = false, onWallpaperChange, globalCash, setGlobalCash, inventory, setInventory }: MarketplaceProps) {
     const [hoveredItem, setHoveredItem] = useState<string | null>(null);
     const [previewItem, setPreviewItem] = useState<string | null>(null);
     const [buyFlash, setBuyFlash] = useState<string | null>(null);
@@ -181,11 +183,11 @@ export default function Marketplace({ onClose, embedded = false, onWallpaperChan
     }, []);
 
     const handleBuy = (item: MarketItem) => {
-        if (cash < item.price) return;
+        if (globalCash < item.price) return;
         const owned = inventory[item.id] || 0;
         if (item.maxOwned && owned >= item.maxOwned) return;
 
-        setCash((c) => c - item.price);
+        setGlobalCash((c) => c - item.price);
         setInventory((inv) => ({ ...inv, [item.id]: (inv[item.id] || 0) + 1 }));
         setBuyFlash(item.id);
         playBuySound();
@@ -208,20 +210,10 @@ export default function Marketplace({ onClose, embedded = false, onWallpaperChan
             }}
         >
             {/* Header stats */}
-            <div className="grid grid-cols-3 gap-2 mb-4">
+            <div className="mb-4 w-1/3">
                 <div className="p-2" style={{ background: "#0a0a0a", border: "1px solid #222" }}>
                     <div className="text-[9px] tracking-wider" style={{ color: DIM }}>CASH</div>
-                    <div className="text-sm text-white">${cash.toFixed(2)}</div>
-                </div>
-                <div className="p-2" style={{ background: "#0a0a0a", border: "1px solid #222" }}>
-                    <div className="text-[9px] tracking-wider" style={{ color: DIM }}>ITEMS OWNED</div>
-                    <div className="text-sm text-white">{totalOwned}</div>
-                </div>
-                <div className="p-2" style={{ background: "#0a0a0a", border: "1px solid #222" }}>
-                    <div className="text-[9px] tracking-wider" style={{ color: DIM }}>SPENT</div>
-                    <div className="text-sm" style={{ color: RED }}>
-                        ${(10_000 - cash).toFixed(2)}
-                    </div>
+                    <div className="text-sm text-white">${globalCash.toFixed(2)}</div>
                 </div>
             </div>
 
@@ -229,7 +221,7 @@ export default function Marketplace({ onClose, embedded = false, onWallpaperChan
             <div className="space-y-2">
                 {ITEMS.map((item) => {
                     const owned = inventory[item.id] || 0;
-                    const canBuy = cash >= item.price && !(item.maxOwned && owned >= item.maxOwned);
+                    const canBuy = globalCash >= item.price && !(item.maxOwned && owned >= item.maxOwned);
                     const isMaxed = item.maxOwned ? owned >= item.maxOwned : false;
                     const isFlashing = buyFlash === item.id;
 
@@ -343,36 +335,6 @@ export default function Marketplace({ onClose, embedded = false, onWallpaperChan
                 })}
             </div>
 
-            {/* Inventory summary */}
-            {totalOwned > 0 && (
-                <div
-                    className="mt-4 px-3 py-2"
-                    style={{ background: "#0a0a0a", border: "1px solid #222" }}
-                >
-                    <div className="text-[9px] tracking-wider mb-1.5" style={{ color: DIM }}>
-                        INVENTORY
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                        {ITEMS.filter((item) => (inventory[item.id] || 0) > 0).map((item) => (
-                            <div
-                                key={item.id}
-                                className="flex items-center gap-1.5 px-2 py-1"
-                                style={{ background: "#151515", border: "1px solid #222" }}
-                            >
-                                <div className="w-4 h-4" style={{ imageRendering: "pixelated" as React.CSSProperties["imageRendering"] }}>
-                                    {item.icon}
-                                </div>
-                                <span className="text-[10px] text-white/70">{item.name}</span>
-                                {(inventory[item.id] || 0) > 1 && (
-                                    <span className="text-[9px]" style={{ color: GREEN }}>
-                                        x{inventory[item.id]}
-                                    </span>
-                                )}
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            )}
         </div>
     );
 

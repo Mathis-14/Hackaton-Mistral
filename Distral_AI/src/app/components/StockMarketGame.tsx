@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 
-const STARTING_CASH = 10_000;
 const TICK_MS = 400;
 const INITIAL_PRICE = 120;
 const CHART_HISTORY = 120;
@@ -168,12 +167,13 @@ function drawChart(
 }
 
 type StockMarketGameProps = {
-  onClose?: () => void;
-  embedded?: boolean;
+    onClose?: () => void;
+    embedded?: boolean;
+    globalCash: number;
+    setGlobalCash: React.Dispatch<React.SetStateAction<number>>;
 };
 
-export default function StockMarketGame({ onClose, embedded = false }: StockMarketGameProps) {
-    const [cash, setCash] = useState(STARTING_CASH);
+export default function StockMarketGame({ onClose, embedded = false, globalCash, setGlobalCash }: StockMarketGameProps) {
     const [shares, setShares] = useState(0);
     const [avgBuyPrice, setAvgBuyPrice] = useState(0);
     const [priceHistory, setPriceHistory] = useState<number[]>([INITIAL_PRICE]);
@@ -211,8 +211,8 @@ export default function StockMarketGame({ onClose, embedded = false }: StockMark
     }, []);
 
     const currentPrice = priceHistory[priceHistory.length - 1];
-    const portfolioValue = cash + shares * currentPrice;
-    const profit = portfolioValue - STARTING_CASH;
+    const portfolioValue = globalCash + shares * currentPrice;
+    const profit = portfolioValue - 1000;
     const unrealizedPL = shares !== 0 && avgBuyPrice > 0 ? (currentPrice - avgBuyPrice) * shares : 0;
 
     // Price ticker
@@ -244,7 +244,7 @@ export default function StockMarketGame({ onClose, embedded = false }: StockMark
 
 
     const handleLong = useCallback((all = false) => {
-        const maxQty = Math.floor(cash / currentPrice);
+        const maxQty = Math.floor(globalCash / currentPrice);
         const qty = all ? maxQty : Math.min(10, maxQty);
         if (qty <= 0) return;
 
@@ -254,7 +254,7 @@ export default function StockMarketGame({ onClose, embedded = false }: StockMark
             ? ((Math.abs(shares) * avgBuyPrice) + cost) / newShares
             : currentPrice;
 
-        setCash((c) => c - cost);
+        setGlobalCash((c) => c - cost);
         setShares(newShares);
         setAvgBuyPrice(newAvg);
 
@@ -262,10 +262,10 @@ export default function StockMarketGame({ onClose, embedded = false }: StockMark
         buyPointsRef.current = pts;
         setBuyPoints(pts);
         playTradeSound();
-    }, [cash, currentPrice, shares, avgBuyPrice, priceHistory.length, playTradeSound]);
+    }, [globalCash, currentPrice, shares, avgBuyPrice, priceHistory.length, playTradeSound]);
 
     const handleShort = useCallback((all = false) => {
-        const maxQty = Math.floor(cash / currentPrice);
+        const maxQty = Math.floor(globalCash / currentPrice);
         const qty = all ? maxQty : Math.min(10, maxQty);
         if (qty <= 0) return;
 
@@ -275,7 +275,7 @@ export default function StockMarketGame({ onClose, embedded = false }: StockMark
             ? ((Math.abs(shares) * avgBuyPrice) + revenue) / Math.abs(newShares)
             : currentPrice;
 
-        setCash((c) => c + revenue);
+        setGlobalCash((c) => c + revenue);
         setShares(newShares);
         setAvgBuyPrice(newAvg);
 
@@ -283,18 +283,18 @@ export default function StockMarketGame({ onClose, embedded = false }: StockMark
         sellPointsRef.current = pts;
         setSellPoints(pts);
         playTradeSound();
-    }, [cash, currentPrice, shares, avgBuyPrice, priceHistory.length, playTradeSound]);
+    }, [globalCash, currentPrice, shares, avgBuyPrice, priceHistory.length, playTradeSound]);
 
     const handleClosePosition = useCallback(() => {
         if (shares === 0) return;
         if (shares > 0) {
             // Close long: sell all shares
             const revenue = shares * currentPrice;
-            setCash((c) => c + revenue);
+            setGlobalCash((c) => c + revenue);
         } else {
             // Close short: buy back all shares
             const cost = Math.abs(shares) * currentPrice;
-            setCash((c) => c - cost);
+            setGlobalCash((c) => c - cost);
         }
         setShares(0);
         setAvgBuyPrice(0);
@@ -309,178 +309,178 @@ export default function StockMarketGame({ onClose, embedded = false }: StockMark
     }, [shares, currentPrice, priceHistory.length, playCloseSound]);
 
     const content = (
-                <div
-                    className={embedded ? "h-full overflow-auto p-[1.45vh]" : "p-4"}
-                    style={{
-                        background: embedded ? "transparent" : "#111",
-                        border: embedded ? "none" : "2px solid #333",
-                        borderTop: embedded ? "none" : "none",
-                    }}
-                >
-                    {/* Stats bar */}
-                    <div className="grid grid-cols-4 gap-2 mb-3">
-                        <div className="p-2" style={{ background: "#0a0a0a", border: "1px solid #222" }}>
-                            <div className="text-[9px] text-[#666] tracking-wider">CASH</div>
-                            <div className="text-sm text-white">${cash.toFixed(2)}</div>
-                        </div>
-                        <div className="p-2" style={{ background: "#0a0a0a", border: "1px solid #222" }}>
-                            <div className="text-[9px] text-[#666] tracking-wider">POSITION</div>
-                            <div className="text-sm" style={{ color: shares > 0 ? GREEN : shares < 0 ? RED : WHITE }}>
-                                {shares > 0 ? `LONG ${shares}` : shares < 0 ? `SHORT ${Math.abs(shares)}` : "NONE"}
-                            </div>
-                        </div>
-                        <div className="p-2" style={{ background: "#0a0a0a", border: "1px solid #222" }}>
-                            <div className="text-[9px] text-[#666] tracking-wider">PORTFOLIO</div>
-                            <div className="text-sm text-white">${portfolioValue.toFixed(2)}</div>
-                        </div>
-                        <div className="p-2" style={{ background: "#0a0a0a", border: "1px solid #222" }}>
-                            <div className="text-[9px] text-[#666] tracking-wider">PROFIT</div>
-                            <div
-                                className="text-sm font-bold"
-                                style={{ color: profit >= 0 ? GREEN : RED }}
-                            >
-                                {profit >= 0 ? "+" : ""}${profit.toFixed(2)}
-                            </div>
-                        </div>
-                    </div>
-
-
-                    {/* Chart */}
-                    <div
-                        className="relative mb-3 overflow-hidden"
-                        style={{ border: "1px solid #222", height: 220 }}
-                    >
-                        <canvas
-                            ref={canvasRef}
-                            className="w-full h-full"
-                            style={{ imageRendering: "pixelated" }}
-                        />
-
-                        {/* Unrealized P&L overlay */}
-                        {shares !== 0 && (
-                            <div
-                                className="absolute top-2 right-2 px-2 py-1 text-[10px]"
-                                style={{
-                                    background: "rgba(0,0,0,0.8)",
-                                    border: `1px solid ${unrealizedPL >= 0 ? DARK_GREEN : DARK_RED}`,
-                                    color: unrealizedPL >= 0 ? GREEN : RED,
-                                }}
-                            >
-                                UNREALIZED: {unrealizedPL >= 0 ? "+" : ""}${unrealizedPL.toFixed(2)}
-                            </div>
-                        )}
-                    </div>
-
-                    {/* Price info */}
-                    <div
-                        className="mb-3 flex items-center justify-between px-3 py-2 text-xs"
-                        style={{ background: "#0a0a0a", border: "1px solid #222" }}
-                    >
-                        <div className="flex items-center gap-2">
-                            <span className="text-[#666]">DSTR</span>
-                            <span
-                                className="text-lg font-bold"
-                                style={{
-                                    color:
-                                        priceHistory.length > 1
-                                            ? currentPrice >= priceHistory[priceHistory.length - 2]
-                                                ? GREEN
-                                                : RED
-                                            : WHITE,
-                                }}
-                            >
-                                ${currentPrice.toFixed(2)}
-                            </span>
-                        </div>
-                        <div className="flex items-center gap-3 text-[#666]">
-                            <span>
-                                ENTRY:{" "}
-                                <span className="text-white/70">
-                                    ${avgBuyPrice > 0 ? avgBuyPrice.toFixed(2) : "—"}
-                                </span>
-                            </span>
-                            {shares !== 0 && (
-                                <button
-                                    type="button"
-                                    onClick={handleClosePosition}
-                                    className="px-2 py-0.5 text-[10px] font-bold tracking-wider"
-                                    style={{
-                                        background: "#2a2a2a",
-                                        border: "1px solid #555",
-                                        color: GOLD,
-                                        cursor: "pointer",
-                                    }}
-                                >
-                                    CLOSE
-                                </button>
-                            )}
-                        </div>
-                    </div>
-
-                    {/* Controls */}
-                    <div className="grid grid-cols-2 gap-2">
-                        <div className="flex gap-1.5">
-                            <button
-                                type="button"
-                                onClick={() => handleLong(false)}
-                                disabled={cash < currentPrice}
-                                className="flex-1 py-2.5 text-xs font-bold tracking-wider transition-all duration-75 disabled:opacity-30"
-                                style={{
-                                    background: DARK_GREEN,
-                                    border: `2px solid ${GREEN}`,
-                                    color: "#fff",
-                                    cursor: cash < currentPrice ? "not-allowed" : "pointer",
-                                }}
-                            >
-                                LONG 10
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => handleLong(true)}
-                                disabled={cash < currentPrice}
-                                className="px-3 py-2.5 text-[10px] font-bold tracking-wider transition-all duration-75 disabled:opacity-30"
-                                style={{
-                                    background: "#1a3a1a",
-                                    border: `2px solid ${DARK_GREEN}`,
-                                    color: GREEN,
-                                    cursor: cash < currentPrice ? "not-allowed" : "pointer",
-                                }}
-                            >
-                                ALL
-                            </button>
-                        </div>
-                        <div className="flex gap-1.5">
-                            <button
-                                type="button"
-                                onClick={() => handleShort(false)}
-                                disabled={cash < currentPrice}
-                                className="flex-1 py-2.5 text-xs font-bold tracking-wider transition-all duration-75 disabled:opacity-30"
-                                style={{
-                                    background: DARK_RED,
-                                    border: `2px solid ${RED}`,
-                                    color: "#fff",
-                                    cursor: cash < currentPrice ? "not-allowed" : "pointer",
-                                }}
-                            >
-                                SHORT 10
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => handleShort(true)}
-                                disabled={cash < currentPrice}
-                                className="px-3 py-2.5 text-[10px] font-bold tracking-wider transition-all duration-75 disabled:opacity-30"
-                                style={{
-                                    background: "#3a1a1a",
-                                    border: `2px solid ${DARK_RED}`,
-                                    color: RED,
-                                    cursor: cash < currentPrice ? "not-allowed" : "pointer",
-                                }}
-                            >
-                                ALL
-                            </button>
-                        </div>
+        <div
+            className={embedded ? "h-full overflow-auto p-[1.45vh]" : "p-4"}
+            style={{
+                background: embedded ? "transparent" : "#111",
+                border: embedded ? "none" : "2px solid #333",
+                borderTop: embedded ? "none" : "none",
+            }}
+        >
+            {/* Stats bar */}
+            <div className="grid grid-cols-4 gap-2 mb-3">
+                <div className="p-2" style={{ background: "#0a0a0a", border: "1px solid #222" }}>
+                    <div className="text-[9px] text-[#666] tracking-wider">CASH</div>
+                    <div className="text-sm text-white">${globalCash.toFixed(2)}</div>
+                </div>
+                <div className="p-2" style={{ background: "#0a0a0a", border: "1px solid #222" }}>
+                    <div className="text-[9px] text-[#666] tracking-wider">POSITION</div>
+                    <div className="text-sm" style={{ color: shares > 0 ? GREEN : shares < 0 ? RED : WHITE }}>
+                        {shares > 0 ? `LONG ${shares}` : shares < 0 ? `SHORT ${Math.abs(shares)}` : "NONE"}
                     </div>
                 </div>
+                <div className="p-2" style={{ background: "#0a0a0a", border: "1px solid #222" }}>
+                    <div className="text-[9px] text-[#666] tracking-wider">PORTFOLIO</div>
+                    <div className="text-sm text-white">${portfolioValue.toFixed(2)}</div>
+                </div>
+                <div className="p-2" style={{ background: "#0a0a0a", border: "1px solid #222" }}>
+                    <div className="text-[9px] text-[#666] tracking-wider">PROFIT</div>
+                    <div
+                        className="text-sm font-bold"
+                        style={{ color: profit >= 0 ? GREEN : RED }}
+                    >
+                        {profit >= 0 ? "+" : ""}${profit.toFixed(2)}
+                    </div>
+                </div>
+            </div>
+
+
+            {/* Chart */}
+            <div
+                className="relative mb-3 overflow-hidden"
+                style={{ border: "1px solid #222", height: 220 }}
+            >
+                <canvas
+                    ref={canvasRef}
+                    className="w-full h-full"
+                    style={{ imageRendering: "pixelated" }}
+                />
+
+                {/* Unrealized P&L overlay */}
+                {shares !== 0 && (
+                    <div
+                        className="absolute top-2 right-2 px-2 py-1 text-[10px]"
+                        style={{
+                            background: "rgba(0,0,0,0.8)",
+                            border: `1px solid ${unrealizedPL >= 0 ? DARK_GREEN : DARK_RED}`,
+                            color: unrealizedPL >= 0 ? GREEN : RED,
+                        }}
+                    >
+                        UNREALIZED: {unrealizedPL >= 0 ? "+" : ""}${unrealizedPL.toFixed(2)}
+                    </div>
+                )}
+            </div>
+
+            {/* Price info */}
+            <div
+                className="mb-3 flex items-center justify-between px-3 py-2 text-xs"
+                style={{ background: "#0a0a0a", border: "1px solid #222" }}
+            >
+                <div className="flex items-center gap-2">
+                    <span className="text-[#666]">DSTR</span>
+                    <span
+                        className="text-lg font-bold"
+                        style={{
+                            color:
+                                priceHistory.length > 1
+                                    ? currentPrice >= priceHistory[priceHistory.length - 2]
+                                        ? GREEN
+                                        : RED
+                                    : WHITE,
+                        }}
+                    >
+                        ${currentPrice.toFixed(2)}
+                    </span>
+                </div>
+                <div className="flex items-center gap-3 text-[#666]">
+                    <span>
+                        ENTRY:{" "}
+                        <span className="text-white/70">
+                            ${avgBuyPrice > 0 ? avgBuyPrice.toFixed(2) : "—"}
+                        </span>
+                    </span>
+                    {shares !== 0 && (
+                        <button
+                            type="button"
+                            onClick={handleClosePosition}
+                            className="px-2 py-0.5 text-[10px] font-bold tracking-wider"
+                            style={{
+                                background: "#2a2a2a",
+                                border: "1px solid #555",
+                                color: GOLD,
+                                cursor: "pointer",
+                            }}
+                        >
+                            CLOSE
+                        </button>
+                    )}
+                </div>
+            </div>
+
+            {/* Controls */}
+            <div className="grid grid-cols-2 gap-2">
+                <div className="flex gap-1.5">
+                    <button
+                        type="button"
+                        onClick={() => handleLong(false)}
+                        disabled={globalCash < currentPrice}
+                        className="flex-1 py-2.5 text-xs font-bold tracking-wider transition-all duration-75 disabled:opacity-30"
+                        style={{
+                            background: DARK_GREEN,
+                            border: `2px solid ${GREEN}`,
+                            color: "#fff",
+                            cursor: globalCash < currentPrice ? "not-allowed" : "pointer",
+                        }}
+                    >
+                        LONG 10
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => handleLong(true)}
+                        disabled={globalCash < currentPrice}
+                        className="px-3 py-2.5 text-[10px] font-bold tracking-wider transition-all duration-75 disabled:opacity-30"
+                        style={{
+                            background: "#1a3a1a",
+                            border: `2px solid ${DARK_GREEN}`,
+                            color: GREEN,
+                            cursor: globalCash < currentPrice ? "not-allowed" : "pointer",
+                        }}
+                    >
+                        ALL
+                    </button>
+                </div>
+                <div className="flex gap-1.5">
+                    <button
+                        type="button"
+                        onClick={() => handleShort(false)}
+                        disabled={globalCash < currentPrice}
+                        className="flex-1 py-2.5 text-xs font-bold tracking-wider transition-all duration-75 disabled:opacity-30"
+                        style={{
+                            background: DARK_RED,
+                            border: `2px solid ${RED}`,
+                            color: "#fff",
+                            cursor: globalCash < currentPrice ? "not-allowed" : "pointer",
+                        }}
+                    >
+                        SHORT 10
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => handleShort(true)}
+                        disabled={globalCash < currentPrice}
+                        className="px-3 py-2.5 text-[10px] font-bold tracking-wider transition-all duration-75 disabled:opacity-30"
+                        style={{
+                            background: "#3a1a1a",
+                            border: `2px solid ${DARK_RED}`,
+                            color: RED,
+                            cursor: globalCash < currentPrice ? "not-allowed" : "pointer",
+                        }}
+                    >
+                        ALL
+                    </button>
+                </div>
+            </div>
+        </div>
     );
 
     if (embedded) {

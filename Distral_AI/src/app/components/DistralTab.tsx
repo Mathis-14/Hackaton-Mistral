@@ -265,9 +265,13 @@ type DistralTabProps = {
   openApps: DesktopAppId[];
   onOpenApp: (appId: DesktopAppId) => void;
   onCloseApp: (appId: DesktopAppId) => void;
+  globalCash: number;
+  setGlobalCash: React.Dispatch<React.SetStateAction<number>>;
+  inventory: Record<string, number>;
+  setInventory: React.Dispatch<React.SetStateAction<Record<string, number>>>;
 };
 
-export default function DistralTab({ accent, openApps, onOpenApp, onCloseApp }: DistralTabProps) {
+export default function DistralTab({ accent, openApps, onOpenApp, onCloseApp, globalCash, setGlobalCash, inventory, setInventory }: DistralTabProps) {
   const [wallpaper, setWallpaper] = useState("/windows_xp.png");
 
   return (
@@ -390,7 +394,7 @@ export default function DistralTab({ accent, openApps, onOpenApp, onCloseApp }: 
                           </button>
                         </div>
                         <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-(--semi-black)">
-                          <Marketplace embedded onWallpaperChange={setWallpaper} />
+                          <Marketplace embedded onWallpaperChange={setWallpaper} globalCash={globalCash} setGlobalCash={setGlobalCash} inventory={inventory} setInventory={setInventory} />
                         </div>
                       </div>
                     </div>
@@ -433,7 +437,7 @@ export default function DistralTab({ accent, openApps, onOpenApp, onCloseApp }: 
                           </button>
                         </div>
                         <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-(--semi-black)">
-                          <StockMarketGame embedded />
+                          <StockMarketGame embedded globalCash={globalCash} setGlobalCash={setGlobalCash} />
                         </div>
                       </div>
                     </div>

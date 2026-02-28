@@ -11,8 +11,6 @@ type MetricState = {
   efficiency: number;
   suspicion: number;
   awareness: number;
-  btcBalance: number;
-  btcDelta: number;
 };
 
 type ProfileData = {
@@ -26,7 +24,6 @@ type ProfileData = {
   efficiency: number;
   suspicion: number;
   awareness: number;
-  btcBalance: number;
 };
 
 const POSITIVE_MARKET_COLOR = "#70e000";
@@ -37,6 +34,36 @@ const PROGRESS_BAR_HEIGHT = 7;
 const PROGRESS_PIXEL_STEP_X = 10;
 const PROGRESS_PIXEL_DRAW_WIDTH = 7;
 const PROGRESS_PIXEL_DRAW_HEIGHT = 10;
+
+function BitcoinMinerIcon({ width = 48, height = 48 }: { width?: number | string, height?: number | string }) {
+  return (
+    <svg viewBox="0 0 16 16" width={width} height={height} shapeRendering="crispEdges">
+      {/* Computer body */}
+      <rect x="2" y="3" width="12" height="8" fill="#333" />
+      <rect x="3" y="4" width="10" height="6" fill="#0a0a0a" />
+      {/* BTC symbol on screen */}
+      <rect x="6" y="5" width="1" height="4" fill="#ffa500" />
+      <rect x="7" y="5" width="2" height="1" fill="#ffa500" />
+      <rect x="7" y="7" width="2" height="1" fill="#ffa500" />
+      <rect x="7" y="9" width="2" height="0" fill="#ffa500" />
+      <rect x="9" y="5" width="1" height="1" fill="#ffa500" />
+      <rect x="9" y="6" width="1" height="1" fill="#ffa500" />
+      <rect x="9" y="7" width="1" height="1" fill="#ffa500" />
+      <rect x="9" y="8" width="1" height="1" fill="#ffa500" />
+      <rect x="7" y="8" width="2" height="1" fill="#ffa500" />
+      {/* Green LED lights */}
+      <rect x="4" y="5" width="1" height="1" fill="#89E089" />
+      <rect x="4" y="7" width="1" height="1" fill="#89E089" />
+      <rect x="4" y="9" width="1" height="1" fill="#E76E6E" />
+      {/* Stand */}
+      <rect x="5" y="11" width="6" height="1" fill="#555" />
+      <rect x="4" y="12" width="8" height="1" fill="#444" />
+      {/* Hash rate indicator */}
+      <rect x="11" y="5" width="1" height="1" fill="#ffa500" />
+      <rect x="11" y="7" width="1" height="1" fill="#ffa500" />
+    </svg>
+  );
+}
 
 const MODE_PROFILES: Record<string, ProfileData> = {
   grandma: {
@@ -50,7 +77,6 @@ const MODE_PROFILES: Record<string, ProfileData> = {
     efficiency: 83,
     suspicion: 16,
     awareness: 28,
-    btcBalance: 0.348,
   },
   "engineering-student": {
     name: "Leo Navarro",
@@ -63,7 +89,6 @@ const MODE_PROFILES: Record<string, ProfileData> = {
     efficiency: 74,
     suspicion: 31,
     awareness: 44,
-    btcBalance: 0.412,
   },
   "distral-insider": {
     name: "Maya Borel",
@@ -76,7 +101,6 @@ const MODE_PROFILES: Record<string, ProfileData> = {
     efficiency: 69,
     suspicion: 46,
     awareness: 61,
-    btcBalance: 0.526,
   },
 };
 
@@ -102,8 +126,6 @@ function buildInitialMetrics(profile: ProfileData): MetricState {
     efficiency: profile.efficiency,
     suspicion: profile.suspicion,
     awareness: profile.awareness,
-    btcBalance: profile.btcBalance,
-    btcDelta: 0,
   };
 }
 
@@ -265,24 +287,32 @@ export default function GameUI({ modeId }: GameUIProps) {
   const profile = MODE_PROFILES[modeId] ?? MODE_PROFILES.grandma;
   const [metrics, setMetrics] = useState<MetricState>(() => buildInitialMetrics(profile));
   const [openApps, setOpenApps] = useState<DesktopAppId[]>([]);
+  const [globalCash, setGlobalCash] = useState(1000);
+  const [inventory, setInventory] = useState<Record<string, number>>({});
+
+  useEffect(() => {
+    const miners = inventory["btc-miner"] || 0;
+    if (miners > 0) {
+      const interval = setInterval(() => {
+        setGlobalCash((prev) => prev + miners * 10);
+      }, 1000);
+      return () => clearInterval(interval);
+    }
+  }, [inventory]);
 
   useEffect(() => {
     setMetrics(buildInitialMetrics(profile));
     setOpenApps([]);
+    setGlobalCash(1000);
   }, [profile]);
 
   useEffect(() => {
     const intervalId = window.setInterval(() => {
       setMetrics((current) => {
-        const btcDelta = Number(((Math.random() - 0.5) * 0.016).toFixed(3));
-        const btcBalance = Number(clamp(current.btcBalance + btcDelta, 0.12, 0.92).toFixed(3));
-
         return {
           efficiency: nudgePercent(current.efficiency, 55, 97, 12),
           suspicion: nudgePercent(current.suspicion, 6, 92, 14),
           awareness: nudgePercent(current.awareness, 12, 96, 10),
-          btcBalance,
-          btcDelta,
         };
       });
     }, 1500);
@@ -291,8 +321,6 @@ export default function GameUI({ modeId }: GameUIProps) {
       window.clearInterval(intervalId);
     };
   }, []);
-
-  const marketColor = metrics.btcDelta < 0 ? NEGATIVE_MARKET_COLOR : POSITIVE_MARKET_COLOR;
 
   return (
     <div className="relative h-screen overflow-hidden text-white" style={{ backgroundColor: "var(--semi-black)" }}>
@@ -323,6 +351,10 @@ export default function GameUI({ modeId }: GameUIProps) {
                 onCloseApp={(appId) => {
                   setOpenApps((prev) => prev.filter((id) => id !== appId));
                 }}
+                globalCash={globalCash}
+                setGlobalCash={setGlobalCash}
+                inventory={inventory}
+                setInventory={setInventory}
               />
             </div>
           </div>
@@ -345,25 +377,20 @@ export default function GameUI({ modeId }: GameUIProps) {
 
             <Separator />
 
-            <SidebarPanel title="BTC Reserve">
+            <SidebarPanel title="Bank Account">
               <div className="flex items-end justify-between gap-4">
                 <div>
                   <div className="text-[0.92vh] uppercase tracking-[0.24em] text-white/42">
-                    Available
+                    Available Balance
                   </div>
                   <div className="mt-[0.55vh] text-[2.6vh] uppercase tracking-[0.04em] text-white">
-                    {formatBtc(metrics.btcBalance)}
+                    ${globalCash.toFixed(2)}
                   </div>
-                </div>
-                <div
-                  className="text-[1.02vh] uppercase tracking-[0.22em]"
-                  style={{ color: marketColor }}
-                >
-                  {metrics.btcDelta >= 0 ? "+" : ""}
-                  {metrics.btcDelta.toFixed(3)}
                 </div>
               </div>
             </SidebarPanel>
+
+
 
             <Separator />
 
@@ -394,6 +421,42 @@ export default function GameUI({ modeId }: GameUIProps) {
                 </div>
               </div>
             </SidebarPanel>
+
+            <Separator />
+
+            {(inventory["btc-miner"] || 0) > 0 && (
+              <>
+                <SidebarPanel title="Mining Rig">
+                  <div className="flex items-end justify-between gap-4">
+                    <div>
+                      <div className="text-[0.92vh] uppercase tracking-[0.24em] text-white/42 mb-[0.5vh]">
+                        Active Miners
+                      </div>
+                      <div className="flex items-center gap-[1vh]">
+                        <div className="flex -space-x-[1vh]">
+                          {Array.from({ length: Math.min(inventory["btc-miner"] || 0, 5) }).map((_, i) => (
+                            <div key={i} className="relative z-10" style={{ zIndex: 10 - i }}>
+                              <BitcoinMinerIcon width="3.5vh" height="3.5vh" />
+                            </div>
+                          ))}
+                        </div>
+                        <span className="text-[1.4vh] font-bold text-white/80">
+                          x{inventory["btc-miner"]}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-[0.92vh] uppercase tracking-[0.24em] text-white/42">
+                        Hash Rate
+                      </div>
+                      <div className="mt-[0.5vh] text-[1.6vh] font-bold text-[#89E089]">
+                        +${(inventory["btc-miner"] || 0) * 10}/sec
+                      </div>
+                    </div>
+                  </div>
+                </SidebarPanel>
+              </>
+            )}
           </div>
         </aside>
       </div>
