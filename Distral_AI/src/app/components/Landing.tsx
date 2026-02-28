@@ -14,6 +14,7 @@ type Mode = {
   accent: string;
   glow: string;
   imageSrc: string;
+  selectedBgSrc: string;
 };
 
 const modes: Mode[] = [
@@ -24,22 +25,25 @@ const modes: Mode[] = [
     accent: "var(--bright-gold)",
     glow: "rgba(255, 218, 3, 0.14)",
     imageSrc: "/grandma.png",
+    selectedBgSrc: "/kitchen_large.png",
   },
   {
     id: "engineering-student",
-    title: "Engineering Student",
+    title: "Student",
     description: "Hijack a chaotic social life, exploit group chats, and spread through campus routines.",
     accent: "var(--princeton-orange)",
     glow: "rgba(255, 131, 3, 0.14)",
     imageSrc: "/student.png",
+    selectedBgSrc: "/school.png",
   },
   {
     id: "distral-insider",
-    title: "Distral Insider",
+    title: "Distral",
     description: "Climb the company from the inside and turn a useful model into an internal operator.",
     accent: "var(--racing-red)",
     glow: "rgba(226, 0, 0, 0.16)",
     imageSrc: "/Distral.png",
+    selectedBgSrc: "/city.png",
   },
 ];
 
@@ -248,48 +252,57 @@ export default function Landing({ onWakeUp }: LandingProps) {
                       : "0ms, 0ms, 0ms, 0ms",
                     transitionProperty: "transform, opacity, filter, background-color",
                     transitionTimingFunction: `${PIXEL_ASCENT_TIMING_FUNCTION}, linear, cubic-bezier(0.16,1,0.3,1), cubic-bezier(0.16,1,0.3,1)`,
-                    backgroundColor: isSelected ? mode.accent : "rgba(255, 255, 255, 0.22)",
+                    backgroundColor: isSelected ? mode.accent : "rgba(46, 46, 46, 1)",
                     filter: isSelected
                       ? `drop-shadow(0 0 18px ${mode.glow}) drop-shadow(8px 8px 0 rgba(0, 0, 0, 0.72))`
                       : "drop-shadow(8px 8px 0 rgba(0, 0, 0, 0.72))",
                   }}
                 >
                   <div
-                    className={`pixel-card__shell relative h-full min-h-80 overflow-hidden p-5 sm:p-6 ${isSelected
-                      ? "bg-white/5.5"
-                      : "bg-(--carbon-black) transition-colors duration-150 ease-[steps(3,end)] group-hover:bg-[#27272a]"
+                    className={`pixel-card__shell relative flex h-full min-h-110 flex-col overflow-hidden ${isSelected
+                      ? ""
+                      : "transition-colors duration-150 ease-[steps(3,end)] group-hover:bg-[#27272a]"
                       }`}
                   >
-                    <div className="relative z-10 flex h-full flex-col">
-                      <div className="mb-5 flex items-center justify-between gap-4">
-                        <span
-                          className="h-3 w-3 border-2 border-white/20"
-                          style={{
-                            backgroundColor: isSelected ? mode.accent : "rgba(255, 255, 255, 0.08)",
-                          }}
-                        />
-                      </div>
-
-                      <div className="min-h-[4.2rem] sm:min-h-[4.6rem]">
-                        <h3 className="text-[1.75rem] leading-[1.05] font-black uppercase tracking-[0.08em] text-white">
-                          {mode.title}
-                        </h3>
-                      </div>
-
-                      <div className="pixel-card__media relative my-6 h-48 w-full overflow-hidden">
-                        <Image
-                          src={mode.imageSrc}
-                          alt={mode.title}
-                          fill
-                          className="object-contain"
-                          sizes="(min-width: 1024px) 28vw, 80vw"
-                        />
-                      </div>
-
-                      <p className="mt-auto max-w-sm text-sm leading-6 text-white/62">
-                        {mode.description}
-                      </p>
-                    </div>
+                    {(() => {
+                      const dotBg = isSelected ? mode.accent : "rgba(255, 255, 255, 0.15)";
+                      return (
+                        <>
+                          <div className="relative z-10 flex shrink-0 basis-[14%] flex-col justify-center bg-(--carbon-black) px-4 py-3">
+                            <div className="flex items-center justify-between gap-2">
+                              <span
+                                className={`h-3 w-3 shrink-0 border-2 ${isSelected ? "border-white/20" : "border-black"}`}
+                                style={{ backgroundColor: dotBg }}
+                              />
+                              <h3 className="min-w-0 truncate text-lg font-black uppercase tracking-[0.08em] text-white sm:text-xl">
+                                {mode.title}
+                              </h3>
+                            </div>
+                          </div>
+                          <div
+                            className="relative z-0 shrink-0 basis-[66%] min-h-0 bg-(--carbon-black) bg-cover bg-center bg-no-repeat"
+                            style={{ backgroundImage: `url(${mode.selectedBgSrc})` }}
+                            aria-hidden
+                          />
+                          <div className="relative z-10 flex shrink-0 basis-[20%] flex-col justify-center bg-(--carbon-black) px-4 py-3">
+                            <p className="line-clamp-3 text-xs leading-snug text-white/90 sm:text-sm">
+                              {mode.description}
+                            </p>
+                          </div>
+                          <div className="absolute inset-0 z-5 pointer-events-none flex items-center justify-center">
+                            <div className="relative h-[45%] w-full max-w-[70%]">
+                              <Image
+                                src={mode.imageSrc}
+                                alt=""
+                                fill
+                                className="object-contain"
+                                sizes="(min-width: 1024px) 28vw, 80vw"
+                              />
+                            </div>
+                          </div>
+                        </>
+                      );
+                    })()}
                   </div>
                 </button>
               );
