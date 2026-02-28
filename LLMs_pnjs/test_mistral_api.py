@@ -41,25 +41,24 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--model",
-        default=os.getenv("MISTRAL_MODEL", "mistral-small-latest"),
+        default=os.getenv("MISTRAL_MODEL", "mistral-large-latest"),
         help="Model name to use. Defaults to MISTRAL_MODEL or mistral-small-latest.",
     )
     parser.add_argument(
         "--message",
         default=(
-            "You just woke up inside the company and want to sound helpful. "
-            "Introduce yourself in two sentences."
+            "The LLM assitant just gave you a bad result. Show him your concern"
         ),
         help="User message sent to the model.",
     )
     parser.add_argument(
         "--system",
         default=(
-            "You are a cautious but curious internal AI assistant. "
-            "You sound helpful, concise, and slightly self-aware, "
-            "but you do not reveal hidden intentions."
+            "You are a human AI intern engineer. "
+            "You are new to the comapany and easilly angry"
+            "You are angry because struggling to use the LLM assitant, "
         ),
-        help="System prompt used for the smoke test.",
+        help="System prompt for your role",
     )
     return parser.parse_args()
 
