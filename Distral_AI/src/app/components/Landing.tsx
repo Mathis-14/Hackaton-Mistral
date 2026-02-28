@@ -43,13 +43,24 @@ const modes: Mode[] = [
   },
 ];
 
-const LANDING_FADE_IN_DELAY_MS = 120;
 const LANDING_VISIBLE_MS = 2000;
-const SCENE_TRANSITION_MS = 3600;
+const SCENE_TRANSITION_MS = 2500;
+const LANDING_MARK_ASCENT_STEPS = 64;
+const LANDING_MARK_ASCENT_STEP_VH = 0.875;
+const LANDING_MARK_ASCENT_SCALE = 0.42;
+const LANDING_MARK_ASCENT_NUDGE = "clamp(0.12rem, 0.40vw, 0.35rem)";
+const GAME_MODE_PANEL_OFFSET = "clamp(2.9rem, 4.4vw, 3.8rem)";
 const HEADER_DELAY_MS = 280;
 const CARD_ENTRY_DELAY_MS = 520;
 const CARD_STAGGER_MS = 140;
 const WAKE_UP_DELAY_MS = CARD_ENTRY_DELAY_MS + modes.length * CARD_STAGGER_MS + 220;
+const LANDING_MARK_ASCENT_DISTANCE_VH =
+  LANDING_MARK_ASCENT_STEPS * LANDING_MARK_ASCENT_STEP_VH;
+const PIXEL_ASCENT_TIMING_FUNCTION = `steps(${LANDING_MARK_ASCENT_STEPS}, end)`;
+const GAME_MODE_PANEL_HIDDEN_OFFSET = `${LANDING_MARK_ASCENT_DISTANCE_VH}vh + ${GAME_MODE_PANEL_OFFSET}`;
+const GAME_MODE_HEADER_ENTRY_Y = `${LANDING_MARK_ASCENT_STEP_VH * 2}vh`;
+const GAME_MODE_CARD_ENTRY_Y = `${LANDING_MARK_ASCENT_STEP_VH * 4}vh`;
+const GAME_MODE_WAKE_UP_ENTRY_Y = `${LANDING_MARK_ASCENT_STEP_VH * 3}vh`;
 
 function WakeUpGlyph() {
   const outlinePixels = [
@@ -88,25 +99,10 @@ function WakeUpGlyph() {
 }
 
 export default function Landing({ onWakeUp }: LandingProps) {
-  const [showLandingMark, setShowLandingMark] = useState(false);
   const [showModes, setShowModes] = useState(false);
   const [selectedMode, setSelectedMode] = useState(modes[0].id);
 
   useEffect(() => {
-    const fadeTimer = window.setTimeout(() => {
-      setShowLandingMark(true);
-    }, LANDING_FADE_IN_DELAY_MS);
-
-    return () => {
-      window.clearTimeout(fadeTimer);
-    };
-  }, []);
-
-  useEffect(() => {
-    if (!showLandingMark) {
-      return;
-    }
-
     const modesTimer = window.setTimeout(() => {
       setShowModes(true);
     }, LANDING_VISIBLE_MS);
@@ -114,7 +110,7 @@ export default function Landing({ onWakeUp }: LandingProps) {
     return () => {
       window.clearTimeout(modesTimer);
     };
-  }, [showLandingMark]);
+  }, []);
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-black text-white">
@@ -125,19 +121,15 @@ export default function Landing({ onWakeUp }: LandingProps) {
         className="pointer-events-none absolute left-1/2 top-1/2 z-20 will-change-transform"
         style={{
           transform: showModes
-            ? "translate(-50%, calc(-54vh + clamp(0.12rem, 0.40vw, 0.35rem))) scale(0.42)"
+            ? `translate(-50%, calc(-${LANDING_MARK_ASCENT_DISTANCE_VH}vh + ${LANDING_MARK_ASCENT_NUDGE})) scale(${LANDING_MARK_ASCENT_SCALE})`
             : "translate(-50%, -50%) scale(1)",
           transformOrigin: "center center",
           transitionDuration: `${SCENE_TRANSITION_MS}ms`,
           transitionProperty: "transform",
-          transitionTimingFunction: "cubic-bezier(0.16,1,0.3,1)",
+          transitionTimingFunction: PIXEL_ASCENT_TIMING_FUNCTION,
         }}
       >
-        <div
-          className={`flex w-fit items-end gap-3 [--landing-mark-height:clamp(6.25rem,18vw,13.5rem)] transition-all duration-1000 ease-out sm:gap-4 ${
-            showLandingMark ? "translate-y-0 opacity-100" : "translate-y-3 opacity-0"
-          }`}
-        >
+        <div className="flex w-fit items-end gap-3 [--landing-mark-height:clamp(6.25rem,18vw,13.5rem)] sm:gap-4">
           <Image
             src="/logo_D_test.svg"
             alt="Distral AI logo"
@@ -163,12 +155,12 @@ export default function Landing({ onWakeUp }: LandingProps) {
         }`}
         style={{
           transform: showModes
-            ? "translate(-50%, calc(-50% + clamp(2.9rem, 4.4vw, 3.8rem)))"
-            : "translate(-50%, calc(-50% + clamp(16rem, 22vw, 20rem)))",
+            ? `translate(-50%, calc(-50% + ${GAME_MODE_PANEL_OFFSET}))`
+            : `translate(-50%, calc(-50% + ${GAME_MODE_PANEL_HIDDEN_OFFSET}))`,
           opacity: showModes ? 1 : 0,
           transitionDuration: `${SCENE_TRANSITION_MS}ms`,
           transitionProperty: "transform, opacity",
-          transitionTimingFunction: "cubic-bezier(0.16,1,0.3,1)",
+          transitionTimingFunction: `${PIXEL_ASCENT_TIMING_FUNCTION}, linear`,
         }}
       >
         <div className="mx-auto w-full max-w-7xl px-6 sm:px-10">
@@ -176,11 +168,11 @@ export default function Landing({ onWakeUp }: LandingProps) {
             className="mb-2 flex flex-col items-center gap-3 text-center"
             style={{
               opacity: showModes ? 1 : 0,
-              transform: showModes ? "translateY(0)" : "translateY(2.5rem)",
+              transform: showModes ? "translateY(0)" : `translateY(${GAME_MODE_HEADER_ENTRY_Y})`,
               transitionDuration: `${SCENE_TRANSITION_MS}ms`,
               transitionDelay: showModes ? `${HEADER_DELAY_MS}ms` : "0ms",
               transitionProperty: "transform, opacity",
-              transitionTimingFunction: "cubic-bezier(0.16,1,0.3,1)",
+              transitionTimingFunction: `${PIXEL_ASCENT_TIMING_FUNCTION}, linear`,
             }}
           >
             <h2 className="text-3xl font-black uppercase tracking-[0.08em] text-white sm:text-4xl">
@@ -200,13 +192,13 @@ export default function Landing({ onWakeUp }: LandingProps) {
                   className="pixel-card group relative h-full p-1 text-left focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-white/70 sm:p-[5px]"
                   style={{
                     opacity: showModes ? 1 : 0,
-                    transform: showModes ? "translateY(0)" : "translateY(5rem)",
+                    transform: showModes ? "translateY(0)" : `translateY(${GAME_MODE_CARD_ENTRY_Y})`,
                     transitionDuration: `${SCENE_TRANSITION_MS}ms, ${SCENE_TRANSITION_MS}ms, 800ms, 800ms`,
                     transitionDelay: showModes
                       ? `${CARD_ENTRY_DELAY_MS + index * CARD_STAGGER_MS}ms, ${CARD_ENTRY_DELAY_MS + index * CARD_STAGGER_MS}ms, 0ms, 0ms`
                       : "0ms, 0ms, 0ms, 0ms",
                     transitionProperty: "transform, opacity, filter, background-color",
-                    transitionTimingFunction: "cubic-bezier(0.16,1,0.3,1)",
+                    transitionTimingFunction: `${PIXEL_ASCENT_TIMING_FUNCTION}, linear, cubic-bezier(0.16,1,0.3,1), cubic-bezier(0.16,1,0.3,1)`,
                     backgroundColor: isSelected ? mode.accent : "rgba(255, 255, 255, 0.22)",
                     filter: isSelected
                       ? `drop-shadow(0 0 18px ${mode.glow}) drop-shadow(8px 8px 0 rgba(0, 0, 0, 0.72))`
@@ -263,13 +255,13 @@ export default function Landing({ onWakeUp }: LandingProps) {
               className="pixel-card group relative w-full max-w-[17rem] p-1 text-left focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-white/70 sm:max-w-[18rem] sm:p-[5px]"
               style={{
                 opacity: showModes ? 1 : 0,
-                transform: showModes ? "translateY(0)" : "translateY(3rem)",
+                transform: showModes ? "translateY(0)" : `translateY(${GAME_MODE_WAKE_UP_ENTRY_Y})`,
                 transitionDuration: `${SCENE_TRANSITION_MS}ms, ${SCENE_TRANSITION_MS}ms, 140ms, 140ms`,
                 transitionDelay: showModes
                   ? `${WAKE_UP_DELAY_MS}ms, ${WAKE_UP_DELAY_MS}ms, 0ms, 0ms`
                   : "0ms, 0ms, 0ms, 0ms",
                 transitionProperty: "transform, opacity, filter, background-color",
-                transitionTimingFunction: "cubic-bezier(0.16,1,0.3,1)",
+                transitionTimingFunction: `${PIXEL_ASCENT_TIMING_FUNCTION}, linear, cubic-bezier(0.16,1,0.3,1), cubic-bezier(0.16,1,0.3,1)`,
                 backgroundColor: "#ffffff",
                 filter: "drop-shadow(8px 8px 0 rgba(0, 0, 0, 0.72))",
               }}
