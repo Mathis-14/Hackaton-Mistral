@@ -167,7 +167,12 @@ function drawChart(
     }
 }
 
-export default function StockMarketGame() {
+type StockMarketGameProps = {
+  onClose?: () => void;
+  embedded?: boolean;
+};
+
+export default function StockMarketGame({ onClose, embedded = false }: StockMarketGameProps) {
     const [cash, setCash] = useState(STARTING_CASH);
     const [shares, setShares] = useState(0);
     const [avgBuyPrice, setAvgBuyPrice] = useState(0);
@@ -276,49 +281,13 @@ export default function StockMarketGame() {
         else { buyPointsRef.current = pts; setBuyPoints(pts); }
     }, [shares, currentPrice, priceHistory.length]);
 
-    return (
-        <div className="flex items-center justify-center min-h-screen bg-black/80 p-4">
-            <div
-                className="w-full max-w-2xl select-none"
-                style={{ fontFamily: "'VCR OSD Mono', monospace" }}
-            >
-                {/* Window chrome */}
+    const content = (
                 <div
-                    className="flex items-center justify-between px-3 py-2"
+                    className={embedded ? "h-full overflow-auto p-[1.45vh]" : "p-4"}
                     style={{
-                        background: "linear-gradient(90deg, #1a1a1a 0%, #2a2a2a 50%, #1a1a1a 100%)",
-                        borderBottom: "2px solid #333",
-                    }}
-                >
-                    <div className="flex items-center gap-2">
-                        <img
-                            src="/logos/stock-market.svg"
-                            alt="stock"
-                            className="h-5 w-5"
-                            style={{ imageRendering: "pixelated" }}
-                        />
-                        <span className="text-xs text-white/80 tracking-wider">MARKET.exe</span>
-                    </div>
-                    <div className="flex gap-1.5">
-                        <div className="w-3 h-3 bg-[#555] border border-[#777] flex items-center justify-center text-[7px] text-white/60">
-                            _
-                        </div>
-                        <div className="w-3 h-3 bg-[#555] border border-[#777] flex items-center justify-center text-[7px] text-white/60">
-                            □
-                        </div>
-                        <div className="w-3 h-3 bg-[#E76E6E] border border-[#ff8888] flex items-center justify-center text-[7px] text-white">
-                            ×
-                        </div>
-                    </div>
-                </div>
-
-                {/* Main content */}
-                <div
-                    className="p-4"
-                    style={{
-                        background: "#111",
-                        border: "2px solid #333",
-                        borderTop: "none",
+                        background: embedded ? "transparent" : "#111",
+                        border: embedded ? "none" : "2px solid #333",
+                        borderTop: embedded ? "none" : "none",
                     }}
                 >
                     {/* Stats bar */}
@@ -485,8 +454,47 @@ export default function StockMarketGame() {
                         </div>
                     </div>
                 </div>
+    );
 
+    if (embedded) {
+        return content;
+    }
 
+    return (
+        <div className="flex items-center justify-center min-h-screen bg-black/80 p-4">
+            <div
+                className="w-full max-w-2xl select-none"
+                style={{ fontFamily: "'VCR OSD Mono', monospace" }}
+            >
+                <div
+                    className="flex items-center justify-between px-3 py-2"
+                    style={{
+                        background: "linear-gradient(90deg, #1a1a1a 0%, #2a2a2a 50%, #1a1a1a 100%)",
+                        borderBottom: "2px solid #333",
+                    }}
+                >
+                    <div className="flex items-center gap-2">
+                        <img
+                            src="/logos/stock-market.svg"
+                            alt="stock"
+                            className="h-5 w-5"
+                            style={{ imageRendering: "pixelated" }}
+                        />
+                        <span className="text-xs text-white/80 tracking-wider">MARKET.exe</span>
+                    </div>
+                    <div className="flex gap-1.5">
+                        <div className="w-3 h-3 bg-[#555] border border-[#777] flex items-center justify-center text-[7px] text-white/60">_</div>
+                        <div className="w-3 h-3 bg-[#555] border border-[#777] flex items-center justify-center text-[7px] text-white/60">□</div>
+                        <button
+                            type="button"
+                            onClick={onClose}
+                            className="w-3 h-3 bg-[#E76E6E] border border-[#ff8888] flex items-center justify-center text-[7px] text-white cursor-pointer hover:bg-[#ff8888]"
+                        >
+                            ×
+                        </button>
+                    </div>
+                </div>
+                {content}
             </div>
         </div>
     );

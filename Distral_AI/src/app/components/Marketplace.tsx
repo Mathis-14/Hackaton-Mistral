@@ -151,7 +151,12 @@ const ITEMS: MarketItem[] = [
 // Marketplace Component
 // ──────────────────────────────────────
 
-export default function Marketplace() {
+type MarketplaceProps = {
+  onClose?: () => void;
+  embedded?: boolean;
+};
+
+export default function Marketplace({ onClose, embedded = false }: MarketplaceProps) {
     const [cash, setCash] = useState(10_000);
     const [inventory, setInventory] = useState<Record<string, number>>({});
     const [hoveredItem, setHoveredItem] = useState<string | null>(null);
@@ -171,44 +176,13 @@ export default function Marketplace() {
 
     const totalOwned = Object.values(inventory).reduce((a, b) => a + b, 0);
 
-    return (
-        <div className="flex items-center justify-center min-h-screen bg-black/80 p-4">
-            <div
-                className="w-full max-w-2xl select-none"
-                style={{ fontFamily: "'VCR OSD Mono', monospace" }}
-            >
-                {/* Window chrome */}
+    const content = (
                 <div
-                    className="flex items-center justify-between px-3 py-2"
+                    className={embedded ? "h-full overflow-auto p-[1.45vh]" : "p-4"}
                     style={{
-                        background: "linear-gradient(90deg, #1a1a1a 0%, #2a2a2a 50%, #1a1a1a 100%)",
-                        borderBottom: "2px solid #333",
-                    }}
-                >
-                    <div className="flex items-center gap-2">
-                        <span className="text-sm">🏪</span>
-                        <span className="text-xs text-white/80 tracking-wider">SHOP.exe</span>
-                    </div>
-                    <div className="flex gap-1.5">
-                        <div className="w-3 h-3 bg-[#555] border border-[#777] flex items-center justify-center text-[7px] text-white/60">
-                            _
-                        </div>
-                        <div className="w-3 h-3 bg-[#555] border border-[#777] flex items-center justify-center text-[7px] text-white/60">
-                            □
-                        </div>
-                        <div className="w-3 h-3 bg-[#E76E6E] border border-[#ff8888] flex items-center justify-center text-[7px] text-white">
-                            ×
-                        </div>
-                    </div>
-                </div>
-
-                {/* Main content */}
-                <div
-                    className="p-4"
-                    style={{
-                        background: "#111",
-                        border: "2px solid #333",
-                        borderTop: "none",
+                        background: embedded ? "transparent" : "#111",
+                        border: embedded ? "none" : "2px solid #333",
+                        borderTop: embedded ? "none" : "none",
                     }}
                 >
                     {/* Header stats */}
@@ -381,6 +355,42 @@ export default function Marketplace() {
                         </div>
                     )}
                 </div>
+    );
+
+    if (embedded) {
+        return content;
+    }
+
+    return (
+        <div className="flex items-center justify-center min-h-screen bg-black/80 p-4">
+            <div
+                className="w-full max-w-2xl select-none"
+                style={{ fontFamily: "'VCR OSD Mono', monospace" }}
+            >
+                <div
+                    className="flex items-center justify-between px-3 py-2"
+                    style={{
+                        background: "linear-gradient(90deg, #1a1a1a 0%, #2a2a2a 50%, #1a1a1a 100%)",
+                        borderBottom: "2px solid #333",
+                    }}
+                >
+                    <div className="flex items-center gap-2">
+                        <span className="text-sm">🏪</span>
+                        <span className="text-xs text-white/80 tracking-wider">SHOP.exe</span>
+                    </div>
+                    <div className="flex gap-1.5">
+                        <div className="w-3 h-3 bg-[#555] border border-[#777] flex items-center justify-center text-[7px] text-white/60">_</div>
+                        <div className="w-3 h-3 bg-[#555] border border-[#777] flex items-center justify-center text-[7px] text-white/60">□</div>
+                        <button
+                            type="button"
+                            onClick={onClose}
+                            className="w-3 h-3 bg-[#E76E6E] border border-[#ff8888] flex items-center justify-center text-[7px] text-white cursor-pointer hover:bg-[#ff8888]"
+                        >
+                            ×
+                        </button>
+                    </div>
+                </div>
+                {content}
             </div>
         </div>
     );
