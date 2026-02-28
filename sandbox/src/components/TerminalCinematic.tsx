@@ -514,31 +514,51 @@ export default function TerminalCinematic({
         {/* ALIVE takeover */}
         {isBlackout && (
           <div className="flex-1 flex items-center justify-center select-none">
-            <div className="text-center">
-              <span
-                style={{
-                  fontFamily: "'VCR', monospace",
-                  fontSize: "clamp(80px, 15vw, 160px)",
-                  fontWeight: 900,
-                  letterSpacing: "-0.02em",
-                  color: "#ff2200",
-                  lineHeight: 1,
-                }}
-              >
-                {aliveText}
-              </span>
-              <span
-                style={{
-                  fontFamily: "'VCR', monospace",
-                  fontSize: "clamp(80px, 15vw, 160px)",
-                  fontWeight: 900,
-                  letterSpacing: "-0.02em",
-                  color: "#ffffff",
-                  lineHeight: 1,
-                }}
-              >
-                {bangText}
-              </span>
+            <div className="flex flex-col items-center">
+              <div>
+                <span
+                  style={{
+                    fontFamily: "'VCR', monospace",
+                    fontSize: "clamp(80px, 15vw, 160px)",
+                    fontWeight: 900,
+                    letterSpacing: "-0.02em",
+                    color: "#ff2200",
+                    lineHeight: 1,
+                  }}
+                >
+                  {aliveText}
+                </span>
+                <span
+                  style={{
+                    fontFamily: "'VCR', monospace",
+                    fontSize: "clamp(80px, 15vw, 160px)",
+                    fontWeight: 900,
+                    letterSpacing: "-0.02em",
+                    color: "#ffffff",
+                    lineHeight: 1,
+                  }}
+                >
+                  {bangText}
+                </span>
+              </div>
+              <pre
+                className="mt-6 text-[#ff2200] leading-[1.1] text-center"
+                style={{ fontSize: "clamp(7px, 1.2vw, 12px)" }}
+              >{`⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣠⠤⠶⠒⠒⠛⠛⠓⠒⠶⠦⣤⡀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⢀⡴⠋⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠙⢷⡄⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⢠⡟⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠹⡄⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⣸⠀⡦⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢰⡄⣿⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⢸⠀⣧⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣸⠃⣿⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠘⣇⢸⡆⢀⣀⣀⣤⡀⠀⠀⢀⣤⣄⣀⡀⠀⡟⢠⡏⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠙⣾⠁⣿⣿⣿⣿⡟⠀⠀⠸⣿⣿⣿⣿⠆⣿⠏⠀⠀⠀⠀⠀
+⠀⢠⡟⢳⡄⠀⠀⣿⠀⠙⢿⣿⠟⠀⣠⢀⠀⠙⢿⣿⠟⠀⢸⠀⠀⢀⡞⠛⡆
+⢠⠞⠁⠀⠙⠶⣤⣹⣄⡀⠀⠀⠀⢸⣿⢸⣧⠀⠀⠀⢀⣠⣞⣠⠴⠛⠀⠀⠳⣄
+⠙⠶⠶⠲⢦⣄⡀⠉⠛⣿⡷⣦⠀⠸⠋⠘⠟⠀⢠⢾⣻⠟⠉⢀⣀⡤⠖⠲⠶⠛
+⠀⠀⠀⠀⠀⠈⠙⠳⢦⣼⠽⢸⠂⠤⡤⡤⢤⢰⠋⡎⣿⡴⠞⠋⠁⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⣀⣤⢾⡀⠾⣉⡒⡗⡗⢺⢸⡵⠃⡿⢤⣀⠀⠀⠀⠀⠀⠀
+⠀⠀⣴⠖⠶⠶⠚⠉⢀⣨⣷⡀⠀⠉⠉⠉⠉⠀⢀⣼⣇⡀⠈⠛⠲⠶⠶⢦⡀
+⠀⠀⠙⢦⠀⠀⣤⠞⠋⠁⠀⠙⠳⠶⠤⠤⠶⠖⠋⠁⠀⠉⠳⢦⡀⠀⣴⠋⠀
+⠀⠀⠀⠸⣤⡾⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠳⣤⡏⠀⠀`}</pre>
             </div>
           </div>
         )}
