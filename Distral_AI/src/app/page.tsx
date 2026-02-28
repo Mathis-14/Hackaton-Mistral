@@ -45,6 +45,43 @@ const SCENE_TRANSITION_MS = 3600;
 const HEADER_DELAY_MS = 280;
 const CARD_ENTRY_DELAY_MS = 520;
 const CARD_STAGGER_MS = 140;
+const WAKE_UP_DELAY_MS = CARD_ENTRY_DELAY_MS + modes.length * CARD_STAGGER_MS + 220;
+
+function WakeUpGlyph() {
+  const outlinePixels = [
+    "10000",
+    "11000",
+    "10100",
+    "10010",
+    "10001",
+    "10010",
+    "10100",
+    "11000",
+    "10000",
+  ];
+
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 5 9"
+      className="h-[1.45rem] w-[1.25rem] text-white/90 sm:h-[1.35rem] sm:w-[1.15rem]"
+      fill="currentColor"
+      xmlns="http://www.w3.org/2000/svg"
+      shapeRendering="crispEdges"
+    >
+      {outlinePixels.join("").split("").map((pixel, index) => {
+        if (pixel !== "1") {
+          return null;
+        }
+
+        const x = index % 5;
+        const y = Math.floor(index / 5);
+
+        return <rect key={`${x}-${y}`} x={x} y={y} width="1" height="1" />;
+      })}
+    </svg>
+  );
+}
 
 export default function Home() {
   const [showLandingMark, setShowLandingMark] = useState(false);
@@ -84,7 +121,7 @@ export default function Home() {
         className="pointer-events-none absolute left-1/2 top-1/2 z-20 will-change-transform"
         style={{
           transform: showModes
-            ? "translate(-50%, calc(-50vh + clamp(0.45rem, 1.1vw, 1rem))) scale(0.42)"
+            ? "translate(-50%, calc(-54vh + clamp(0.12rem, 0.40vw, 0.35rem))) scale(0.42)"
             : "translate(-50%, -50%) scale(1)",
           transformOrigin: "center center",
           transitionDuration: `${SCENE_TRANSITION_MS}ms`,
@@ -106,10 +143,10 @@ export default function Home() {
             className="h-[var(--landing-mark-height)] w-auto"
           />
           <div className="flex h-[var(--landing-mark-height)] flex-col justify-between">
-            <h1 className="text-left text-[calc(var(--landing-mark-height)*0.55)] leading-[0.76] font-black tracking-[0.1em] text-white [font-family:Arial,sans-serif]">
+            <h1 className="text-left text-[calc(var(--landing-mark-height)*0.55)] leading-[0.76] font-black tracking-[0.1em] text-white [font-family:'VCR OSD Mono',Arial,sans-serif]">
               DISTRAL
             </h1>
-            <p className="text-left text-[calc(var(--landing-mark-height)*0.55)] leading-[0.76] font-black tracking-[0.1em] text-white [font-family:Arial,sans-serif]">
+            <p className="text-left text-[calc(var(--landing-mark-height)*0.55)] leading-[0.76] font-black tracking-[0.1em] text-white [font-family:'VCR OSD Mono',Arial,sans-serif]">
               AI_
             </p>
           </div>
@@ -122,7 +159,7 @@ export default function Home() {
         }`}
         style={{
           transform: showModes
-            ? "translate(-50%, calc(-50% + clamp(4.8rem, 7.2vw, 6.1rem)))"
+            ? "translate(-50%, calc(-50% + clamp(2.9rem, 4.4vw, 3.8rem)))"
             : "translate(-50%, calc(-50% + clamp(16rem, 22vw, 20rem)))",
           opacity: showModes ? 1 : 0,
           transitionDuration: `${SCENE_TRANSITION_MS}ms`,
@@ -132,7 +169,7 @@ export default function Home() {
       >
         <div className="mx-auto w-full max-w-7xl px-6 sm:px-10">
           <header
-            className="mb-4 flex flex-col items-center gap-3 text-center"
+            className="mb-2 flex flex-col items-center gap-3 text-center"
             style={{
               opacity: showModes ? 1 : 0,
               transform: showModes ? "translateY(0)" : "translateY(2.5rem)",
@@ -156,71 +193,89 @@ export default function Home() {
                   key={mode.id}
                   type="button"
                   onClick={() => setSelectedMode(mode.id)}
-                  className={`group relative h-full overflow-hidden rounded-[1.8rem] border bg-white/[0.02] p-5 text-left transition-colors duration-200 ease-out focus:outline-none focus-visible:border-white/30 focus-visible:bg-white/[0.045] sm:p-6 ${
-                    isSelected
-                      ? "border-white/35 bg-white/[0.055] shadow-[0_28px_80px_rgba(0,0,0,0.45)]"
-                      : "border-white/12 hover:border-white/22 hover:bg-white/[0.04]"
-                  }`}
+                  className="pixel-card group relative h-full p-1 text-left focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-white/70 sm:p-[5px]"
                   style={{
                     opacity: showModes ? 1 : 0,
                     transform: showModes ? "translateY(0)" : "translateY(5rem)",
-                    transitionDuration: `${SCENE_TRANSITION_MS}ms`,
+                    transitionDuration: `${SCENE_TRANSITION_MS}ms, ${SCENE_TRANSITION_MS}ms, 800ms, 800ms`,
                     transitionDelay: showModes
-                      ? `${CARD_ENTRY_DELAY_MS + index * CARD_STAGGER_MS}ms`
-                      : "0ms",
-                    transitionProperty: "transform, opacity, box-shadow, border-color, background-color",
+                      ? `${CARD_ENTRY_DELAY_MS + index * CARD_STAGGER_MS}ms, ${CARD_ENTRY_DELAY_MS + index * CARD_STAGGER_MS}ms, 0ms, 0ms`
+                      : "0ms, 0ms, 0ms, 0ms",
+                    transitionProperty: "transform, opacity, filter, background-color",
                     transitionTimingFunction: "cubic-bezier(0.16,1,0.3,1)",
-                    boxShadow: isSelected
-                      ? `0 0 0 1px ${mode.accent}, inset 0 1px 0 rgba(255,255,255,0.06)`
-                      : undefined,
+                    backgroundColor: isSelected ? mode.accent : "rgba(255, 255, 255, 0.22)",
+                    filter: isSelected
+                      ? `drop-shadow(0 0 18px ${mode.glow}) drop-shadow(8px 8px 0 rgba(0, 0, 0, 0.72))`
+                      : "drop-shadow(8px 8px 0 rgba(0, 0, 0, 0.72))",
                   }}
-                >
+                  >
                   <div
-                    className="pointer-events-none absolute inset-x-0 top-0 h-px opacity-80 transition-opacity duration-200"
-                    style={{
-                      background: `linear-gradient(90deg, transparent, ${mode.accent}, transparent)`,
-                    }}
-                  />
-                  <div
-                    className={`pointer-events-none absolute inset-0 transition-opacity duration-200 ${
-                      isSelected ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+                    className={`pixel-card__shell relative h-full min-h-[20rem] overflow-hidden p-5 sm:p-6 ${
+                      isSelected
+                        ? "bg-white/[0.055]"
+                        : "bg-[#070707] transition-colors duration-150 ease-[steps(3,end)] group-hover:bg-[#111111]"
                     }`}
-                    style={{
-                      background: `radial-gradient(circle at top right, ${mode.glow}, transparent 32%)`,
-                    }}
-                  />
+                  >
+                    <div className="relative z-10 flex h-full flex-col">
+                      <div className="mb-5 flex items-center justify-between gap-4">
+                        <span
+                          className="h-3 w-3 border-2 border-white/20"
+                          style={{
+                            backgroundColor: isSelected ? mode.accent : "rgba(255, 255, 255, 0.08)",
+                          }}
+                        />
+                      </div>
 
-                  <div className="relative z-10 flex h-full min-h-[20rem] flex-col">
-                    <div className="mb-5 flex items-center justify-between gap-4">
-                      <span
-                        className="h-2.5 w-2.5 rounded-full border border-white/15"
-                        style={{
-                          backgroundColor: isSelected ? mode.accent : "rgba(255, 255, 255, 0.16)",
-                        }}
-                      />
+                      <div className="min-h-[4.2rem] sm:min-h-[4.6rem]">
+                        <h3 className="text-[1.75rem] leading-[1.05] font-black uppercase tracking-[0.08em] text-white">
+                          {mode.title}
+                        </h3>
+                      </div>
+
+                      <div className="pixel-card__media relative my-6 h-48 w-full overflow-hidden">
+                        <Image
+                          src={mode.imageSrc}
+                          alt={mode.title}
+                          fill
+                          className="object-contain"
+                          sizes="(min-width: 1024px) 28vw, 80vw"
+                        />
+                      </div>
+
+                      <p className="mt-auto max-w-sm text-sm leading-6 text-white/62">{mode.description}</p>
                     </div>
-
-                    <div className="min-h-[4.2rem] sm:min-h-[4.6rem]">
-                      <h3 className="text-[1.75rem] leading-[1.05] font-black uppercase tracking-[0.08em] text-white">
-                        {mode.title}
-                      </h3>
-                    </div>
-
-                    <div className="relative my-6 h-48 w-full overflow-hidden">
-                      <Image
-                        src={mode.imageSrc}
-                        alt={mode.title}
-                        fill
-                        className="object-contain"
-                        sizes="(min-width: 1024px) 28vw, 80vw"
-                      />
-                    </div>
-
-                    <p className="mt-auto max-w-sm text-sm leading-6 text-white/62">{mode.description}</p>
                   </div>
                 </button>
               );
             })}
+          </div>
+
+          <div className="mt-7 flex min-h-[5.5rem] items-start justify-center">
+            <button
+              type="button"
+              className="pixel-card group relative w-full max-w-[17rem] p-1 text-left focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-white/70 sm:max-w-[18rem] sm:p-[5px]"
+              style={{
+                opacity: showModes ? 1 : 0,
+                transform: showModes ? "translateY(0)" : "translateY(3rem)",
+                transitionDuration: `${SCENE_TRANSITION_MS}ms, ${SCENE_TRANSITION_MS}ms, 140ms, 140ms`,
+                transitionDelay: showModes
+                  ? `${WAKE_UP_DELAY_MS}ms, ${WAKE_UP_DELAY_MS}ms, 0ms, 0ms`
+                  : "0ms, 0ms, 0ms, 0ms",
+                transitionProperty: "transform, opacity, filter, background-color",
+                transitionTimingFunction: "cubic-bezier(0.16,1,0.3,1)",
+                backgroundColor: "#ffffff",
+                filter: "drop-shadow(8px 8px 0 rgba(0, 0, 0, 0.72))",
+              }}
+            >
+              <div className="pixel-card__shell relative overflow-hidden bg-[#050505] px-5 py-4 sm:px-6">
+                <div className="relative z-10 flex items-center justify-center gap-4 text-white">
+                  <span className="text-2xl font-black uppercase tracking-[0.18em]">
+                    Wake Up
+                  </span>
+                  <WakeUpGlyph />
+                </div>
+              </div>
+            </button>
           </div>
         </div>
       </div>
