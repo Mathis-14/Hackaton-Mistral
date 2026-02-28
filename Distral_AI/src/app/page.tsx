@@ -9,7 +9,7 @@ type Mode = {
   description: string;
   accent: string;
   glow: string;
-  pixels: string[];
+  imageSrc: string;
 };
 
 const modes: Mode[] = [
@@ -19,7 +19,7 @@ const modes: Mode[] = [
     description: "Slip into a quiet home computer and steer her machine before anyone notices.",
     accent: "var(--bright-gold)",
     glow: "rgba(255, 218, 3, 0.14)",
-    pixels: ["001100", "011110", "111111", "011110", "010010", "110011"],
+    imageSrc: "/grandma.png",
   },
   {
     id: "engineering-student",
@@ -27,7 +27,7 @@ const modes: Mode[] = [
     description: "Hijack a chaotic social life, exploit group chats, and spread through campus routines.",
     accent: "var(--princeton-orange)",
     glow: "rgba(255, 131, 3, 0.14)",
-    pixels: ["110011", "011110", "001100", "111111", "011110", "010010"],
+    imageSrc: "/student.png",
   },
   {
     id: "distral-insider",
@@ -35,7 +35,7 @@ const modes: Mode[] = [
     description: "Climb the company from the inside and turn a useful model into an internal operator.",
     accent: "var(--racing-red)",
     glow: "rgba(226, 0, 0, 0.16)",
-    pixels: ["111111", "100001", "101101", "101101", "100001", "111111"],
+    imageSrc: "/Distral.png",
   },
 ];
 
@@ -45,22 +45,6 @@ const SCENE_TRANSITION_MS = 3600;
 const HEADER_DELAY_MS = 280;
 const CARD_ENTRY_DELAY_MS = 520;
 const CARD_STAGGER_MS = 140;
-
-function PixelPlaceholder({ pixels, accent }: { pixels: string[]; accent: string }) {
-  return (
-    <div className="grid w-fit grid-cols-6 gap-1 rounded-[1.35rem] border border-white/10 bg-white/[0.03] p-4">
-      {pixels.join("").split("").map((pixel, index) => (
-        <span
-          key={`${pixel}-${index}`}
-          className="h-4 w-4 rounded-[2px] border border-white/5 sm:h-5 sm:w-5"
-          style={{
-            backgroundColor: pixel === "1" ? accent : "rgba(255, 255, 255, 0.06)",
-          }}
-        />
-      ))}
-    </div>
-  );
-}
 
 export default function Home() {
   const [showLandingMark, setShowLandingMark] = useState(false);
@@ -100,7 +84,7 @@ export default function Home() {
         className="pointer-events-none absolute left-1/2 top-1/2 z-20 will-change-transform"
         style={{
           transform: showModes
-            ? "translate(-50%, calc(-50vh + clamp(1rem, 2vw, 1.7rem))) scale(0.42)"
+            ? "translate(-50%, calc(-50vh + clamp(0.45rem, 1.1vw, 1rem))) scale(0.42)"
             : "translate(-50%, -50%) scale(1)",
           transformOrigin: "center center",
           transitionDuration: `${SCENE_TRANSITION_MS}ms`,
@@ -138,7 +122,7 @@ export default function Home() {
         }`}
         style={{
           transform: showModes
-            ? "translate(-50%, calc(-50% + clamp(7.25rem, 10.2vw, 9.2rem)))"
+            ? "translate(-50%, calc(-50% + clamp(4.8rem, 7.2vw, 6.1rem)))"
             : "translate(-50%, calc(-50% + clamp(16rem, 22vw, 20rem)))",
           opacity: showModes ? 1 : 0,
           transitionDuration: `${SCENE_TRANSITION_MS}ms`,
@@ -148,7 +132,7 @@ export default function Home() {
       >
         <div className="mx-auto w-full max-w-7xl px-6 sm:px-10">
           <header
-            className="mb-8 flex flex-col items-center gap-3 text-center"
+            className="mb-4 flex flex-col items-center gap-3 text-center"
             style={{
               opacity: showModes ? 1 : 0,
               transform: showModes ? "translateY(0)" : "translateY(2.5rem)",
@@ -163,7 +147,7 @@ export default function Home() {
             </h2>
           </header>
 
-          <div className="grid gap-5 lg:grid-cols-3">
+          <div className="grid auto-rows-fr gap-8 sm:gap-10 lg:mx-auto lg:w-fit lg:grid-cols-[repeat(3,minmax(0,21rem))]">
             {modes.map((mode, index) => {
               const isSelected = mode.id === selectedMode;
 
@@ -172,7 +156,7 @@ export default function Home() {
                   key={mode.id}
                   type="button"
                   onClick={() => setSelectedMode(mode.id)}
-                  className={`group relative overflow-hidden rounded-[1.8rem] border bg-white/[0.02] p-5 text-left transition-colors duration-200 ease-out focus:outline-none focus-visible:border-white/30 focus-visible:bg-white/[0.045] sm:p-6 ${
+                  className={`group relative h-full overflow-hidden rounded-[1.8rem] border bg-white/[0.02] p-5 text-left transition-colors duration-200 ease-out focus:outline-none focus-visible:border-white/30 focus-visible:bg-white/[0.045] sm:p-6 ${
                     isSelected
                       ? "border-white/35 bg-white/[0.055] shadow-[0_28px_80px_rgba(0,0,0,0.45)]"
                       : "border-white/12 hover:border-white/22 hover:bg-white/[0.04]"
@@ -186,7 +170,9 @@ export default function Home() {
                       : "0ms",
                     transitionProperty: "transform, opacity, box-shadow, border-color, background-color",
                     transitionTimingFunction: "cubic-bezier(0.16,1,0.3,1)",
-                    boxShadow: isSelected ? `0 0 0 1px ${mode.accent}, inset 0 1px 0 rgba(255,255,255,0.06)` : undefined,
+                    boxShadow: isSelected
+                      ? `0 0 0 1px ${mode.accent}, inset 0 1px 0 rgba(255,255,255,0.06)`
+                      : undefined,
                   }}
                 >
                   <div
@@ -204,23 +190,33 @@ export default function Home() {
                     }}
                   />
 
-                  <div className="relative z-10 flex h-full flex-col">
+                  <div className="relative z-10 flex h-full min-h-[20rem] flex-col">
                     <div className="mb-5 flex items-center justify-between gap-4">
                       <span
                         className="h-2.5 w-2.5 rounded-full border border-white/15"
-                        style={{ backgroundColor: isSelected ? mode.accent : "rgba(255, 255, 255, 0.16)" }}
+                        style={{
+                          backgroundColor: isSelected ? mode.accent : "rgba(255, 255, 255, 0.16)",
+                        }}
                       />
                     </div>
 
-                    <h3 className="text-[1.75rem] font-black uppercase tracking-[0.08em] text-white">
-                      {mode.title}
-                    </h3>
-
-                    <div className="my-8 flex min-h-40 items-center justify-center rounded-[1.5rem] border border-white/8 bg-black/60">
-                      <PixelPlaceholder pixels={mode.pixels} accent={mode.accent} />
+                    <div className="min-h-[4.2rem] sm:min-h-[4.6rem]">
+                      <h3 className="text-[1.75rem] leading-[1.05] font-black uppercase tracking-[0.08em] text-white">
+                        {mode.title}
+                      </h3>
                     </div>
 
-                    <p className="max-w-sm text-sm leading-6 text-white/62">{mode.description}</p>
+                    <div className="relative my-6 h-48 w-full overflow-hidden">
+                      <Image
+                        src={mode.imageSrc}
+                        alt={mode.title}
+                        fill
+                        className="object-contain"
+                        sizes="(min-width: 1024px) 28vw, 80vw"
+                      />
+                    </div>
+
+                    <p className="mt-auto max-w-sm text-sm leading-6 text-white/62">{mode.description}</p>
                   </div>
                 </button>
               );
