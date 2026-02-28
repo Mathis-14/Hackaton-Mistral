@@ -274,7 +274,13 @@ export default function DistralTab({ accent, openApps, onOpenApp, onCloseApp }: 
     <div className="relative flex h-full min-h-0 flex-col overflow-hidden border border-white/10 bg-[var(--carbon-black)]/90">
       <div
         id="vm-bounds"
-        className="pointer-events-none absolute bottom-[-200%] left-[-200%] right-[-200%] top-0"
+        className="pointer-events-none absolute"
+        style={{
+          top: 0,
+          bottom: "-300px",
+          left: "-200px",
+          right: "-200px",
+        }}
       />
       <div
         className="pointer-events-none absolute inset-0 bg-cover bg-center bg-no-repeat"
