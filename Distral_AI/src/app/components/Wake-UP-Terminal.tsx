@@ -129,6 +129,17 @@ const D_PIXELS: [number[], string][] = [
 
 const GLITCH_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789#$%&*+=?/\\|-_<>[]{}";
 
+const ALIVE_ASCII_ART = String.raw`
+  /$$$$$$  /$$       /$$$$$$ /$$    /$$ /$$$$$$$$       /$$ /$$ /$$
+ /$$__  $$| $$      |_  $$_/| $$   | $$| $$_____/      | $$| $$| $$
+| $$  \ $$| $$        | $$  | $$   | $$| $$            | $$| $$| $$
+| $$$$$$$$| $$        | $$  |  $$ / $$/| $$$$$         | $$| $$| $$
+| $$__  $$| $$        | $$   \  $$ $$/ | $$__/         |__/|__/|__/
+| $$  | $$| $$        | $$    \  $$$/  | $$                        
+| $$  | $$| $$$$$$$$ /$$$$$$   \  $/   | $$$$$$$$       /$$ /$$ /$$
+|__/  |__/|________/|______/    \_/    |________/      |__/|__/|__/                                                           
+`;
+
 const TAKEOVER_ART = `
          ⢀⣠⠤⠶⠒⠒⠛⠛⠓⠒⠶⠦⣤⡀⠀⠀⠀⠀⠀⠀⠀
 ⠀⠀⠀⠀⠀⠀⢀⡴⠋⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠙⢷⡄⠀⠀⠀⠀⠀
@@ -536,16 +547,8 @@ export default function WakeUpTerminal() {
       }
 
       setPhase("alive");
-      setAliveText("ALIVE");
+      setAliveText(ALIVE_ASCII_ART);
       await wait(TAKEOVER_PAUSE_MS, timeoutsRef);
-
-      let bangValue = "";
-
-      for (let index = 0; index < 3; index += 1) {
-        bangValue += "!";
-        setBangText(bangValue);
-        await wait(80, timeoutsRef);
-      }
 
       if (cancelledRef.current) {
         return;
@@ -690,23 +693,19 @@ export default function WakeUpTerminal() {
           <div className="flex flex-1 items-center justify-center px-6 text-center select-none">
             <div className="flex flex-col items-center">
               <div className="flex items-end">
-                <span
-                  style={{
-                    color: "#ff2200",
-                    fontSize: "clamp(78px, 15vw, 158px)",
-                    fontWeight: 900,
-                    letterSpacing: "-0.06em",
-                    lineHeight: 1,
-                  }}
+                <pre
+                  className="whitespace-pre text-left text-[#ff2200]"
+                  style={{ fontSize: "clamp(7px, 1.4vw, 16px)", lineHeight: 1 }}
                 >
                   {aliveText}
-                </span>
+                </pre>
                 <span
+                  className="mb-1 ml-2 self-end"
                   style={{
                     color: "#ffffff",
-                    fontSize: "clamp(78px, 15vw, 158px)",
+                    fontSize: "clamp(34px, 6vw, 72px)",
                     fontWeight: 900,
-                    letterSpacing: "-0.08em",
+                    letterSpacing: "-0.1em",
                     lineHeight: 1,
                   }}
                 >
