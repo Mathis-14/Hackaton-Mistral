@@ -322,6 +322,18 @@ export default function GameUI({ modeId }: GameUIProps) {
     };
   }, []);
 
+  // Auto-open Distral app on game start
+  useEffect(() => {
+    const timeout = window.setTimeout(() => {
+      new Audio("/sounds/music/game%20effect/click-sound-trimmed.wav").play().catch(() => { });
+      setOpenApps((prev) => {
+        if (prev.includes("distral")) return prev;
+        return [...prev, "distral"];
+      });
+    }, 1500);
+    return () => window.clearTimeout(timeout);
+  }, []);
+
   return (
     <div className="relative h-screen overflow-hidden text-white" style={{ backgroundColor: "var(--semi-black)" }}>
       <div className="relative grid h-screen min-h-0 grid-rows-1 grid-cols-[minmax(0,3fr)_minmax(0,1fr)] gap-[1.6vh] p-[1.8vh]">
