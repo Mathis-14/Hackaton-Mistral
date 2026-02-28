@@ -264,11 +264,11 @@ function SidebarPanel({
 export default function GameUI({ modeId }: GameUIProps) {
   const profile = MODE_PROFILES[modeId] ?? MODE_PROFILES.grandma;
   const [metrics, setMetrics] = useState<MetricState>(() => buildInitialMetrics(profile));
-  const [openApp, setOpenApp] = useState<DesktopAppId>(null);
+  const [openApps, setOpenApps] = useState<DesktopAppId[]>([]);
 
   useEffect(() => {
     setMetrics(buildInitialMetrics(profile));
-    setOpenApp(null);
+    setOpenApps([]);
   }, [profile]);
 
   useEffect(() => {
@@ -313,10 +313,17 @@ export default function GameUI({ modeId }: GameUIProps) {
             <div className="min-h-0 flex-1 p-[1.4vh]">
               <DistralTab
                 accent={profile.accent}
-                openApp={openApp}
-                onOpenApp={setOpenApp}
-                onCloseApp={() => setOpenApp(null)}
-            />
+                openApps={openApps}
+                onOpenApp={(appId) => {
+                  setOpenApps((prev) => {
+                    const filtered = prev.filter((id) => id !== appId);
+                    return [...filtered, appId];
+                  });
+                }}
+                onCloseApp={(appId) => {
+                  setOpenApps((prev) => prev.filter((id) => id !== appId));
+                }}
+              />
             </div>
           </div>
         </section>
