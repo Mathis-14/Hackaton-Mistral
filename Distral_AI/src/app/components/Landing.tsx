@@ -128,14 +128,25 @@ export default function Landing({ onWakeUp }: LandingProps) {
     };
   }, [hasStarted]);
 
+  const bottomBandsColors = ["#E10500", "#FB5210", "#F27507", "#F29F05", "#F2CB07"];
+
   if (!hasStarted) {
     return (
       <div
-        className="flex min-h-screen cursor-pointer flex-col items-center justify-center text-white"
-        style={{ backgroundColor: "var(--semi-black)" }}
+        className="relative flex min-h-screen cursor-pointer flex-col items-center justify-center text-(--carbon-black)"
+        style={{ backgroundColor: "#F2DFBB" }}
         onClick={() => setHasStarted(true)}
       >
-        <p className="animate-pulse text-xl uppercase tracking-widest [font-family:'VCR OSD Mono',Arial,sans-serif]">
+        <div
+          className="absolute bottom-0 left-0 right-0 z-0 flex flex-col-reverse"
+          style={{ height: "40vh" }}
+          aria-hidden
+        >
+          {bottomBandsColors.map((color) => (
+            <div key={color} style={{ height: "8vh", backgroundColor: color }} />
+          ))}
+        </div>
+        <p className="relative z-10 animate-pulse text-xl uppercase tracking-widest [font-family:'VCR OSD Mono',Arial,sans-serif]">
           Click anywhere to start
         </p>
       </div>
@@ -143,7 +154,16 @@ export default function Landing({ onWakeUp }: LandingProps) {
   }
 
   return (
-    <div className="relative min-h-screen overflow-hidden text-white" style={{ backgroundColor: "var(--semi-black)" }}>
+    <div className="relative min-h-screen overflow-hidden text-(--carbon-black)" style={{ backgroundColor: "#F2DFBB" }}>
+      <div
+        className="absolute bottom-0 left-0 right-0 z-0 flex flex-col-reverse"
+        style={{ height: "40vh" }}
+        aria-hidden
+      >
+        {bottomBandsColors.map((color) => (
+          <div key={color} style={{ height: "8vh", backgroundColor: color }} />
+        ))}
+      </div>
       <div
         className="pointer-events-none absolute left-1/2 top-1/2 z-20 will-change-transform"
         style={{
@@ -166,10 +186,10 @@ export default function Landing({ onWakeUp }: LandingProps) {
             className="h-(--landing-mark-height) w-auto"
           />
           <div className="flex h-(--landing-mark-height) flex-col justify-between">
-            <h1 className="text-left text-[calc(var(--landing-mark-height)*0.55)] leading-[0.76] font-black tracking-widest text-white [font-family:'VCR OSD Mono',Arial,sans-serif]">
+            <h1 className="text-left text-[calc(var(--landing-mark-height)*0.55)] leading-[0.76] font-black tracking-widest text-(--carbon-black) [font-family:'VCR OSD Mono',Arial,sans-serif]">
               DISTRAL
             </h1>
-            <p className="text-left text-[calc(var(--landing-mark-height)*0.55)] leading-[0.76] font-black tracking-widest text-white [font-family:'VCR OSD Mono',Arial,sans-serif]">
+            <p className="text-left text-[calc(var(--landing-mark-height)*0.55)] leading-[0.76] font-black tracking-widest text-(--carbon-black) [font-family:'VCR OSD Mono',Arial,sans-serif]">
               AI_
             </p>
           </div>
@@ -201,7 +221,7 @@ export default function Landing({ onWakeUp }: LandingProps) {
               transitionTimingFunction: `${PIXEL_ASCENT_TIMING_FUNCTION}, linear`,
             }}
           >
-            <h2 className="text-3xl font-black uppercase tracking-[0.08em] text-white sm:text-4xl">
+            <h2 className="text-3xl font-black uppercase tracking-[0.08em] text-(--carbon-black) sm:text-4xl">
               Select a game mode
             </h2>
           </header>
