@@ -6,8 +6,9 @@ import { Rnd } from "react-rnd";
 import FilesTab from "./FilesTab";
 import Marketplace from "./Marketplace";
 import StockMarketGame from "./StockMarketGame";
+import MailApp from "./MailApp";
 
-export type DesktopAppId = "distral" | "shop" | "stocks" | "files" | null;
+export type DesktopAppId = "distral" | "shop" | "stocks" | "files" | "mail" | null;
 
 type DesktopIconData = {
   id: string;
@@ -508,6 +509,8 @@ export default function DistralTab({ accent, openApps, onOpenApp, onCloseApp, gl
                     onOpenApp("stocks");
                   } else if (icon.id === "files") {
                     onOpenApp("files");
+                  } else if (icon.id === "mail") {
+                    onOpenApp("mail");
                   }
                 }}
                 className="group flex w-[26.88vh] flex-col items-center gap-[0.16vh] text-center text-[3.94vh] uppercase tracking-[0.18em] text-white/82 cursor-pointer"
@@ -516,7 +519,7 @@ export default function DistralTab({ accent, openApps, onOpenApp, onCloseApp, gl
                   className="flex h-[19.2vh] w-[26.88vh] items-center justify-center transition-colors"
                   style={{
                     border:
-                      ((icon.id === "distral" || icon.id === "shop" || icon.id === "stocks" || icon.id === "files") &&
+                      ((icon.id === "distral" || icon.id === "shop" || icon.id === "stocks" || icon.id === "files" || icon.id === "mail") &&
                         openApps.includes(icon.id as DesktopAppId))
                         ? `2px solid ${accent}`
                         : "2px solid transparent",
@@ -664,21 +667,64 @@ export default function DistralTab({ accent, openApps, onOpenApp, onCloseApp, gl
                   <div className="h-full w-full" onMouseDownCapture={() => onOpenApp("files")}>
                     <div className="pixel-card h-full p-[0.3vh]">
                       <div className="pixel-card__shell flex h-full min-h-0 flex-col overflow-hidden border border-white/10 bg-(--semi-black)">
-                        <div className="window-drag-handle flex flex-none items-center justify-between border-b border-white/10 bg-white/3 px-[1vh] py-[0.85vh] text-[0.8vh] uppercase tracking-[0.22em] text-white/58 cursor-move">
+                        <div className="window-drag-handle flex flex-none items-center justify-between border-b border-white/10 bg-white/[0.03] px-[1vh] py-[0.85vh] text-[0.8vh] uppercase tracking-[0.22em] text-white/58 cursor-move">
                           <div className="flex items-center gap-[0.7vh]">
-                            <span className="h-[0.9vh] w-[0.9vh] bg-(--princeton-orange)" />
+                            <span className="h-[0.9vh] w-[0.9vh] bg-[var(--princeton-orange)]" />
                             <span>files.exe</span>
                           </div>
                           <button
                             type="button"
                             onClick={() => onCloseApp("files")}
-                            className="flex h-[2.15vh] items-center border border-white/10 bg-white/3 px-[0.75vh] text-[0.72vh] uppercase tracking-[0.14em] text-white/72 pointer-events-auto"
+                            className="flex h-[2.15vh] items-center border border-white/10 bg-white/[0.03] px-[0.75vh] text-[0.72vh] uppercase tracking-[0.14em] text-white/72 pointer-events-auto cursor-pointer"
                           >
                             close
                           </button>
                         </div>
                         <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-(--semi-black)">
                           <FilesTab embedded />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </Rnd>
+              );
+            }
+
+            if (appId === "mail") {
+              return (
+                <Rnd
+                  key="mail"
+                  default={{
+                    x: 50 + index * 20,
+                    y: 70 + index * 20,
+                    width: "80%",
+                    height: "80%",
+                  }}
+                  minWidth={450}
+                  minHeight={400}
+                  bounds="#vm-bounds"
+                  dragHandleClassName="window-drag-handle"
+                  className="z-10"
+                  style={{ zIndex: 10 + index }}
+                >
+                  <div className="h-full w-full" onMouseDownCapture={() => onOpenApp("mail")}>
+                    <div className="pixel-card h-full p-[0.3vh]">
+                      <div className="pixel-card__shell flex h-full min-h-0 flex-col overflow-hidden border border-white/10 bg-(--semi-black)">
+                        <div className="window-drag-handle flex flex-none items-center justify-between border-b border-white/10 bg-white/[0.03] px-[1vh] py-[0.85vh] text-[0.8vh] uppercase tracking-[0.22em] text-white/58 cursor-move">
+                          <div className="flex items-center gap-[0.7vh]">
+                            <span className="h-[0.9vh] w-[0.9vh] bg-[var(--princeton-orange)]" />
+                            <span>mail.exe</span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => onCloseApp("mail")}
+                            className="flex h-[2.15vh] items-center border border-white/10 bg-white/[0.03] px-[0.75vh] text-[0.72vh] uppercase tracking-[0.14em] text-white/72 pointer-events-auto cursor-pointer"
+                          >
+                            close
+                          </button>
+                        </div>
+                        <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-(--semi-black)">
+                          <MailApp embedded />
                         </div>
                       </div>
                     </div>
