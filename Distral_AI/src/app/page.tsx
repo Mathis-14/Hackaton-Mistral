@@ -13,7 +13,7 @@ export default function Home() {
   const [showGame, setShowGame] = useState(false);
 
   return (
-    <main className="relative min-h-screen overflow-hidden bg-black">
+    <main className="relative min-h-screen overflow-hidden" style={{ backgroundColor: "var(--semi-black)" }}>
       <div
         className={`absolute inset-0 transition-opacity ease-out ${
           showTerminal ? "pointer-events-none opacity-0" : "opacity-100"

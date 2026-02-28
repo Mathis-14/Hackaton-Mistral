@@ -14,7 +14,6 @@ type MetricState = {
   awareness: number;
   btcBalance: number;
   btcDelta: number;
-  btcHistory: number[];
 };
 
 type ProfileData = {
@@ -40,7 +39,11 @@ type DesktopIconData = {
 const POSITIVE_MARKET_COLOR = "#70e000";
 const NEGATIVE_MARKET_COLOR = "var(--racing-red)";
 const AWARENESS_COLOR = "var(--amber-flame)";
-const PIXEL_CURVE_ROWS = 4;
+const PROGRESS_BAR_WIDTH = 46;
+const PROGRESS_BAR_HEIGHT = 7;
+const PROGRESS_PIXEL_STEP_X = 10;
+const PROGRESS_PIXEL_DRAW_WIDTH = 7;
+const PROGRESS_PIXEL_DRAW_HEIGHT = 10;
 
 const MODE_PROFILES: Record<string, ProfileData> = {
   grandma: {
@@ -134,82 +137,101 @@ function formatBtc(value: number) {
   return `${value.toFixed(3)} BTC`;
 }
 
-function buildPixelCurve(values: number[], rows: number) {
-  const columns = Math.max(values.length, 1);
-  const cells = Array.from({ length: rows }, () => Array<string | null>(columns).fill(null));
-
-  if (values.length === 0) {
-    return { columns, rows, cells };
-  }
-
-  const minimum = Math.min(...values);
-  const maximum = Math.max(...values);
-  const points = values.map((value, index) => {
-    const ratio = maximum === minimum ? 0.5 : (value - minimum) / (maximum - minimum);
-
-    return {
-      value,
-      x: index,
-      y: rows - 1 - Math.round(ratio * (rows - 1)),
-    };
-  });
-
-  points.forEach((point, index) => {
-    const nextPoint = points[index + 1];
-    const previousPoint = points[index - 1];
-    const color =
-      nextPoint?.value !== undefined
-        ? nextPoint.value >= point.value
-          ? POSITIVE_MARKET_COLOR
-          : NEGATIVE_MARKET_COLOR
-        : point.value >= (previousPoint?.value ?? point.value)
-          ? POSITIVE_MARKET_COLOR
-          : NEGATIVE_MARKET_COLOR;
-
-    cells[point.y][point.x] = color;
-
-    if (!nextPoint) {
-      return;
-    }
-
-    const deltaX = nextPoint.x - point.x;
-    let previousY = point.y;
-
-    for (let step = 1; step <= deltaX; step += 1) {
-      const x = point.x + step;
-      const progress = step / deltaX;
-      const y = Math.round(point.y + (nextPoint.y - point.y) * progress);
-      const fromY = Math.min(previousY, y);
-      const toY = Math.max(previousY, y);
-
-      for (let fillY = fromY; fillY <= toY; fillY += 1) {
-        cells[fillY][x] = color;
-      }
-
-      previousY = y;
-    }
-  });
-
-  return { columns, rows, cells };
-}
-
 function buildInitialMetrics(profile: ProfileData): MetricState {
-  const history = Array.from({ length: 16 }, (_, index) =>
-    Number((profile.btcBalance + (index - 8) * 0.0026).toFixed(3)),
-  );
-
   return {
     efficiency: profile.efficiency,
     suspicion: profile.suspicion,
     awareness: profile.awareness,
     btcBalance: profile.btcBalance,
     btcDelta: 0,
-    btcHistory: history,
   };
 }
 
 function Separator() {
   return <div className="my-[1.2vh] h-px bg-white/10" />;
+}
+
+function buildProgressHolderPixels() {
+  const pixels: Array<{ x: number; y: number }> = [];
+
+  for (let x = 2; x <= PROGRESS_BAR_WIDTH - 3; x += 1) {
+    pixels.push({ x, y: 0 });
+    pixels.push({ x, y: PROGRESS_BAR_HEIGHT - 1 });
+  }
+
+  pixels.push({ x: 1, y: 1 });
+  pixels.push({ x: PROGRESS_BAR_WIDTH - 2, y: 1 });
+  pixels.push({ x: 1, y: PROGRESS_BAR_HEIGHT - 2 });
+  pixels.push({ x: PROGRESS_BAR_WIDTH - 2, y: PROGRESS_BAR_HEIGHT - 2 });
+
+  for (let y = 2; y <= PROGRESS_BAR_HEIGHT - 3; y += 1) {
+    pixels.push({ x: 0, y });
+    pixels.push({ x: PROGRESS_BAR_WIDTH - 1, y });
+  }
+
+  return pixels;
+}
+
+function buildProgressFillPixels(value: number) {
+  const clampedValue = clamp(value, 0, 100);
+  const centerY = 3;
+  const topY = 2;
+  const bottomY = 4;
+  const leftTipX = 1;
+  const rightTipX = PROGRESS_BAR_WIDTH - 2;
+  const bodyStartX = 2;
+  const bodyEndX = PROGRESS_BAR_WIDTH - 3;
+  const bodyColumns = bodyEndX - bodyStartX + 1;
+  const pixelMap = new Map<string, { x: number; y: number }>();
+
+  if (clampedValue <= 0) {
+    return [];
+  }
+
+  const pushPixel = (x: number, y: number) => {
+    pixelMap.set(`${x}-${y}`, { x, y });
+  };
+
+  // Left extremity: single central pixel.
+  pushPixel(leftTipX, centerY);
+
+  if (clampedValue <= 10) {
+    return [...pixelMap.values()];
+  }
+
+  const bodyProgress = ((clampedValue - 10) / 90) * bodyColumns;
+  const fullColumns = Math.floor(bodyProgress);
+  const partialProgress = bodyProgress - fullColumns;
+  const clampedFullColumns = Math.min(fullColumns, bodyColumns);
+
+  for (let column = 0; column < clampedFullColumns; column += 1) {
+    const x = bodyStartX + column;
+    pushPixel(x, topY);
+    pushPixel(x, centerY);
+    pushPixel(x, bottomY);
+  }
+
+  if (clampedFullColumns < bodyColumns && partialProgress > 0) {
+    const x = bodyStartX + clampedFullColumns;
+
+    // Partial growth: middle first, then bottom, then top.
+    pushPixel(x, centerY);
+
+    if (partialProgress > 0.34) {
+      pushPixel(x, bottomY);
+    }
+
+    if (partialProgress > 0.67) {
+      pushPixel(x, topY);
+    }
+  }
+
+  if (clampedValue >= 100) {
+    // Right extremity: single central pixel at full value.
+    pushPixel(rightTipX, centerY);
+  }
+
+  return [...pixelMap.values()];
 }
 
 function PixelMeter({
@@ -221,8 +243,8 @@ function PixelMeter({
   value: number;
   accent: string;
 }) {
-  const segments = 20;
-  const filled = Math.round((value / 100) * segments);
+  const holderPixels = buildProgressHolderPixels();
+  const fillPixels = buildProgressFillPixels(value);
 
   return (
     <div className="space-y-[0.55vh]">
@@ -231,47 +253,35 @@ function PixelMeter({
         <span style={{ color: accent }}>{formatPercent(value)}</span>
       </div>
 
-      <div className="grid grid-cols-10 gap-[0.35vh]">
-        {Array.from({ length: segments }, (_, index) => (
-          <span
-            key={`${label}-${index}`}
-            className="h-[1.45vh] border border-white/10 bg-black"
-            style={{
-              backgroundColor: index < filled ? accent : "#050505",
-              boxShadow: index < filled ? `inset 0 0 0 1px rgba(255,255,255,0.14)` : "none",
-            }}
+      <svg
+        viewBox={`0 0 ${PROGRESS_BAR_WIDTH * PROGRESS_PIXEL_STEP_X} ${PROGRESS_BAR_HEIGHT * PROGRESS_PIXEL_DRAW_HEIGHT}`}
+        className="h-[2.35vh] w-full"
+        preserveAspectRatio="none"
+        shapeRendering="crispEdges"
+        aria-hidden="true"
+      >
+        {holderPixels.map((pixel) => (
+          <rect
+            key={`holder-${label}-${pixel.x}-${pixel.y}`}
+            x={pixel.x * PROGRESS_PIXEL_STEP_X}
+            y={pixel.y * PROGRESS_PIXEL_DRAW_HEIGHT}
+            width={PROGRESS_PIXEL_DRAW_WIDTH}
+            height={PROGRESS_PIXEL_DRAW_HEIGHT}
+            fill="rgba(255,255,255,0.26)"
           />
         ))}
-      </div>
-    </div>
-  );
-}
 
-function PixelCurveChart({ values }: { values: number[] }) {
-  const { columns, rows, cells } = buildPixelCurve(values, PIXEL_CURVE_ROWS);
-
-  return (
-    <div className="mt-[1vh] border border-white/10 bg-black/60 p-[0.45vh]">
-      <div
-        className="grid h-[7.5vh] w-full gap-[0.12vh]"
-        style={{
-          gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))`,
-          gridTemplateRows: `repeat(${rows}, minmax(0, 1fr))`,
-        }}
-      >
-        {cells.flatMap((row, rowIndex) =>
-          row.map((cellColor, columnIndex) => (
-            <span
-              key={`${rowIndex}-${columnIndex}`}
-              className="border border-white/[0.04] bg-white/[0.02]"
-              style={{
-                backgroundColor: cellColor ?? "rgba(255,255,255,0.02)",
-                boxShadow: cellColor ? "inset 0 0 0 1px rgba(255,255,255,0.14)" : "none",
-              }}
-            />
-          )),
-        )}
-      </div>
+        {fillPixels.map((pixel) => (
+          <rect
+            key={`fill-${label}-${pixel.x}-${pixel.y}`}
+            x={pixel.x * PROGRESS_PIXEL_STEP_X}
+            y={pixel.y * PROGRESS_PIXEL_DRAW_HEIGHT}
+            width={PROGRESS_PIXEL_DRAW_WIDTH}
+            height={PROGRESS_PIXEL_DRAW_HEIGHT}
+            fill={accent}
+          />
+        ))}
+      </svg>
     </div>
   );
 }
@@ -319,7 +329,7 @@ function DesktopTab({
   profile: ProfileData;
 }) {
   return (
-    <div className="relative flex h-full min-h-0 flex-col overflow-hidden border border-white/10 bg-black/55">
+    <div className="relative flex h-full min-h-0 flex-col overflow-hidden border border-white/10 bg-[var(--carbon-black)]/90">
       <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.04)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.04)_1px,transparent_1px)] bg-[size:22px_22px]" />
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_18%,rgba(255,255,255,0.08),transparent_22%),radial-gradient(circle_at_78%_24%,rgba(255,255,255,0.04),transparent_24%)]" />
 
@@ -335,7 +345,7 @@ function DesktopTab({
               <button
                 key={icon.id}
                 type="button"
-                className="flex min-h-0 h-[9.2vh] flex-col items-center justify-center gap-[0.6vh] border border-white/10 bg-black/60 px-[0.5vh] py-[0.8vh] text-center text-[0.78vh] uppercase tracking-[0.16em] leading-[1.15] text-white/82 transition-colors hover:bg-white/6"
+                className="flex min-h-0 h-[9.2vh] flex-col items-center justify-center gap-[0.6vh] border border-white/10 bg-[var(--carbon-black)] px-[0.5vh] py-[0.8vh] text-center text-[0.78vh] uppercase tracking-[0.16em] leading-[1.15] text-white/82 transition-colors hover:bg-white/6"
               >
                 <DesktopGlyph cells={icon.cells} accent={accent} />
                 <span>{icon.label}</span>
@@ -345,7 +355,7 @@ function DesktopTab({
 
           <div className="grid h-full min-h-0 gap-[1vh] xl:grid-cols-[minmax(0,1.35fr)_minmax(14rem,0.95fr)]">
             <div className="pixel-card p-1">
-              <div className="pixel-card__shell flex h-full min-h-0 flex-col border border-white/10 bg-black/80 p-[1.2vh]">
+              <div className="pixel-card__shell flex h-full min-h-0 flex-col border border-white/10 bg-[var(--carbon-black)] p-[1.2vh]">
                 <div className="mb-[1vh] flex flex-none items-center justify-between border-b border-white/10 pb-[1vh]">
                   <div>
                     <div className="text-[1.15vh] uppercase tracking-[0.2em] text-white">Session Notes</div>
@@ -379,7 +389,7 @@ function DesktopTab({
 
             <div className="grid h-full min-h-0 gap-[1vh] [grid-template-rows:repeat(2,minmax(0,1fr))]">
               <div className="pixel-card p-1">
-                <div className="pixel-card__shell h-full overflow-hidden border border-white/10 bg-black/80 p-[1.1vh]">
+                <div className="pixel-card__shell h-full overflow-hidden border border-white/10 bg-[var(--carbon-black)] p-[1.1vh]">
                   <div className="mb-[0.8vh] text-[0.84vh] uppercase tracking-[0.28em] text-white/45">
                     Mail Preview
                   </div>
@@ -399,7 +409,7 @@ function DesktopTab({
               </div>
 
               <div className="pixel-card p-1">
-                <div className="pixel-card__shell h-full overflow-hidden border border-white/10 bg-black/80 p-[1.1vh]">
+                <div className="pixel-card__shell h-full overflow-hidden border border-white/10 bg-[var(--carbon-black)] p-[1.1vh]">
                   <div className="mb-[0.8vh] text-[0.84vh] uppercase tracking-[0.28em] text-white/45">
                     Open Processes
                   </div>
@@ -435,7 +445,7 @@ function AgentTab({
   profile: ProfileData;
 }) {
   return (
-    <div className="relative flex h-full min-h-0 flex-col overflow-hidden border border-white/10 bg-[#020202]">
+    <div className="relative flex h-full min-h-0 flex-col overflow-hidden border border-white/10 bg-[var(--carbon-black)]">
       <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.05),transparent_18%,transparent_82%,rgba(255,255,255,0.03))]" />
       <div className="relative flex h-full min-h-0 flex-col">
         <div className="flex flex-none items-center justify-between border-b border-white/10 px-[1.3vh] py-[1.1vh] text-[0.92vh] uppercase tracking-[0.24em] text-white/55">
@@ -444,7 +454,7 @@ function AgentTab({
         </div>
 
         <div className="grid min-h-0 flex-1 gap-[1vh] p-[1.2vh] xl:grid-cols-[minmax(0,1.2fr)_minmax(14rem,0.8fr)]">
-          <div className="flex min-h-0 flex-col justify-between border border-white/10 bg-black/45 p-[1.4vh]">
+          <div className="flex min-h-0 flex-col justify-between border border-white/10 bg-[var(--carbon-black)]/80 p-[1.4vh]">
             <div>
               <div className="mb-[0.8vh] text-[0.84vh] uppercase tracking-[0.3em] text-white/40">
                 Distral Agent
@@ -481,7 +491,7 @@ function AgentTab({
               </button>
               <button
                 type="button"
-                className="border border-white/12 bg-black px-[1.4vh] py-[1vh] text-[0.92vh] uppercase tracking-[0.2em] text-white/82"
+                className="border border-white/12 bg-[var(--carbon-black)] px-[1.4vh] py-[1vh] text-[0.92vh] uppercase tracking-[0.2em] text-white/82"
               >
                 Read protocol
               </button>
@@ -489,7 +499,7 @@ function AgentTab({
           </div>
 
           <div className="pixel-card p-1">
-            <div className="pixel-card__shell flex h-full min-h-0 flex-col border border-white/10 bg-black/85 p-[1.2vh]">
+            <div className="pixel-card__shell flex h-full min-h-0 flex-col border border-white/10 bg-[var(--carbon-black)] p-[1.2vh]">
               <div className="mb-[1vh] flex flex-none items-center justify-between border-b border-white/10 pb-[1vh]">
                 <div className="text-[0.84vh] uppercase tracking-[0.28em] text-white/45">
                   Agent Preview
@@ -516,7 +526,7 @@ function AgentTab({
                 </div>
               </div>
 
-              <div className="mt-[1.2vh] border border-white/10 bg-black px-[1vh] py-[1vh] text-[0.88vh] uppercase tracking-[0.18em] text-white/38">
+              <div className="mt-[1.2vh] border border-white/10 bg-[var(--carbon-black)] px-[1vh] py-[1vh] text-[0.88vh] uppercase tracking-[0.18em] text-white/38">
                 type a request...
               </div>
             </div>
@@ -549,7 +559,6 @@ export default function GameUI({ modeId }: GameUIProps) {
           awareness: nudgePercent(current.awareness, 12, 96, 10),
           btcBalance,
           btcDelta,
-          btcHistory: [...current.btcHistory.slice(-15), btcBalance],
         };
       });
     }, 1500);
@@ -562,12 +571,12 @@ export default function GameUI({ modeId }: GameUIProps) {
   const marketColor = metrics.btcDelta < 0 ? NEGATIVE_MARKET_COLOR : POSITIVE_MARKET_COLOR;
 
   return (
-    <div className="relative h-screen overflow-hidden bg-black text-white">
+    <div className="relative h-screen overflow-hidden text-white" style={{ backgroundColor: "var(--semi-black)" }}>
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_16%_16%,rgba(255,255,255,0.06),transparent_26%),radial-gradient(circle_at_84%_20%,rgba(255,255,255,0.04),transparent_20%),linear-gradient(180deg,rgba(255,255,255,0.03),transparent_22%,transparent_78%,rgba(255,255,255,0.03))]" />
 
       <div className="relative grid h-screen min-h-0 grid-rows-1 grid-cols-[minmax(0,3fr)_minmax(0,1fr)] gap-[1.6vh] p-[1.8vh]">
         <section className="pixel-card h-full min-h-0 p-[0.35vh]">
-          <div className="pixel-card__shell flex h-full min-h-0 flex-col overflow-hidden border border-white/10 bg-[#050505]">
+          <div className="pixel-card__shell flex h-full min-h-0 flex-col overflow-hidden border border-white/10 bg-[var(--carbon-black)]">
             <div className="flex flex-none flex-wrap items-center justify-between gap-[1vh] border-b border-white/10 px-[1.6vh] py-[1.35vh]">
               <div>
                 <div className="text-[0.92vh] uppercase tracking-[0.3em] text-white/42">
@@ -592,7 +601,7 @@ export default function GameUI({ modeId }: GameUIProps) {
                       onClick={() => setActiveTab(tabId)}
                       className="border px-[1.3vh] py-[0.85vh] text-[0.94vh] uppercase tracking-[0.24em] transition-colors"
                       style={{
-                        backgroundColor: isActive ? profile.accent : "#050505",
+                        backgroundColor: isActive ? profile.accent : "var(--carbon-black)",
                         borderColor: isActive ? profile.accent : "rgba(255,255,255,0.14)",
                         color: isActive ? "#000000" : "rgba(255,255,255,0.78)",
                       }}
@@ -615,7 +624,7 @@ export default function GameUI({ modeId }: GameUIProps) {
         </section>
 
         <aside className="pixel-card h-full min-h-0 p-[0.35vh]">
-          <div className="pixel-card__shell flex h-full min-h-0 flex-col overflow-hidden border border-white/10 bg-[#050505] p-[1.6vh]">
+          <div className="pixel-card__shell flex h-full min-h-0 flex-col overflow-hidden border border-white/10 bg-[var(--carbon-black)] p-[1.6vh]">
             <div className="mb-[0.35vh] text-[0.92vh] uppercase tracking-[0.32em] text-white/42">
               Telemetry
             </div>
@@ -625,7 +634,6 @@ export default function GameUI({ modeId }: GameUIProps) {
 
             <SidebarPanel title="Status">
               <div className="space-y-[1vh]">
-                <PixelMeter label="Efficiency" value={metrics.efficiency} accent={profile.accent} />
                 <PixelMeter label="Suspicion" value={metrics.suspicion} accent="var(--racing-red)" />
               </div>
             </SidebarPanel>
@@ -650,8 +658,6 @@ export default function GameUI({ modeId }: GameUIProps) {
                   {metrics.btcDelta.toFixed(3)}
                 </div>
               </div>
-
-              <PixelCurveChart values={metrics.btcHistory} />
             </SidebarPanel>
 
             <Separator />

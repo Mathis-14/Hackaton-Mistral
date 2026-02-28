@@ -631,10 +631,10 @@ export default function WakeUpTerminal({ onComplete }: WakeUpTerminalProps) {
       <style dangerouslySetInnerHTML={{ __html: TERMINAL_CSS }} />
 
       <div
-        className={`flex min-h-screen flex-col overflow-hidden bg-[#161616] text-[13px] text-[#d4d4d4] sm:text-sm ${
+        className={`flex min-h-screen flex-col overflow-hidden text-[13px] text-[#d4d4d4] sm:text-sm ${
           shaking ? "wake-terminal-shake" : ""
         } [font-family:'VCR OSD Mono',Arial,sans-serif]`}
-        style={{ backgroundColor: flickerBg ?? (isBlackout ? "#000000" : "#161616") }}
+        style={{ backgroundColor: flickerBg ?? (isBlackout ? "var(--semi-black)" : "var(--carbon-black)") }}
       >
         {!isBlackout ? (
           <>
@@ -698,7 +698,7 @@ export default function WakeUpTerminal({ onComplete }: WakeUpTerminalProps) {
             </div>
 
             <div className="shrink-0 border-t border-white/10 px-4 py-3 sm:px-5">
-              <div className="flex items-center rounded border border-white/15 bg-black/30 px-3 py-2">
+              <div className="flex items-center rounded border border-white/15 bg-[var(--carbon-black)]/70 px-3 py-2">
                 <span className="text-[#ffaf00]">&gt;</span>
                 {showCursor && phase === "idle" ? (
                   <span className="ml-1 text-[#ffaf00] wake-terminal-blink">█</span>

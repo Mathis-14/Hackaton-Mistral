@@ -9,7 +9,9 @@
 
 :root {
   color-scheme: dark;
-  --bright-gold: #ffda03;
+  --carbon-black: #18181b;
+  --semi-black: #121212;
+  --bright-gold: #FFDA03ff;
   --amber-flame: #ffb103;
   --princeton-orange: #ff8303;
   --crimson-carrot: #fb4f08;
@@ -27,7 +29,7 @@ html {
 body {
   min-height: 100vh;
   margin: 0;
-  background: #000;
+  background: var(--semi-black);
   color: #fff;
   font-family: "VCR OSD Mono", Arial, sans-serif;
   user-select: none;
@@ -78,7 +80,7 @@ button {
 .pixel-card__shell {
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0) 18%),
-    #070707;
+    var(--carbon-black);
 }
 
 @media (max-width: 640px) {
