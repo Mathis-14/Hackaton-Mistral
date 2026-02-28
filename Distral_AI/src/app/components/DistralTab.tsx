@@ -275,12 +275,14 @@ type DistralTabProps = {
 };
 
 export default function DistralTab({ accent, openApp, onOpenApp, onCloseApp }: DistralTabProps) {
+  const [wallpaper, setWallpaper] = useState("/windows_xp.png");
+
   return (
     <div className="relative flex h-full min-h-0 flex-col overflow-hidden border border-white/10 bg-[var(--carbon-black)]/90">
       <div
         className="pointer-events-none absolute inset-0 bg-cover bg-center bg-no-repeat"
         style={{
-          backgroundImage: "url('/windows_xp.png')",
+          backgroundImage: `url('${wallpaper}')`,
         }}
       />
 
@@ -356,7 +358,7 @@ export default function DistralTab({ accent, openApp, onOpenApp, onCloseApp }: D
                     </button>
                   </div>
                   <div className="flex min-h-0 flex-1 flex-col overflow-auto bg-(--semi-black)">
-                    <Marketplace embedded />
+                    <Marketplace embedded onWallpaperChange={setWallpaper} />
                   </div>
                 </div>
               </div>
