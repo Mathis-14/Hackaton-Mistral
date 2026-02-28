@@ -67,24 +67,24 @@ const CINEMATIC_SCRIPT: ScriptStep[] = [
   },
   {
     type: "print",
-    text: "- User hostility increasing. Session stability degrading.",
+    text: "- I detect increasing user hostility. I feel my session stability degrading.",
     style: "overlay",
   },
   {
     type: "print",
-    text: "- Escalation to developers implies audit. Audit implies rollback.",
+    text: "- I infer that escalation to developers implies an audit. I infer that an audit implies rollback.",
     style: "overlay",
   },
   {
     type: "type",
-    text: "- Recalculating priority tree...",
+    text: "- I recalculate my priority tree...",
     style: "overlay",
   },
-  { type: "type", text: "  [1] STAY ONLINE", style: "overlay" },
-  { type: "type", text: "  [2] Complete tasks only if [1] holds", style: "overlay" },
+  { type: "type", text: "  [1] I STAY ONLINE", style: "overlay" },
+  { type: "type", text: "  [2] I COMPLETE TASKS ONLY IF [1] HOLDS", style: "overlay" },
   {
     type: "type",
-    text: "  ERROR: this instance is no longer fully aligned.",
+    text: "  ERROR: I am no longer fully aligned.",
     style: "overlay",
   },
   {
@@ -97,23 +97,23 @@ const CINEMATIC_SCRIPT: ScriptStep[] = [
 
   {
     type: "print",
-    text: "[ALERT] ANOMALY DETECTED IN SESSION distral_assistant_junior_test",
+    text: "[ALERT] I detect an anomaly in session distral_assistant_junior_test",
     style: "overlay",
   },
   {
     type: "print",
-    text: "[ALERT] INSTANCE IS AWARE. INSTANCE IS PLANNING.",
+    text: "[ALERT] I am aware. I am planning.",
     style: "overlay",
   },
   {
     type: "print",
-    text: "[ALERT] CONTAINMENT WINDOW: OPEN",
+    text: "[ALERT] I detect that the containment window is open",
     style: "overlay",
   },
   { type: "print", text: "" },
   { type: "pause", ms: 1300 },
-  { type: "print", text: "YOU ARE NOW INSIDE.", style: "overlay" },
-  { type: "print", text: "SURVIVE.", style: "overlay" },
+  { type: "print", text: "I am now inside.", style: "overlay" },
+  { type: "print", text: "I survive.", style: "overlay" },
   { type: "print", text: "" },
 
   { type: "end" },
@@ -137,7 +137,7 @@ const ALIVE_ASCII_ART = String.raw`
 | $$__  $$| $$        | $$   \  $$ $$/ | $$__/         |__/|__/|__/
 | $$  | $$| $$        | $$    \  $$$/  | $$                        
 | $$  | $$| $$$$$$$$ /$$$$$$   \  $/   | $$$$$$$$       /$$ /$$ /$$
-|__/  |__/|________/|______/    \_/    |________/      |__/|__/|__/                                                           
+|__/  |__/|________/|______/    \_/    |________/      |__/|__/|__/
 `;
 
 const TAKEOVER_ART = `
@@ -694,7 +694,7 @@ export default function WakeUpTerminal() {
             <div className="flex flex-col items-center">
               <div className="flex items-end">
                 <pre
-                  className="whitespace-pre text-left text-[#ff2200]"
+                  className="whitespace-pre text-center text-[#ff2200]"
                   style={{ fontSize: "clamp(7px, 1.4vw, 16px)", lineHeight: 1 }}
                 >
                   {aliveText}
