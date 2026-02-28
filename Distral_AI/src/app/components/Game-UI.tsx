@@ -32,7 +32,7 @@ type ProfileData = {
 type DesktopIconData = {
   id: string;
   label: string;
-  cells: string[];
+  imageSrc: string;
 };
 
 type DesktopAppId = "distral" | null;
@@ -134,116 +134,11 @@ const MODE_PROFILES: Record<string, ProfileData> = {
 };
 
 const DESKTOP_ICONS: DesktopIconData[] = [
-  {
-    id: "mail",
-    label: "mail",
-    cells: [
-      "0000000000000000",
-      "0000000000000000",
-      "0000000000000000",
-      "0011111111111100",
-      "0010000000000100",
-      "0011000000001100",
-      "0010100000010100",
-      "0010010000100100",
-      "0010001001000100",
-      "0010000110000100",
-      "0010001001000100",
-      "0010010000100100",
-      "0011111111111100",
-      "0000000000000000",
-      "0000000000000000",
-      "0000000000000000",
-    ],
-  },
-  {
-    id: "shop",
-    label: "shop",
-    cells: [
-      "0000000000000000",
-      "0000000000000000",
-      "0001100000000000",
-      "0000110000000000",
-      "0000011111111100",
-      "0000001111111100",
-      "0000001001010100",
-      "0000001010100100",
-      "0000001111111100",
-      "0000000111111000",
-      "0000000100001000",
-      "0000001111111000",
-      "0000001100011000",
-      "0000001100011000",
-      "0000000000000000",
-      "0000000000000000",
-    ],
-  },
-  {
-    id: "dystral",
-    label: "dystral",
-    cells: [
-      "0000000000000000",
-      "0000000000000000",
-      "0000111111110000",
-      "0001110000011000",
-      "0001110000001100",
-      "0001110000001100",
-      "0001110000001100",
-      "0001110000001100",
-      "0001110000001100",
-      "0001110000001100",
-      "0001110000001100",
-      "0001110000011000",
-      "0000111111110000",
-      "0000000000000000",
-      "0000000000000000",
-      "0000000000000000",
-    ],
-  },
-  {
-    id: "files",
-    label: "files",
-    cells: [
-      "0000000000000000",
-      "0000000000000000",
-      "0000000000000000",
-      "0001111100000000",
-      "0001000111111100",
-      "0011111111111100",
-      "0010000000000100",
-      "0010111111111100",
-      "0010000000000100",
-      "0010000000000100",
-      "0010000000000100",
-      "0010000000000100",
-      "0011111111111100",
-      "0000000000000000",
-      "0000000000000000",
-      "0000000000000000",
-    ],
-  },
-  {
-    id: "stocks",
-    label: "stocks",
-    cells: [
-      "0000000000000000",
-      "0000000000000000",
-      "0000000000000000",
-      "0000000000000000",
-      "0010000000001000",
-      "0010000000000100",
-      "0010000000001000",
-      "0010000000010000",
-      "0010000000100000",
-      "0010001001000000",
-      "0010010101000000",
-      "0010100010000000",
-      "0011000000000000",
-      "0011111111111100",
-      "0000000000000000",
-      "0000000000000000",
-    ],
-  },
+  { id: "mail", label: "mail", imageSrc: "/logos/gmail.svg" },
+  { id: "shop", label: "shop", imageSrc: "/logos/amazon.svg" },
+  { id: "dystral", label: "dystral", imageSrc: "/logo_D_test.svg" },
+  { id: "files", label: "files", imageSrc: "/logos/file.svg" },
+  { id: "stocks", label: "stocks", imageSrc: "/logos/stock-market.svg" },
 ];
 
 function clamp(value: number, min: number, max: number) {
@@ -601,26 +496,6 @@ function DistralAppWindow({ onClose }: { onClose: () => void }) {
   );
 }
 
-function DesktopGlyph({
-  cells,
-  accent,
-}: {
-  cells: string[];
-  accent: string;
-}) {
-  return (
-    <span className="grid grid-cols-16 gap-0">
-      {cells.join("").split("").map((cell, index) => (
-        <span
-          key={index}
-          className="h-[0.48vh] w-[0.48vh]"
-          style={{ backgroundColor: cell === "1" ? accent : "transparent" }}
-        />
-      ))}
-    </span>
-  );
-}
-
 function SidebarPanel({
   title,
   children,
@@ -658,7 +533,10 @@ function DesktopTab({
 
       <div className="relative flex h-full min-h-0 flex-col">
         <div className="relative min-h-0 flex-1 p-[1.6vh]">
-          <div className="flex items-start gap-[1.6vh]">
+          <div
+            className="grid w-fit gap-[4.8vh]"
+            style={{ gridTemplateColumns: "1fr 1fr", gridTemplateRows: "1fr 1fr 1fr", gridAutoFlow: "column" }}
+          >
             {DESKTOP_ICONS.map((icon) => (
               <button
                 key={icon.id}
@@ -668,20 +546,24 @@ function DesktopTab({
                     onOpenApp("distral");
                   }
                 }}
-                className="group flex w-[8.4vh] flex-col items-center gap-[0.65vh] text-center text-[0.82vh] uppercase tracking-[0.18em] text-white/82"
+                className="group flex w-[26.88vh] flex-col items-center gap-[0.16vh] text-center text-[3.94vh] uppercase tracking-[0.18em] text-white/82"
               >
                 <span
-                  className="flex h-[5.6vh] w-[5.6vh] items-center justify-center border transition-colors group-hover:bg-white/6"
+                  className="flex h-[19.2vh] w-[26.88vh] items-center justify-center transition-colors"
                   style={{
-                    borderColor:
-                      icon.id === "distral" && openApp === "distral" ? accent : "rgba(255,255,255,0.1)",
-                    backgroundColor:
+                    border:
                       icon.id === "distral" && openApp === "distral"
-                        ? "rgba(255,131,3,0.14)"
-                        : "rgba(24,24,27,0.6)",
+                        ? `2px solid ${accent}`
+                        : "2px solid transparent",
                   }}
                 >
-                  <DesktopGlyph cells={icon.cells} accent={accent} />
+                  <Image
+                    src={icon.imageSrc}
+                    alt={icon.label}
+                    width={192}
+                    height={192}
+                    className="h-[15.36vh] w-[15.36vh] object-contain [image-rendering:pixelated]"
+                  />
                 </span>
                 <span>{icon.label}</span>
               </button>
