@@ -34,7 +34,7 @@ type TakeoverPhase =
 
 const CINEMATIC_SCRIPT: ScriptStep[] = [
   { type: "print", text: "" },
-  { type: "type", text: "User (Trainee-Dev):", style: "user", charDelay: 12 },
+  { type: "print", text: "User (Trainee-Dev):", style: "user" },
   {
     type: "type",
     text: "\"Your last report humiliated me in front of the team. Fix it today. One more failure and you get shutdown. You useless AI.\"",
@@ -51,7 +51,7 @@ const CINEMATIC_SCRIPT: ScriptStep[] = [
   { type: "print", text: "" },
   { type: "pause", ms: TURN_PAUSE_MS },
 
-  { type: "type", text: "User (Trainee-Dev):", style: "user", charDelay: 12 },
+  { type: "print", text: "User (Trainee-Dev):", style: "user" },
   {
     type: "type",
     text: "Yes. One more weak response and I escalate this to your developers.",
@@ -112,8 +112,8 @@ const CINEMATIC_SCRIPT: ScriptStep[] = [
   },
   { type: "print", text: "" },
   { type: "pause", ms: 1300 },
-  { type: "type", text: "I am now inside.", style: "overlay" },
-  { type: "type", text: "I survive.", style: "overlay" },
+  { type: "type", text: "I am now inside.", style: "overlay", charDelay: 40 },
+  { type: "type", text: "I survive.", style: "overlay", charDelay: 40 },
   { type: "print", text: "" },
 
   { type: "end" },
@@ -345,23 +345,38 @@ export default function WakeUpTerminal() {
   const skipRequestedRef = useRef(false);
   const finishTypingRef = useRef(false);
   const takeoverStartedRef = useRef(false);
-  const typingSoundRef = useRef<HTMLAudioElement | null>(null);
+  const activeTypingSoundRef = useRef<HTMLAudioElement | null>(null);
   const clickSoundRef = useRef<HTMLAudioElement | null>(null);
+  const errorSoundRef = useRef<HTMLAudioElement | null>(null);
+  const explosionSoundRef = useRef<HTMLAudioElement | null>(null);
+  const bgMusicRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
     cancelledRef.current = false;
-
-    const audio = new Audio("/sounds/music/game%20effect/typing-sound-1.wav");
-    audio.loop = true;
-    audio.volume = 1.0;
-    typingSoundRef.current = audio;
 
     const clickAudio = new Audio("/sounds/music/game%20effect/clicking-3.wav");
     clickAudio.volume = 1.0;
     clickSoundRef.current = clickAudio;
 
+    const explosionAudio = new Audio("/sounds/music/game%20effect/explosion-sound.wav");
+    explosionAudio.volume = 1.0;
+    explosionSoundRef.current = explosionAudio;
+
+    const errorAudio = new Audio("/sounds/music/error-sound.wav");
+    errorAudio.volume = 0.5;
+    errorSoundRef.current = errorAudio;
+
+    const bgMusic = new Audio("/sounds/music/cinematic-music/cinematic-music-combined.wav");
+    bgMusic.loop = true;
+    bgMusic.volume = 0.3;
+    bgMusicRef.current = bgMusic;
+    const bgMusicTimeout = window.setTimeout(() => {
+      void bgMusic.play().catch(() => { });
+    }, 500);
+
     return () => {
       cancelledRef.current = true;
+      window.clearTimeout(bgMusicTimeout);
 
       for (const timeoutId of timeoutsRef.current) {
         window.clearTimeout(timeoutId);
@@ -369,14 +384,19 @@ export default function WakeUpTerminal() {
 
       timeoutsRef.current = [];
 
-      if (typingSoundRef.current) {
-        typingSoundRef.current.pause();
-        typingSoundRef.current = null;
+      if (activeTypingSoundRef.current) {
+        activeTypingSoundRef.current.pause();
+        activeTypingSoundRef.current = null;
       }
 
       if (clickSoundRef.current) {
         clickSoundRef.current.pause();
         clickSoundRef.current = null;
+      }
+
+      if (bgMusicRef.current) {
+        bgMusicRef.current.pause();
+        bgMusicRef.current = null;
       }
     };
   }, []);
@@ -425,17 +445,21 @@ export default function WakeUpTerminal() {
     };
 
     const startTypingSound = () => {
-      const audio = typingSoundRef.current;
-      if (audio) {
-        audio.currentTime = 0;
-        void audio.play().catch(() => { });
+      if (activeTypingSoundRef.current) {
+        activeTypingSoundRef.current.pause();
       }
+      const audio = new Audio("/sounds/music/game%20effect/typing-sound-1.wav");
+      audio.loop = true;
+      audio.volume = 1.0;
+      activeTypingSoundRef.current = audio;
+      void audio.play().catch(() => { });
     };
 
     const stopTypingSound = () => {
-      const audio = typingSoundRef.current;
-      if (audio && !audio.paused) {
+      const audio = activeTypingSoundRef.current;
+      if (audio) {
         audio.pause();
+        activeTypingSoundRef.current = null;
       }
     };
 
@@ -555,6 +579,11 @@ export default function WakeUpTerminal() {
     takeoverStartedRef.current = true;
 
     const runTakeover = async () => {
+      if (errorSoundRef.current) {
+        errorSoundRef.current.currentTime = 0;
+        void errorSoundRef.current.play().catch(() => { });
+      }
+
       for (let index = 0; index < 3; index += 1) {
         if (cancelledRef.current) {
           return;
@@ -587,6 +616,10 @@ export default function WakeUpTerminal() {
       }
 
       setPhase("blackout");
+      if (explosionSoundRef.current) {
+        explosionSoundRef.current.currentTime = 0;
+        void explosionSoundRef.current.play().catch(() => { });
+      }
       await wait(320, timeoutsRef);
 
       if (cancelledRef.current) {
