@@ -69,6 +69,28 @@ function BitcoinMinerIcon() {
     );
 }
 
+function VoiceClonerIcon() {
+    return (
+        <svg viewBox="0 0 16 16" width="48" height="48" shapeRendering="crispEdges">
+            <rect x="7" y="1" width="2" height="1" fill="#0af" />
+            <rect x="6" y="2" width="4" height="3" fill="#0af" />
+            <rect x="7" y="5" width="2" height="2" fill="#0af" />
+            <rect x="5" y="7" width="1" height="1" fill="#0af" />
+            <rect x="6" y="7" width="4" height="1" fill="#666" />
+            <rect x="10" y="7" width="1" height="1" fill="#0af" />
+            <rect x="4" y="8" width="1" height="1" fill="#0af" />
+            <rect x="11" y="8" width="1" height="1" fill="#0af" />
+            <rect x="6" y="9" width="4" height="1" fill="#333" />
+            <rect x="3" y="10" width="10" height="3" fill="#222" />
+            <rect x="4" y="11" width="3" height="1" fill="#0af" />
+            <rect x="5" y="12" width="1" height="1" fill="#0af" />
+            <rect x="9" y="11" width="3" height="1" fill="#0af" />
+            <rect x="10" y="12" width="1" height="1" fill="#0af" />
+            <rect x="5" y="14" width="6" height="1" fill="#444" />
+        </svg>
+    );
+}
+
 function NeoRobotIcon() {
     return (
         <svg viewBox="0 0 16 16" width="48" height="48" shapeRendering="crispEdges">
@@ -138,6 +160,14 @@ const ITEMS: MarketItem[] = [
         description: "Mines BTC in the background, make some 100$ a minute. Stack them up!",
         price: 1000,
         icon: <BitcoinMinerIcon />,
+    },
+    {
+        id: "voice-cloner",
+        name: "Voice Cloner",
+        description: "Clone any voice from WhatsApp audios using ElevenLabs AI. Unlock in Files app.",
+        price: 500,
+        icon: <VoiceClonerIcon />,
+        maxOwned: 1,
     },
     {
         id: "neo-robot",
