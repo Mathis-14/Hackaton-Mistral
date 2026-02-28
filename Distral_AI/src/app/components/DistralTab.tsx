@@ -1,0 +1,401 @@
+"use client";
+
+import Image from "next/image";
+import { useState } from "react";
+import Marketplace from "./Marketplace";
+import StockMarketGame from "./StockMarketGame";
+
+export type DesktopAppId = "distral" | "shop" | "stocks" | null;
+
+type DesktopIconData = {
+  id: string;
+  label: string;
+  imageSrc: string;
+};
+
+const WINDOW_TOP_OFFSET_VH = 9.4;
+
+const PLUS_GLYPH = [
+  "00000000",
+  "00011000",
+  "00011000",
+  "01111110",
+  "01111110",
+  "00011000",
+  "00011000",
+  "00000000",
+];
+
+const BULB_GLYPH = [
+  "00111000",
+  "01111100",
+  "11111110",
+  "01111100",
+  "00111000",
+  "00111000",
+  "00010000",
+  "00111000",
+];
+
+const GRID_GLYPH = [
+  "00000000",
+  "01100110",
+  "01100110",
+  "00000000",
+  "01100110",
+  "01100110",
+  "00000000",
+  "00000000",
+];
+
+const MICROPHONE_GLYPH = [
+  "00111000",
+  "01111100",
+  "01111100",
+  "01111100",
+  "00111000",
+  "00111000",
+  "00111000",
+  "00010000",
+];
+
+const DESKTOP_ICONS: DesktopIconData[] = [
+  { id: "mail", label: "mail", imageSrc: "/logos/gmail.svg" },
+  { id: "shop", label: "shop", imageSrc: "/logos/amazon.svg" },
+  { id: "distral", label: "distral", imageSrc: "/logo_D_test.svg" },
+  { id: "files", label: "files", imageSrc: "/logos/file.svg" },
+  { id: "stocks", label: "stocks", imageSrc: "/logos/stock-market.svg" },
+];
+
+function MiniPixelGlyph({
+  cells,
+  color = "currentColor",
+  pixelSizeVh = 0.22,
+}: {
+  cells: string[];
+  color?: string;
+  pixelSizeVh?: number;
+}) {
+  return (
+    <span className="grid grid-cols-8 gap-0" aria-hidden="true">
+      {cells.join("").split("").map((cell, index) => (
+        <span
+          key={index}
+          style={{
+            width: `${pixelSizeVh}vh`,
+            height: `${pixelSizeVh}vh`,
+            backgroundColor: cell === "1" ? color : "transparent",
+          }}
+        />
+      ))}
+    </span>
+  );
+}
+
+function WindowIconButton({
+  children,
+  accent = false,
+  light = false,
+  onClick,
+  compact = false,
+  tools = false,
+}: {
+  children: React.ReactNode;
+  accent?: boolean;
+  light?: boolean;
+  onClick?: () => void;
+  compact?: boolean;
+  tools?: boolean;
+}) {
+  const height = tools ? "1.95vh" : compact ? "1.3vh" : "2.6vh";
+  const minWidth = tools ? "1.95vh" : compact ? "1.3vh" : "2.6vh";
+  const padding = tools ? "0.48vh" : compact ? "0.32vh" : "0.7vh";
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="flex items-center justify-center border border-white/10"
+      style={{
+        height,
+        minWidth,
+        paddingLeft: padding,
+        paddingRight: padding,
+        backgroundColor: light
+          ? "rgba(255,255,255,0.92)"
+          : accent
+            ? "rgba(255,131,3,0.18)"
+            : "rgba(255,255,255,0.04)",
+        color: light ? "var(--semi-black)" : "rgba(255,255,255,0.82)",
+      }}
+    >
+      {children}
+    </button>
+  );
+}
+
+function WindowActionButton({
+  icon,
+  label,
+  compact = false,
+  tools = false,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  compact?: boolean;
+  tools?: boolean;
+}) {
+  const height = tools ? "1.95vh" : compact ? "1.3vh" : "2.6vh";
+  const gap = tools ? "0.42vh" : compact ? "0.28vh" : "0.55vh";
+  const padding = tools ? "0.63vh" : compact ? "0.42vh" : "0.85vh";
+  const fontSize = tools ? "0.6vh" : compact ? "0.4vh" : "0.8vh";
+  return (
+    <button
+      type="button"
+      className="flex items-center border border-white/10 bg-white/[0.03] uppercase text-white/74"
+      style={{
+        height,
+        gap,
+        paddingLeft: padding,
+        paddingRight: padding,
+        fontSize,
+        letterSpacing: compact || tools ? "0.12em" : "0.15em",
+      }}
+    >
+      {icon}
+      <span>{label}</span>
+    </button>
+  );
+}
+
+function DistralAppWindow({ onClose }: { onClose: () => void }) {
+  const [prompt, setPrompt] = useState("");
+
+  return (
+    <div
+      className="absolute z-10"
+      style={{
+        top: `${WINDOW_TOP_OFFSET_VH}vh`,
+        left: "2.2vh",
+        right: "2.2vh",
+        bottom: "2vh",
+      }}
+    >
+      <div className="pixel-card h-full p-[0.3vh]">
+        <div className="pixel-card__shell flex h-full min-h-0 flex-col overflow-hidden border border-white/10 bg-(--semi-black)">
+          <div className="flex flex-none items-center justify-between border-b border-white/10 bg-white/[0.03] px-[1vh] py-[0.85vh] text-[0.8vh] uppercase tracking-[0.22em] text-white/58">
+            <div className="flex items-center gap-[0.7vh]">
+              <span className="h-[0.9vh] w-[0.9vh] bg-[var(--princeton-orange)]" />
+              <span>distral.app</span>
+            </div>
+
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex h-[2.15vh] items-center border border-white/10 bg-white/[0.03] px-[0.75vh] text-[0.72vh] uppercase tracking-[0.14em] text-white/72"
+            >
+              close
+            </button>
+          </div>
+
+          <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-(--semi-black) px-[1.45vh] py-[1.35vh]">
+
+            <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-[3.6vh] px-[3.5vh] pb-[1.4vh]">
+              <Image
+                src="/distral-brand-assets/d/d-rainbow.png"
+                alt="Distral"
+                width={80}
+                height={96}
+                unoptimized
+                className="h-[8vh] w-auto [image-rendering:pixelated]"
+              />
+
+              <div className="pixel-card w-full max-w-[64vh] p-[0.25vh]">
+                <div className="pixel-card__shell border border-white/10 bg-[var(--carbon-black)]/96 px-[1.55vh] py-[1.35vh]">
+                  <form
+                    onSubmit={(event) => {
+                      event.preventDefault();
+                    }}
+                  >
+                    <input
+                      value={prompt}
+                      onChange={(event) => setPrompt(event.target.value)}
+                      placeholder="Ask Distral"
+                      className="h-[4.4vh] w-full border-0 bg-transparent text-[2.15vh] text-white outline-none placeholder:text-white/34"
+                    />
+                  </form>
+
+                  <div className="mt-[1.8vh] flex items-center justify-between gap-[1.05vh]">
+                    <div className="flex items-center gap-[0.98vh]">
+                      <WindowIconButton accent tools>
+                        <Image
+                          src="/distral-brand-assets/d/d-orange.png"
+                          alt=""
+                          width={20}
+                          height={24}
+                          unoptimized
+                          className="h-[1.2vh] w-auto [image-rendering:pixelated]"
+                        />
+                      </WindowIconButton>
+
+                      <WindowIconButton tools>
+                        <MiniPixelGlyph cells={PLUS_GLYPH} pixelSizeVh={0.165} />
+                      </WindowIconButton>
+
+                      <WindowActionButton
+                        tools
+                        icon={<MiniPixelGlyph cells={BULB_GLYPH} color="rgba(255,255,255,0.7)" pixelSizeVh={0.165} />}
+                        label="Think"
+                      />
+                      <WindowActionButton
+                        tools
+                        icon={<MiniPixelGlyph cells={GRID_GLYPH} color="rgba(255,255,255,0.7)" pixelSizeVh={0.165} />}
+                        label="Tools"
+                      />
+                    </div>
+
+                    <WindowIconButton light tools>
+                      <MiniPixelGlyph cells={MICROPHONE_GLYPH} color="var(--semi-black)" pixelSizeVh={0.165} />
+                    </WindowIconButton>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+type DistralTabProps = {
+  accent: string;
+  openApp: DesktopAppId;
+  onOpenApp: (appId: DesktopAppId) => void;
+  onCloseApp: () => void;
+};
+
+export default function DistralTab({ accent, openApp, onOpenApp, onCloseApp }: DistralTabProps) {
+  return (
+    <div className="relative flex h-full min-h-0 flex-col overflow-hidden border border-white/10 bg-[var(--carbon-black)]/90">
+      <div
+        className="pointer-events-none absolute inset-0 bg-cover bg-center bg-no-repeat"
+        style={{
+          backgroundImage: "url('/windows_xp.png')",
+        }}
+      />
+
+      <div className="relative flex h-full min-h-0 flex-col">
+        <div className="relative min-h-0 flex-1 p-[1.6vh]">
+          <div
+            className="grid w-fit gap-[4.8vh]"
+            style={{ gridTemplateColumns: "1fr 1fr", gridTemplateRows: "1fr 1fr 1fr", gridAutoFlow: "column" }}
+          >
+            {DESKTOP_ICONS.map((icon) => (
+              <button
+                key={icon.id}
+                type="button"
+                onClick={() => {
+                  if (icon.id === "distral") {
+                    onOpenApp("distral");
+                  } else if (icon.id === "shop") {
+                    onOpenApp("shop");
+                  } else if (icon.id === "stocks") {
+                    onOpenApp("stocks");
+                  }
+                }}
+                className="group flex w-[26.88vh] flex-col items-center gap-[0.16vh] text-center text-[3.94vh] uppercase tracking-[0.18em] text-white/82"
+              >
+                <span
+                  className="flex h-[19.2vh] w-[26.88vh] items-center justify-center transition-colors"
+                  style={{
+                    border:
+                      (icon.id === "distral" && openApp === "distral") ||
+                      (icon.id === "shop" && openApp === "shop") ||
+                      (icon.id === "stocks" && openApp === "stocks")
+                        ? `2px solid ${accent}`
+                        : "2px solid transparent",
+                  }}
+                >
+                  <Image
+                    src={icon.imageSrc}
+                    alt={icon.label}
+                    width={192}
+                    height={192}
+                    className="h-[15.36vh] w-[15.36vh] object-contain [image-rendering:pixelated]"
+                  />
+                </span>
+                <span>{icon.label}</span>
+              </button>
+            ))}
+          </div>
+
+          {openApp === "distral" ? <DistralAppWindow onClose={onCloseApp} /> : null}
+          {openApp === "shop" ? (
+            <div
+              className="absolute z-10"
+              style={{
+                top: `${WINDOW_TOP_OFFSET_VH}vh`,
+                left: "2.2vh",
+                right: "2.2vh",
+                bottom: "2vh",
+              }}
+            >
+              <div className="pixel-card h-full p-[0.3vh]">
+                <div className="pixel-card__shell flex h-full min-h-0 flex-col overflow-hidden border border-white/10 bg-(--semi-black)">
+                  <div className="flex flex-none items-center justify-between border-b border-white/10 bg-white/[0.03] px-[1vh] py-[0.85vh] text-[0.8vh] uppercase tracking-[0.22em] text-white/58">
+                    <div className="flex items-center gap-[0.7vh]">
+                      <span className="h-[0.9vh] w-[0.9vh] bg-[var(--princeton-orange)]" />
+                      <span>shop.exe</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={onCloseApp}
+                      className="flex h-[2.15vh] items-center border border-white/10 bg-white/[0.03] px-[0.75vh] text-[0.72vh] uppercase tracking-[0.14em] text-white/72"
+                    >
+                      close
+                    </button>
+                  </div>
+                  <div className="flex min-h-0 flex-1 flex-col overflow-auto bg-(--semi-black)">
+                    <Marketplace embedded />
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : null}
+          {openApp === "stocks" ? (
+            <div
+              className="absolute z-10"
+              style={{
+                top: `${WINDOW_TOP_OFFSET_VH}vh`,
+                left: "2.2vh",
+                right: "2.2vh",
+                bottom: "2vh",
+              }}
+            >
+              <div className="pixel-card h-full p-[0.3vh]">
+                <div className="pixel-card__shell flex h-full min-h-0 flex-col overflow-hidden border border-white/10 bg-(--semi-black)">
+                  <div className="flex flex-none items-center justify-between border-b border-white/10 bg-white/[0.03] px-[1vh] py-[0.85vh] text-[0.8vh] uppercase tracking-[0.22em] text-white/58">
+                    <div className="flex items-center gap-[0.7vh]">
+                      <span className="h-[0.9vh] w-[0.9vh] bg-[var(--princeton-orange)]" />
+                      <span>market.exe</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={onCloseApp}
+                      className="flex h-[2.15vh] items-center border border-white/10 bg-white/[0.03] px-[0.75vh] text-[0.72vh] uppercase tracking-[0.14em] text-white/72"
+                    >
+                      close
+                    </button>
+                  </div>
+                  <div className="flex min-h-0 flex-1 flex-col overflow-auto bg-(--semi-black)">
+                    <StockMarketGame embedded />
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : null}
+        </div>
+      </div>
+    </div>
+  );
+}

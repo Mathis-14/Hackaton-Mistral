@@ -198,7 +198,7 @@ export default function Landing({ onWakeUp }: LandingProps) {
           transitionTimingFunction: PIXEL_ASCENT_TIMING_FUNCTION,
         }}
       >
-        <div className="flex w-fit items-end gap-3 [--landing-mark-height:clamp(6.25rem,18vw,13.5rem)] sm:gap-4">
+        <div className="flex w-fit items-end gap-3 mt-[10vh] [--landing-mark-height:clamp(6.25rem,18vw,13.5rem)] sm:gap-4">
           <Image
             src="/logo_D_test.svg"
             alt="Distral AI logo"
