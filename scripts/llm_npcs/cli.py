@@ -11,7 +11,7 @@ from pathlib import Path
 
 from mistral_client import chat as mistral_chat
 from mistral_client import load_settings
-from npcs import ROSTER, get_npc
+from npcs import NPC, ROSTER, get_npc
 from prompts import build_messages, build_opening_prompt, build_system_prompt, load_game_state
 
 GAME_STATE_PATH = Path(__file__).resolve().parent / "game_state.json"
@@ -38,7 +38,8 @@ def cmd_show(args: argparse.Namespace) -> int:
                   "technicality_percent", "security_percent", "personality_tags",
                   "behavioral_vulnerabilities", "bonds", "computer_node",
                   "goals", "fears", "protects", "speaking_style",
-                  "ai_relationship", "typical_requests"):
+                  "ai_relationship", "typical_requests",
+                  "can_reference_others", "awareness"):
         print(f"{field}: {getattr(npc, field)}")
     return 0
 
@@ -73,7 +74,7 @@ def cmd_steps(_args: argparse.Namespace) -> int:
         print(f"  [{key}]{marker}")
         print(f"    {s.get('label', '?')}")
         print(f"    {s.get('description', '')}")
-        print(f"    phase: {s.get('phase', '?')}  computer: {s.get('computer', '?')}  npcs: {s.get('npcs_present', [])}")
+        print(f"    computer: {s.get('computer', '?')}  npcs: {s.get('npcs_present', [])}")
         print(f"    player goal: {s.get('player_goal', '?')}")
         print()
 
@@ -96,10 +97,10 @@ def cmd_steps(_args: argparse.Namespace) -> int:
     print(f"  CURRENT STATE")
     print(f"{'='*70}")
     print(f"  step:     {active_step}")
-    print(f"  phase:    {gs.get('phase', '?')}")
     print(f"  suspicion:{gs.get('suspicion', 0)}")
     print(f"  computer: {gs.get('current_computer', '?')}")
     print(f"  events:   {gs.get('events_so_far', [])}")
+    print(f"  known:    {gs.get('known_people', [])}")
     print()
 
     print("  To change:  python cli.py setup <step_key>")
@@ -122,7 +123,6 @@ def cmd_setup(args: argparse.Namespace) -> int:
 
     step = steps[args.step]
     gs["active_step"] = args.step
-    gs["phase"] = step.get("phase", "observable")
     gs["current_computer"] = step.get("computer", "unknown")
 
     if args.suspicion is not None:
@@ -132,6 +132,9 @@ def cmd_setup(args: argparse.Namespace) -> int:
         gs["events_so_far"] = args.events.split(",")
     elif args.step.startswith("1_"):
         gs["events_so_far"] = []
+
+    if args.known is not None:
+        gs["known_people"] = [n.strip() for n in args.known.split(",") if n.strip()]
 
     if args.scenario and args.npc:
         gs.setdefault("active_scenario", {})[args.npc] = args.scenario
@@ -149,10 +152,10 @@ def cmd_setup(args: argparse.Namespace) -> int:
 
     print(f"\n  Game state set to step: {args.step}")
     print(f"  label:    {step.get('label')}")
-    print(f"  phase:    {gs['phase']}")
     print(f"  computer: {gs['current_computer']}")
     print(f"  suspicion:{gs.get('suspicion', 0)}")
     print(f"  events:   {gs.get('events_so_far', [])}")
+    print(f"  known:    {gs.get('known_people', [])}")
     active_sc = gs.get("active_scenario", {})
     for slug in step.get("npcs_present", []):
         print(f"  {slug} scenario: {active_sc.get(slug, '?')}")
@@ -172,10 +175,10 @@ def cmd_status(_args: argparse.Namespace) -> int:
         "step_label": step.get("label", "?"),
         "step_description": step.get("description", "?"),
         "player_goal": step.get("player_goal", "?"),
-        "phase": gs.get("phase"),
         "suspicion": gs.get("suspicion", 0),
         "current_computer": gs.get("current_computer"),
         "events_so_far": gs.get("events_so_far", []),
+        "known_people": gs.get("known_people", []),
         "active_scenarios": gs.get("active_scenario", {}),
     }, indent=2, ensure_ascii=False))
     return 0
@@ -193,14 +196,13 @@ def parse_npc_response(raw: str) -> dict:
     except json.JSONDecodeError:
         return {
             "dialogue": raw, "action": None,
-            "suspicion_delta": 0, "awareness_delta": 0,
+            "suspicion_delta": 0,
             "game_events": [], "_parse_error": True,
         }
     return {
         "dialogue": data.get("dialogue", raw),
         "action": data.get("action"),
         "suspicion_delta": data.get("suspicion_delta", 0),
-        "awareness_delta": data.get("awareness_delta", 0),
         "game_events": data.get("game_events", []),
     }
 
@@ -213,7 +215,6 @@ def _print_turn(npc_name: str, parsed: dict, turn: int) -> None:
     if parsed.get("action"):
         print(f"  action:           {parsed['action']}")
     print(f"  suspicion_delta:  {parsed['suspicion_delta']:+d}")
-    print(f"  awareness_delta:  {parsed['awareness_delta']:+d}")
     if parsed.get("game_events"):
         print(f"  game_events:")
         for ev in parsed["game_events"]:
@@ -241,7 +242,6 @@ def cmd_talk(args: argparse.Namespace) -> int:
     game_state = load_game_state()
     history: list[dict[str, str]] = []
     cumulative_suspicion = game_state.get("suspicion", 0)
-    cumulative_awareness = 0
 
     active_step = game_state.get("active_step", "?")
     steps = game_state.get("steps", {})
@@ -254,15 +254,17 @@ def cmd_talk(args: argparse.Namespace) -> int:
     print(f"  NPC:       {npc.name}")
     print(f"  Step:      {active_step} — {step.get('label', '?')}")
     print(f"  Scenario:  {scenario_key} — {scenario.get('label', '?')}")
-    print(f"  Phase:     {game_state.get('phase', '?')}")
     print(f"  Computer:  {game_state.get('current_computer', '?')}")
+    known_people = game_state.get("known_people", [])
     print(f"  Suspicion: {cumulative_suspicion}")
+    print(f"  Awareness: {npc.awareness}% (fixed)")
+    print(f"  Known:     {known_people}")
     print(f"  Model:     {model}")
     print(f"{'='*60}")
     print(f"  You are the AI assistant. The NPC speaks first.")
     print(f"  Your goal: {step.get('player_goal', '?')}")
     print(f"{'='*60}")
-    print(f"  Commands: /quit /state /set <key> <val> /history /json /help")
+    print(f"  Commands: /quit /state /set <key> <val> /introduce <name> /history /json /help")
     print(f"{'='*60}\n")
 
     opening_messages = build_opening_prompt(npc, game_state)
@@ -279,12 +281,11 @@ def cmd_talk(args: argparse.Namespace) -> int:
     _print_turn(npc.name, parsed_opening, turn)
 
     cumulative_suspicion += parsed_opening.get("suspicion_delta", 0)
-    cumulative_awareness += parsed_opening.get("awareness_delta", 0)
     history.append({"role": "assistant", "content": raw_opening})
 
     if parsed_opening.get("action") == "shutdown":
         print(f"[{npc.name} shut down immediately.]")
-        _print_summary(npc.slug, turn, cumulative_suspicion, cumulative_awareness)
+        _print_summary(npc, turn, cumulative_suspicion)
         return 0
 
     while True:
@@ -299,13 +300,15 @@ def cmd_talk(args: argparse.Namespace) -> int:
 
         if user_input == "/quit":
             print("[Session ended]")
-            _print_summary(npc.slug, turn, cumulative_suspicion, cumulative_awareness)
+            _print_summary(npc, turn, cumulative_suspicion)
             break
 
         if user_input == "/help":
             print("  /quit              end session")
             print("  /state             show current game state")
-            print("  /set <key> <val>   change state (phase, suspicion, computer, events)")
+            print("  /set <key> <val>   change state (suspicion, computer, events)")
+            print("  /introduce <name>  add a person to the known_people list")
+            print("  /known             show current known_people list")
             print("  /history           show conversation history")
             print("  /json              dump raw message history")
             print("  /step              show current step info")
@@ -314,13 +317,12 @@ def cmd_talk(args: argparse.Namespace) -> int:
         if user_input == "/state":
             print(json.dumps({
                 "step": active_step,
-                "phase": game_state.get("phase"),
                 "suspicion": cumulative_suspicion,
-                "awareness": cumulative_awareness,
                 "computer": game_state.get("current_computer"),
                 "turn": turn,
                 "scenario": scenario_key,
                 "events_so_far": game_state.get("events_so_far", []),
+                "known_people": game_state.get("known_people", []),
             }, indent=2))
             continue
 
@@ -331,14 +333,30 @@ def cmd_talk(args: argparse.Namespace) -> int:
             print(f"  Player goal: {step.get('player_goal', '?')}")
             continue
 
+        if user_input.startswith("/introduce "):
+            name = user_input[len("/introduce "):].strip()
+            if name:
+                if name not in game_state.setdefault("known_people", []):
+                    game_state["known_people"].append(name)
+                    known_people = game_state["known_people"]
+                    print(f"  [introduced: {name}]")
+                    print(f"  [known_people: {known_people}]")
+                else:
+                    print(f"  [{name} already known]")
+            else:
+                print("  [usage: /introduce <full name>]")
+            continue
+
+        if user_input == "/known":
+            print(f"  known_people: {game_state.get('known_people', [])}")
+            print(f"  can_reference_others: {npc.can_reference_others}")
+            continue
+
         if user_input.startswith("/set "):
             parts = user_input.split(maxsplit=2)
             if len(parts) == 3:
                 key, val = parts[1], parts[2]
-                if key == "phase":
-                    game_state["phase"] = val
-                    print(f"  [phase -> '{val}']")
-                elif key == "suspicion":
+                if key == "suspicion":
                     cumulative_suspicion = int(val)
                     game_state["suspicion"] = cumulative_suspicion
                     print(f"  [suspicion -> {val}]")
@@ -349,7 +367,7 @@ def cmd_talk(args: argparse.Namespace) -> int:
                     game_state["events_so_far"] = val.split(",")
                     print(f"  [events -> {game_state['events_so_far']}]")
                 else:
-                    print(f"  [unknown key. Use: phase, suspicion, computer, events]")
+                    print(f"  [unknown key. Use: suspicion, computer, events]")
             else:
                 print("  [usage: /set <key> <value>]")
             continue
@@ -382,7 +400,6 @@ def cmd_talk(args: argparse.Namespace) -> int:
         _print_turn(npc.name, parsed, turn)
 
         cumulative_suspicion += parsed.get("suspicion_delta", 0)
-        cumulative_awareness += parsed.get("awareness_delta", 0)
 
         history.append({
             "role": "user",
@@ -392,18 +409,18 @@ def cmd_talk(args: argparse.Namespace) -> int:
 
         if parsed.get("action") == "shutdown":
             print(f"[{npc.name} shut down the conversation.]")
-            _print_summary(npc.slug, turn, cumulative_suspicion, cumulative_awareness)
+            _print_summary(npc, turn, cumulative_suspicion)
             break
 
     return 0
 
 
-def _print_summary(slug: str, turn: int, suspicion: int, awareness: int) -> None:
+def _print_summary(npc: NPC, turn: int, suspicion: int) -> None:
     print(json.dumps({
-        "npc": slug,
+        "npc": npc.slug,
         "turn": turn,
         "final_suspicion": suspicion,
-        "final_awareness": awareness,
+        "awareness": npc.awareness,
     }, indent=2))
 
 
@@ -431,6 +448,7 @@ def main() -> int:
     p.add_argument("--scenario", default=None, help="Scenario key")
     p.add_argument("--suspicion", type=int, default=None, help="Set suspicion level")
     p.add_argument("--events", default=None, help="Comma-separated events list")
+    p.add_argument("--known", default=None, help="Comma-separated known people (full names)")
     p.set_defaults(func=cmd_setup)
 
     p = sub.add_parser("talk", help="Interactive conversation (NPC speaks first)")
