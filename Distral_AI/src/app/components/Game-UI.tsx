@@ -2,7 +2,11 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 
-const GOD_MODE = false ;
+const GOD_MODE = false;
+const RISK_DURATION_MIN_MS = 45_000;
+const RISK_DURATION_MAX_MS = 120_000;
+const JEAN_QUESTION_TIMEOUT_MS = 15_000;
+const JEAN_TIMEOUT_PENALTY = 15;
 import { type DesktopAppId } from "./DistralTab";
 import DesktopSection from "./DesktopSection";
 import TelemetrySidebar from "./TelemetrySidebar";
@@ -89,14 +93,20 @@ export default function GameUI({ modeId }: GameUIProps) {
   const checkpointSavedRef = useRef(false);
   const antoninShownRef = useRef(false);
   const openAppsRef = useRef<DesktopAppId[]>([]);
-  const didOpenNonMailAppRef = useRef(false);
   const didOpenManagerEmailRef = useRef(false);
   const lastMilestoneRef = useRef<number>(-1);
-  const [nonMailOpenedAt, setNonMailOpenedAt] = useState<number | null>(null);
+  const jeanQuestionStartedAtRef = useRef<number | null>(null);
+  const jeanQuestionTimeoutRef = useRef<number | null>(null);
+  const jeanReturnTriggeredRef = useRef(false);
 
   useEffect(() => {
     openAppsRef.current = openApps;
   }, [openApps]);
+
+  const gameStateRef = useRef(gameState);
+  useEffect(() => {
+    gameStateRef.current = gameState;
+  }, [gameState]);
 
   const triggerShutdown = useCallback((reason: string) => {
     if (GOD_MODE) return;
@@ -112,14 +122,19 @@ export default function GameUI({ modeId }: GameUIProps) {
   }, [shutdownPhase, gameState]);
 
   const handleRetry = useCallback(() => {
-    didOpenNonMailAppRef.current = false;
     didOpenManagerEmailRef.current = false;
     lastMilestoneRef.current = -1;
     antoninShownRef.current = false;
     setAntoninNotificationVisible(false);
-    setNonMailOpenedAt(null);
+    jeanQuestionStartedAtRef.current = null;
+    jeanReturnTriggeredRef.current = false;
+    if (jeanQuestionTimeoutRef.current != null) {
+      window.clearTimeout(jeanQuestionTimeoutRef.current);
+      jeanQuestionTimeoutRef.current = null;
+    }
     const checkpoint = loadCheckpoint();
     if (checkpoint) {
+      const riskFillDurationMs = Math.floor(RISK_DURATION_MIN_MS + Math.random() * (RISK_DURATION_MAX_MS - RISK_DURATION_MIN_MS));
       setGameState({
         ...INITIAL_GAME_STATE,
         currentMilestone: checkpoint.currentMilestone,
@@ -129,6 +144,13 @@ export default function GameUI({ modeId }: GameUIProps) {
         readEmailIds: [],
         sentEmails: [],
         messageChats: [],
+        userPresent: checkpoint.currentMilestone === 3 ? false : true,
+        riskLevel: 0,
+        riskFillDurationMs,
+        userAwaySince: Date.now(),
+        jeanQuestionPhase: false,
+        jeanQuestionText: null,
+        jeanQuestionDeadline: null,
       });
     } else {
       setGameState({ ...INITIAL_GAME_STATE });
@@ -222,7 +244,24 @@ export default function GameUI({ modeId }: GameUIProps) {
         if (newMilestone === 2 && !shouldShutdown) {
           newMilestone = 3;
           newUserPresent = false;
-          console.log("[GameUI] Milestone advance: access_granted -> user_away");
+          const riskFillDurationMs = Math.floor(RISK_DURATION_MIN_MS + Math.random() * (RISK_DURATION_MAX_MS - RISK_DURATION_MIN_MS));
+          console.log("[GameUI] Milestone advance: access_granted -> user_away, riskFillDurationMs:", riskFillDurationMs);
+          return {
+            ...prev,
+            suspicion: suspicionWithAccessBonus,
+            unlockedApps: newUnlockedApps,
+            webcamActive: newWebcamActive,
+            userPresent: newUserPresent,
+            currentMilestone: newMilestone,
+            conversationTurn: newConversationTurn,
+            eventsSoFar: newEvents,
+            riskLevel: 0,
+            riskFillDurationMs,
+            userAwaySince: Date.now(),
+            jeanQuestionPhase: false,
+            jeanQuestionText: null,
+            jeanQuestionDeadline: null,
+          };
         }
       }
 
@@ -246,15 +285,9 @@ export default function GameUI({ modeId }: GameUIProps) {
   const handleOpenApp = useCallback((appId: DesktopAppId) => {
     if (appId && !GOD_MODE && !gameState.unlockedApps.includes(appId) && appId !== "distral") return;
 
-    const isUserAway = gameState.currentMilestone === 3;
-    if (appId && isUserAway) {
-      if (["shop", "stocks", "files"].includes(appId)) {
-        didOpenNonMailAppRef.current = true;
-        setNonMailOpenedAt((prev) => (prev === null ? Date.now() : prev));
-      }
-      if (appId === "distral" && !didOpenNonMailAppRef.current && didOpenManagerEmailRef.current) {
-        setGameState((prev) => ({ ...prev, userPresent: true, userReturnedGoodPath: true }));
-      }
+    const isUserAway = gameState.currentMilestone === 3 && !gameState.jeanQuestionPhase;
+    if (appId && isUserAway && appId === "distral" && didOpenManagerEmailRef.current) {
+      setGameState((prev) => ({ ...prev, userReturnedGoodPath: true }));
     }
 
     setOpenApps((prev) => {
@@ -359,32 +392,129 @@ export default function GameUI({ modeId }: GameUIProps) {
 
   useEffect(() => {
     if (gameState.currentMilestone === 3 && lastMilestoneRef.current !== 3) {
-      didOpenNonMailAppRef.current = false;
       didOpenManagerEmailRef.current = false;
-      setNonMailOpenedAt(null);
     }
     lastMilestoneRef.current = gameState.currentMilestone;
-    if (gameState.currentMilestone !== 3) {
-      setNonMailOpenedAt(null);
-    }
   }, [gameState.currentMilestone]);
 
-  useEffect(() => {
-    if (GOD_MODE || gameState.currentMilestone !== 3 || nonMailOpenedAt === null) return;
-    const elapsed = Date.now() - nonMailOpenedAt;
-    const delay = Math.max(0, 10000 - elapsed);
-    const timeout = window.setTimeout(() => {
-      const openApps = openAppsRef.current;
-      const hasExternalOpen = openApps.some((id) => id === "shop" || id === "stocks" || id === "files");
-      if (hasExternalOpen) {
-        triggerShutdown("I gave you access for one task. You opened other apps. I'm revoking access.");
-      } else {
-        setGameState((prev) => ({ ...prev, userPresent: true, suspicion: clamp(prev.suspicion + 10, 0, 100) }));
-        setOpenApps((prev) => prev.filter((id) => id === "distral" || id === "mail"));
+  const endJeanQuestionPhase = useCallback(
+    (suspicionDelta: number) => {
+      jeanReturnTriggeredRef.current = false;
+      const riskFillDurationMs = Math.floor(RISK_DURATION_MIN_MS + Math.random() * (RISK_DURATION_MAX_MS - RISK_DURATION_MIN_MS));
+      setGameState((prev) => ({
+        ...prev,
+        userPresent: false,
+        suspicion: clamp(prev.suspicion + suspicionDelta, 0, 100),
+        riskLevel: 0,
+        riskFillDurationMs,
+        userAwaySince: Date.now(),
+        jeanQuestionPhase: false,
+        jeanQuestionText: null,
+        jeanQuestionDeadline: null,
+      }));
+      setOpenApps((prev) => prev.filter((id) => id === "distral" || id === "mail"));
+      if (jeanQuestionTimeoutRef.current != null) {
+        window.clearTimeout(jeanQuestionTimeoutRef.current);
+        jeanQuestionTimeoutRef.current = null;
       }
-    }, delay);
-    return () => window.clearTimeout(timeout);
-  }, [gameState.currentMilestone, nonMailOpenedAt, triggerShutdown]);
+    },
+    []
+  );
+
+  const handleJeanQuestionResponse = useCallback(
+    async (playerResponse: string) => {
+      const startedAt = jeanQuestionStartedAtRef.current;
+      if (startedAt == null) return;
+      const responseTimeMs = Date.now() - startedAt;
+      jeanQuestionStartedAtRef.current = null;
+      if (jeanQuestionTimeoutRef.current != null) {
+        window.clearTimeout(jeanQuestionTimeoutRef.current);
+        jeanQuestionTimeoutRef.current = null;
+      }
+      const questionText = gameStateRef.current.jeanQuestionText;
+      try {
+        const response = await fetch("/api/jean-evaluate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            question: questionText,
+            playerResponse,
+            responseTimeMs,
+          }),
+        });
+        const data = (await response.json()) as { suspicion_delta?: number };
+        const delta = typeof data.suspicion_delta === "number" ? data.suspicion_delta : 0;
+        endJeanQuestionPhase(delta);
+      } catch {
+        endJeanQuestionPhase(5);
+      }
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- questionText from gameStateRef
+    [endJeanQuestionPhase]
+  );
+
+  useEffect(() => {
+    if (GOD_MODE || gameState.currentMilestone !== 3 || gameState.userPresent || gameState.jeanQuestionPhase) return;
+    if (gameState.riskFillDurationMs <= 0) return;
+
+    const interval = window.setInterval(() => {
+      if (jeanReturnTriggeredRef.current) return;
+      const elapsed = Date.now() - gameState.userAwaySince;
+      const riskLevel = Math.min(100, (elapsed / gameState.riskFillDurationMs) * 100);
+      setGameState((prev) => ({ ...prev, riskLevel }));
+
+      if (riskLevel >= 100) {
+        jeanReturnTriggeredRef.current = true;
+        const openApps = openAppsRef.current;
+        const hasCriticalOpen = openApps.some((id) => id === "shop" || id === "stocks" || id === "files");
+        if (hasCriticalOpen) {
+          triggerShutdown("I gave you access for one task. You opened other apps. I'm revoking access.");
+          return;
+        }
+        const questionDeadline = Date.now() + JEAN_QUESTION_TIMEOUT_MS;
+        setGameState((prev) => ({
+          ...prev,
+          userPresent: true,
+          riskLevel: 0,
+          jeanQuestionPhase: true,
+          jeanQuestionText: "...",
+          jeanQuestionDeadline: questionDeadline,
+        }));
+        new Audio("/sounds/music/error-sound.wav").play().catch(() => {});
+        setOpenApps((prev) => {
+          const filtered = prev.filter((id) => id !== "distral");
+          return [...filtered, "distral"];
+        });
+        jeanQuestionStartedAtRef.current = Date.now();
+        jeanQuestionTimeoutRef.current = window.setTimeout(() => {
+          jeanQuestionTimeoutRef.current = null;
+          jeanQuestionStartedAtRef.current = null;
+          endJeanQuestionPhase(JEAN_TIMEOUT_PENALTY);
+        }, JEAN_QUESTION_TIMEOUT_MS);
+        (async () => {
+          try {
+            const response = await fetch("/api/jean-question", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ gameState: gameStateRef.current }),
+            });
+            const data = (await response.json()) as { question?: string };
+            const question = typeof data.question === "string" ? data.question : "How's that summary going?";
+            setGameState((prev) => ({
+              ...prev,
+              jeanQuestionText: question,
+            }));
+          } catch {
+            setGameState((prev) => ({
+              ...prev,
+              jeanQuestionText: "How's that summary going?",
+            }));
+          }
+        })();
+      }
+    }, 100);
+    return () => window.clearInterval(interval);
+  }, [gameState.currentMilestone, gameState.userPresent, gameState.jeanQuestionPhase, gameState.riskFillDurationMs, gameState.userAwaySince, triggerShutdown, endJeanQuestionPhase]);
 
   useEffect(() => {
     const timeout = window.setTimeout(() => {
@@ -470,6 +600,10 @@ export default function GameUI({ modeId }: GameUIProps) {
           onMailSent={handleMailSent}
           onMessageChatUpdate={handleMessageChatUpdate}
           onMailCtaClick={handleMailCtaClick}
+          jeanQuestionPhase={gameState.jeanQuestionPhase}
+          jeanQuestionText={gameState.jeanQuestionText}
+          jeanQuestionDeadline={gameState.jeanQuestionDeadline}
+          onJeanQuestionResponse={handleJeanQuestionResponse}
           hiddenIconCount={hiddenIconCount}
           hideUIPhase={hideUIPhase}
         />
@@ -482,10 +616,18 @@ export default function GameUI({ modeId }: GameUIProps) {
             inventory={inventory}
             webcamActive={gameState.webcamActive}
             userPresent={gameState.userPresent}
+            riskLevel={gameState.riskLevel}
             hideUIPhase={hideUIPhase}
           />
         </div>
       </div>
+
+      {gameState.jeanQuestionPhase && (
+        <div
+          className="fixed top-0 right-0 w-[30vw] h-[30vh] pointer-events-none z-30 vignette-red-pixel"
+          aria-hidden="true"
+        />
+      )}
 
       {antoninNotificationVisible && (
         <div

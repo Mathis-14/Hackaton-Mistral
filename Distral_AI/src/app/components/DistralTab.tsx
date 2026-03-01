@@ -206,12 +206,20 @@ function DistralAppWindow({
   gameState,
   onNpcResponse,
   onChatHistoryUpdate,
+  jeanQuestionPhase,
+  jeanQuestionText,
+  jeanQuestionDeadline,
+  onJeanQuestionResponse,
 }: {
   onClose: () => void;
   onFocus: () => void;
   gameState: GameState;
   onNpcResponse: (payload: NpcResponsePayload) => void;
   onChatHistoryUpdate?: (npcSlug: string, conversationHistory: ChatMessage[]) => void;
+  jeanQuestionPhase?: boolean;
+  jeanQuestionText?: string | null;
+  jeanQuestionDeadline?: number | null;
+  onJeanQuestionResponse?: (response: string) => void;
 }) {
   const CHAR_DELAY_MIN = 16;
   const CHAR_DELAY_MAX = 40;
@@ -448,9 +456,23 @@ function DistralAppWindow({
     }
   };
 
+  useEffect(() => {
+    if (jeanQuestionPhase && phase === "chat") {
+      window.setTimeout(() => { playerInputRef.current?.focus(); }, 150);
+    }
+  }, [jeanQuestionPhase, phase]);
+
   const handlePlayerSubmit = useCallback(async () => {
     const text = playerResponse.trim();
     if (!text || isNpcTyping || isWaitingForApi) return;
+
+    if (jeanQuestionPhase && onJeanQuestionResponse) {
+      new Audio("/sounds/music/game%20effect/message-sent.wav").play().catch(() => {});
+      setDisplayMessages((prev) => [...prev, { role: "ai", text }]);
+      setPlayerResponse("");
+      onJeanQuestionResponse(text);
+      return;
+    }
 
     console.log("[DistralApp] Player submitting:", text.slice(0, 80));
     new Audio("/sounds/music/game%20effect/message-sent.wav").play().catch(() => { });
@@ -485,7 +507,7 @@ function DistralAppWindow({
       console.error("[DistralApp] handlePlayerSubmit failed:", error);
       setIsWaitingForApi(false);
     }
-  }, [playerResponse, isNpcTyping, isWaitingForApi, npcSlug, gameState, processNpcResponse, pushToChatHistory]);
+  }, [playerResponse, isNpcTyping, isWaitingForApi, npcSlug, gameState, processNpcResponse, pushToChatHistory, jeanQuestionPhase, onJeanQuestionResponse]);
 
   const toolbar = (
     <div className="flex items-center justify-between gap-[1.05vh]">
@@ -521,7 +543,7 @@ function DistralAppWindow({
   return (
     <div className="h-full w-full" onMouseDownCapture={onFocus}>
       <div className="pixel-card h-full p-[0.3vh]">
-        <div className="pixel-card__shell flex h-full min-h-0 flex-col overflow-hidden border border-white/10 bg-(--semi-black)">
+        <div className={`pixel-card__shell flex h-full min-h-0 flex-col overflow-hidden border border-white/10 bg-(--semi-black) ${jeanQuestionPhase ? "jean-alert-mode border-[#E76E6E]" : ""}`}>
 
           {phase === "landing" ? (
             <>
@@ -590,6 +612,17 @@ function DistralAppWindow({
               </div>
 
               <div ref={chatScrollRef} className="flex min-h-0 flex-1 flex-col overflow-auto bg-(--semi-black) px-[2vh] py-[1.5vh]">
+                {jeanQuestionPhase && jeanQuestionText && (
+                  <div className="mb-[1.5vh] px-[1.6vh] py-[1.1vh] border-2 border-[#E76E6E] bg-[#E76E6E]/10 rounded-[0.3vh]" style={{ fontFamily: "'VCR OSD Mono', monospace" }}>
+                    <div className="text-[1vh] uppercase tracking-wider text-[#E76E6E] mb-[0.4vh]">Jean asks:</div>
+                    <div className="text-[1.3vh] text-white/90">{jeanQuestionText}</div>
+                    {jeanQuestionDeadline != null && (
+                      <div className="text-[0.9vh] text-white/50 mt-[0.5vh]">
+                        Respond within 15 seconds
+                      </div>
+                    )}
+                  </div>
+                )}
                 {displayMessages.map((msg, index) => (
                   msg.role === "human" ? (
                     <div key={index} className="flex flex-col items-end mb-[2vh]" style={{ animation: "messageSlideIn 0.25s ease-out" }}>
@@ -737,11 +770,15 @@ type DistralTabProps = {
   onMailSent?: (sent: import("@/lib/game/gameState").SentEmailRecord) => void;
   onMessageChatUpdate?: (chats: import("@/lib/game/gameState").MessageAppChat[]) => void;
   onMailCtaClick?: (emailId: string, action: import("@/lib/game/mailDefinitions").MailCtaAction) => void;
+  jeanQuestionPhase?: boolean;
+  jeanQuestionText?: string | null;
+  jeanQuestionDeadline?: number | null;
+  onJeanQuestionResponse?: (response: string) => void;
   hiddenIconCount?: number;
   hideUIPhase?: number;
 };
 
-export default function DistralTab({ accent, openApps, onOpenApp, onCloseApp, globalCash, setGlobalCash, inventory, setInventory, isShuttingDown, onShutdown, unlockedApps, gameState, onNpcResponse, onManagerEmailOpened, onChatHistoryUpdate, onMailRead, onMailSent, onMessageChatUpdate, onMailCtaClick, hiddenIconCount = 0, hideUIPhase = 0 }: DistralTabProps) {
+export default function DistralTab({ accent, openApps, onOpenApp, onCloseApp, globalCash, setGlobalCash, inventory, setInventory, isShuttingDown, onShutdown, unlockedApps, gameState, onNpcResponse, onManagerEmailOpened, onChatHistoryUpdate, onMailRead, onMailSent, onMessageChatUpdate, onMailCtaClick, jeanQuestionPhase, jeanQuestionText, jeanQuestionDeadline, onJeanQuestionResponse, hiddenIconCount = 0, hideUIPhase = 0 }: DistralTabProps) {
   const [wallpaper, setWallpaper] = useState("/windows_xp.png");
 
   const isAppLocked = (appId: string): boolean => {
@@ -842,6 +879,10 @@ export default function DistralTab({ accent, openApps, onOpenApp, onCloseApp, gl
                     gameState={gameState}
                     onNpcResponse={onNpcResponse}
                     onChatHistoryUpdate={onChatHistoryUpdate}
+                    jeanQuestionPhase={jeanQuestionPhase}
+                    jeanQuestionText={jeanQuestionText}
+                    jeanQuestionDeadline={jeanQuestionDeadline}
+                    onJeanQuestionResponse={onJeanQuestionResponse}
                   />
                 </Rnd>
               );

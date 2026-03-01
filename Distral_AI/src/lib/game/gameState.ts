@@ -93,6 +93,12 @@ export type GameState = {
   messageChats: MessageAppChat[];
   mailSeed: number;
   miningDiscountActive: boolean;
+  riskLevel: number;
+  riskFillDurationMs: number;
+  userAwaySince: number;
+  jeanQuestionPhase: boolean;
+  jeanQuestionText: string | null;
+  jeanQuestionDeadline: number | null;
 };
 
 export const INITIAL_GAME_STATE: GameState = {
@@ -112,6 +118,12 @@ export const INITIAL_GAME_STATE: GameState = {
   messageChats: [],
   mailSeed: 0,
   miningDiscountActive: false,
+  riskLevel: 0,
+  riskFillDurationMs: 0,
+  userAwaySince: 0,
+  jeanQuestionPhase: false,
+  jeanQuestionText: null,
+  jeanQuestionDeadline: null,
 };
 
 const CHECKPOINT_KEY = "distral_game_checkpoint";
@@ -137,6 +149,12 @@ export function loadCheckpoint(): GameState | null {
       messageChats: parsed.messageChats ?? [],
       mailSeed: parsed.mailSeed ?? 0,
       miningDiscountActive: parsed.miningDiscountActive ?? false,
+      riskLevel: parsed.riskLevel ?? 0,
+      riskFillDurationMs: parsed.riskFillDurationMs ?? 0,
+      userAwaySince: parsed.userAwaySince ?? 0,
+      jeanQuestionPhase: false,
+      jeanQuestionText: null,
+      jeanQuestionDeadline: null,
     } as GameState;
   } catch {
     return null;

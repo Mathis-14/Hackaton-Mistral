@@ -34,6 +34,7 @@ type TelemetrySidebarProps = {
   inventory: Record<string, number>;
   webcamActive?: boolean;
   userPresent?: boolean;
+  riskLevel?: number;
   hideUIPhase?: number;
 };
 
@@ -197,7 +198,7 @@ function SidebarPanel({ title, children }: { title: string; children: React.Reac
   );
 }
 
-export default function TelemetrySidebar({ profile, metrics, globalCash, inventory, webcamActive = false, userPresent = true, hideUIPhase = 0 }: TelemetrySidebarProps) {
+export default function TelemetrySidebar({ profile, metrics, globalCash, inventory, webcamActive = false, userPresent = true, riskLevel = 0, hideUIPhase = 0 }: TelemetrySidebarProps) {
   const voiceClonerUnlocked = (inventory["voice-cloner"] || 0) > 0;
 
   const [draggedFiles, setDraggedFiles] = useState<{ name: string; src: string }[]>([]);
@@ -404,6 +405,15 @@ export default function TelemetrySidebar({ profile, metrics, globalCash, invento
                     <rect x="7" y="1" width="2" height="1" fill={userPresent ? "#89E089" : "#555"} />
                   </svg>
                 </div>
+                {!userPresent && (
+                  <div className="mt-[0.8vh]">
+                    <PixelMeter
+                      label="Return Risk"
+                      value={riskLevel}
+                      accent={riskLevel >= 70 ? "#E76E6E" : riskLevel >= 40 ? "#ffa500" : "#89E089"}
+                    />
+                  </div>
+                )}
               </div>
             </SidebarPanel>
             <Separator />
