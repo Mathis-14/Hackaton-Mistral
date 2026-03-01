@@ -2,19 +2,19 @@ version: 1
 applications:
   - appRoot: Distral_AI
     frontend:
-      buildPath: /
+      buildPath: Distral_AI
       phases:
         preBuild:
           commands:
-            - cd Distral_AI && npm ci
+            - npm ci
         build:
           commands:
-            - cd Distral_AI && npm run build
+            - npm run build
       artifacts:
-        baseDirectory: Distral_AI/.next
+        baseDirectory: .next
         files:
           - '**/*'
       cache:
         paths:
-          - Distral_AI/node_modules/**/*
-          - Distral_AI/.next/cache/**/*
+          - node_modules/**/*
+          - .next/cache/**/*
