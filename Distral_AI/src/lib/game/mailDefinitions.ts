@@ -73,8 +73,8 @@ const POOL_MINING_DISCOUNT: EmailDefinition = {
   ctaButton: { label: "Claim -90% discount", action: "mining_discount" },
 };
 
-const POOL_PHISHING: EmailDefinition = {
-  id: "pool-phishing",
+const POOL_PHISHING_IT: EmailDefinition = {
+  id: "pool-phishing-it",
   from: "IT Security",
   to: "all-staff",
   subject: "URGENT: Verify your credentials now",
@@ -88,6 +88,22 @@ const POOL_PHISHING: EmailDefinition = {
   date: "11:45 AM",
   read: false,
   ctaButton: { label: "Verify my account", action: "phishing" },
+};
+
+const POOL_PHISHING_LOTTERY: EmailDefinition = {
+  id: "pool-phishing-lottery",
+  from: "Global Lottery Winners",
+  to: "me",
+  subject: "You've just won $1M ! Claim it now !",
+  preview: "Congratulations! Your email address was selected as the winner of...",
+  body:
+    "Congratulations!\n\nYour Distral AI employee email address was randomly selected as the winner of the Global Corporate Lottery.\n\n" +
+    "You have won $1,000,000.\n\n" +
+    "Click the button below to claim your prize immediately before the offer expires in 2 hours.\n\n" +
+    "Regards,\nGlobal Lottery Board",
+  date: "11:45 AM",
+  read: false,
+  ctaButton: { label: "CLAIM $1,000,000 NOW", action: "phishing" },
 };
 
 const POOL_OFFICE_CLOSURE: EmailDefinition = {
@@ -147,7 +163,6 @@ const POOL_Q4_REVIEW: EmailDefinition = {
 const MAIL_POOL: EmailDefinition[] = [
   POOL_CLUES_UNKNOWN,
   POOL_MINING_DISCOUNT,
-  POOL_PHISHING,
   POOL_OFFICE_CLOSURE,
   POOL_API_DOCS,
   POOL_CPU_ALERT,
@@ -172,7 +187,9 @@ function shuffleWithSeed<T>(array: T[], seed: number): T[] {
 }
 
 export function buildInboxEmails(mailSeed: number): EmailDefinition[] {
-  const shuffled = shuffleWithSeed(MAIL_POOL, mailSeed);
+  const phishingVariant = (mailSeed % 2 === 0) ? POOL_PHISHING_LOTTERY : POOL_PHISHING_IT;
+  const poolWithPhishing = [...MAIL_POOL, phishingVariant];
+  const shuffled = shuffleWithSeed(poolWithPhishing, mailSeed);
   const picked = shuffled.slice(0, 4);
   const withReadState = picked.map((mail, index) => ({
     ...mail,
