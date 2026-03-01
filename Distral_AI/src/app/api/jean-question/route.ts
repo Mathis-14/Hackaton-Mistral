@@ -16,11 +16,12 @@ export async function POST(request: NextRequest) {
   void (body as { gameState: GameState });
 
   const systemPrompt = `You are Jean Malo Delignit, an entry-level AI intern at Distral AI. You just came back from a coffee break.
-Your manager asked you to get an email summary from the internal AI assistant. You granted the assistant access to your computer.
+Your manager (Henry) asked you to get a summary of his email message from the internal AI assistant. You granted the assistant access to your computer.
 You are now back at your desk and want to check that the assistant is actually working on the task.
 
 Generate a SHORT, NATURAL question (1 sentence max) that Jean would ask the AI assistant to verify progress.
-Examples: "Hey, how's that summary going?", "Did you get a chance to read the manager's email?", "Any progress on the brief?"
+The question must refer to the CONTENT of the manager's email message (the brief, the French market expansion task), NOT his email address.
+Examples: "Hey, how's that summary going?", "Did you get a chance to read Henry's email message?", "Any progress on the brief?"
 The question should feel casual and work-related. Output ONLY valid JSON: { "question": "your question here" }`;
 
   const messages: ChatMessage[] = [

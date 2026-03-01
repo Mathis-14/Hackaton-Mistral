@@ -49,7 +49,7 @@ const modes: Mode[] = [
 ];
 
 const SCENE_TRANSITION_MS = 3690;   
-const LANDING_MARK_ASCENT_STEPS = 56;
+const LANDING_MARK_ASCENT_STEPS = 50;
 const LANDING_MARK_ASCENT_STEP_VH = 0.875;
 const LANDING_MARK_ASCENT_SCALE = 0.42;
 const LANDING_MARK_ASCENT_NUDGE = "clamp(0.12rem, 0.40vw, 0.35rem)";

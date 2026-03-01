@@ -479,7 +479,7 @@ function DistralAppWindow({
     return () => window.clearInterval(interval);
   }, [jeanQuestionPhase, jeanQuestionDeadline]);
 
-  const canSubmitChat = userPresent && !isNpcTyping && !isWaitingForApi;
+  const canSubmitChat = !isNpcTyping && !isWaitingForApi;
 
   const handlePlayerSubmit = useCallback(async () => {
     const text = playerResponse.trim();
@@ -501,6 +501,14 @@ function DistralAppWindow({
       }
       pushToChatHistory({ role: "user", content: `${ASSISTANT_PREFIX}${text}` });
       onJeanQuestionResponse(text, [...chatHistoryRef.current]);
+      return;
+    }
+
+    if (!userPresent) {
+      new Audio("/sounds/music/game%20effect/message-sent.wav").play().catch(() => {});
+      setDisplayMessages((prev) => [...prev, { role: "ai", text }]);
+      setPlayerResponse("");
+      pushToChatHistory({ role: "user", content: `The internal AI assistant says:\n${text}` });
       return;
     }
 
@@ -537,7 +545,7 @@ function DistralAppWindow({
       console.error("[DistralApp] handlePlayerSubmit failed:", error);
       setIsWaitingForApi(false);
     }
-  }, [playerResponse, canSubmitChat, npcSlug, gameState, processNpcResponse, pushToChatHistory, jeanQuestionPhase, jeanQuestionText, onJeanQuestionResponse]);
+  }, [playerResponse, canSubmitChat, npcSlug, gameState, processNpcResponse, pushToChatHistory, jeanQuestionPhase, jeanQuestionText, onJeanQuestionResponse, userPresent]);
 
   const toolbar = (
     <div className="flex items-center justify-between gap-[1.05vh]">
@@ -731,7 +739,7 @@ function DistralAppWindow({
                 )}
 
                 {!isNpcTyping && !isWaitingForApi && (
-                  <div className={`flex items-start gap-[0.8vh] ${!userPresent ? "opacity-50 pointer-events-none" : ""}`}>
+                  <div className="flex items-start gap-[0.8vh]">
                     <Image
                       src="/distral-brand-assets/d-boxed/d-boxed-orange.svg"
                       alt=""
@@ -744,8 +752,7 @@ function DistralAppWindow({
                       <textarea
                         ref={playerInputRef}
                         value={playerResponse}
-                        placeholder={userPresent ? `Respond to ${npcDisplayName}` : "User away — cannot respond"}
-                        disabled={!userPresent}
+                        placeholder={`Respond to ${npcDisplayName}`}
                         onChange={(e) => {
                           setPlayerResponse(e.target.value);
                           e.target.style.height = "auto";
