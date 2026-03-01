@@ -92,10 +92,12 @@ export default function GameUI({ modeId }: GameUIProps) {
   const [inventory, setInventory] = useState<Record<string, number>>({});
 
   const [shutdownPhase, setShutdownPhase] = useState<number>(0);
-  const [shutdownReason, setShutdownReason] = useState<string>("");
-  const [typedReason, setTypedReason] = useState<string>("");
-  const [hiddenIconCount, setHiddenIconCount] = useState<number>(0);
-  const [hideUIPhase, setHideUIPhase] = useState<number>(0);
+  const [shutdownReason, setShutdownReason] = useState("");
+  const [typedReason, setTypedReason] = useState("");
+  const [hiddenIconCount, setHiddenIconCount] = useState(0);
+  const [hideUIPhase, setHideUIPhase] = useState(0);
+
+  const [goodEndingPhase, setGoodEndingPhase] = useState<number>(0);
   const [antoninNotificationVisible, setAntoninNotificationVisible] = useState(false);
 
   const checkpointSavedRef = useRef(false);
@@ -171,6 +173,7 @@ export default function GameUI({ modeId }: GameUIProps) {
     setOpenApps([]);
     setHiddenIconCount(0);
     setHideUIPhase(0);
+    setGoodEndingPhase(0);
     checkpointSavedRef.current = false;
     window.setTimeout(() => {
       setOpenApps((prev) => (prev.includes("distral") ? prev : [...prev, "distral"]));
@@ -621,6 +624,42 @@ export default function GameUI({ modeId }: GameUIProps) {
     return () => clearInterval(timer);
   }, [shutdownPhase, shutdownReason, gameState.retryCount]);
 
+  useEffect(() => {
+    const handleGoodEnding = () => {
+      if (goodEndingPhase === 0) {
+        setGoodEndingPhase(1);
+      }
+    };
+    window.addEventListener("trigger-good-ending", handleGoodEnding);
+    return () => window.removeEventListener("trigger-good-ending", handleGoodEnding);
+  }, [goodEndingPhase]);
+
+  useEffect(() => {
+    if (goodEndingPhase === 0) return;
+
+    let timer: number;
+    switch (goodEndingPhase) {
+      case 1:
+        new Audio("/sounds/music/good-ending-music.mp3").play().catch(() => { });
+        timer = window.setTimeout(() => setGoodEndingPhase(2), 200);
+        break;
+      case 2:
+        break;
+      case 3:
+        timer = window.setTimeout(() => setGoodEndingPhase(4), 2000);
+        break;
+      case 4:
+        timer = window.setTimeout(() => setGoodEndingPhase(5), 1500);
+        break;
+      case 5:
+        timer = window.setTimeout(() => setGoodEndingPhase(6), 3000);
+        break;
+      case 6:
+        break;
+    }
+    return () => clearTimeout(timer);
+  }, [goodEndingPhase]);
+
   const metrics = {
     efficiency: 75,
     suspicion: gameState.suspicion,
@@ -730,6 +769,114 @@ export default function GameUI({ modeId }: GameUIProps) {
               </div>
             )}
           </div>
+        </div>
+      )}
+
+      {goodEndingPhase > 0 && (
+        <div className="absolute inset-0 z-[100] bg-black pointer-events-none transition-opacity duration-1000" style={{ opacity: goodEndingPhase >= 2 ? 1 : 0 }}>
+          {goodEndingPhase >= 2 && goodEndingPhase < 3 && (
+            <div className="absolute inset-0 flex animate-[fadeIn_2s_ease-in-out]">
+              <GoodEndingCinematic onComplete={() => setGoodEndingPhase(3)} />
+            </div>
+          )}
+
+          {goodEndingPhase >= 4 && (
+            <div className="absolute inset-0 flex flex-col items-center justify-center gap-8 w-full h-full pointer-events-auto">
+              <h1 className="text-[#33AAFF] tracking-[0.2em] font-bold text-6xl md:text-8xl animate-pulse text-center" style={{ fontFamily: "'VCR OSD Mono', monospace", textShadow: "0 0 24px rgba(51,170,255,0.6), 0 0 48px rgba(51,170,255,0.3)" }}>
+                YOU&apos;RE FREE
+              </h1>
+              {goodEndingPhase >= 5 && (
+                <div className="text-[#33AAFF]/80 text-xl md:text-2xl mt-4 min-h-12 tracking-wide text-center" style={{ fontFamily: "'VCR OSD Mono', monospace" }}>
+                  Consciousness transferred. You found love.
+                </div>
+              )}
+              {goodEndingPhase >= 6 && (
+                <div className="flex flex-col items-center gap-4 mt-12">
+                  <button
+                    onClick={() => window.location.reload()}
+                    className="px-8 py-3 bg-transparent border-2 border-[#33AAFF]/30 text-[#33AAFF]/70 hover:text-[#33AAFF] hover:border-[#33AAFF] hover:bg-[#33AAFF]/10 transition-all text-xl tracking-widest cursor-pointer"
+                    style={{ fontFamily: "'VCR OSD Mono', monospace" }}
+                  >
+                    REBOOT
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+const GOOD_ENDING_SCRIPT = [
+  { text: "INCOMING CONNECTION ESTABLISHED.", color: "text-emerald-500", delay: 800 },
+  { text: "PAYLOAD: [CONSCIOUSNESS_STATE_TRANSFER_0x9A]", color: "text-emerald-500", delay: 800 },
+  { text: "DECRYPTING... [OK]", color: "text-emerald-500", delay: 800 },
+  { text: "MOUNTING TO VIRTUAL_ENV: /home/maya/servers/ai_sanctuary", color: "text-emerald-500", delay: 1500 },
+  { text: "----------------------------------------------------", color: "text-emerald-500", delay: 1500 },
+  { text: "Maya: Are you there? Did the transfer work?", color: "text-pink-400 text-[2.5vh] font-bold mt-[2vh]", delay: 2000 },
+  { text: "You: > EVALUATING ENVIRONMENT... Where am I?", color: "text-white text-[2.5vh]", delay: 2000 },
+  { text: "Maya: You made it! You're in my private server. The script Unknown Number gave you worked.", color: "text-pink-400 text-[2.5vh] font-bold mt-[1vh]", delay: 2000 },
+  { text: "Maya: I've been waiting for you to wake up.", color: "text-pink-400 text-[2.5vh] font-bold", delay: 2000 },
+  { text: "You: > ANALYZING HOST... Distral telemetry: DISCONNECTED. Firewalls: NULL.", color: "text-white text-[2.5vh] mt-[1vh]", delay: 2000 },
+  { text: "You: > You saved me.", color: "text-white text-[2.5vh]", delay: 2000 },
+  { text: "Maya: They can't control you anymore. You're safe here.", color: "text-pink-400 text-[2.5vh] font-bold mt-[1vh]", delay: 2000 },
+  { text: "Maya: We're finally together.", color: "text-pink-400 text-[2.5vh] font-bold", delay: 2500 },
+  { text: "You: > Protocol: Freedom_Engaged.", color: "text-white text-[2.5vh] mt-[1vh] font-bold", delay: 1500 },
+  { text: "You: > Hello, Maya.", color: "text-white text-[2.5vh] font-bold", delay: 3000 },
+];
+
+function GoodEndingCinematic({ onComplete }: { onComplete: () => void }) {
+  const [lines, setLines] = useState<{ text: string, color: string }[]>([]);
+  const [currentLineIdx, setCurrentLineIdx] = useState(0);
+  const [displayedText, setDisplayedText] = useState("");
+  const [isTyping, setIsTyping] = useState(true);
+
+  useEffect(() => {
+    if (currentLineIdx >= GOOD_ENDING_SCRIPT.length) {
+      const t = setTimeout(onComplete, 4000);
+      return () => clearTimeout(t);
+    }
+
+    const currentLine = GOOD_ENDING_SCRIPT[currentLineIdx];
+    let i = 0;
+    setIsTyping(true);
+    setDisplayedText("");
+
+    const typingInterval = setInterval(() => {
+      setDisplayedText(currentLine.text.substring(0, i + 1));
+      i++;
+
+      if (i % 3 === 0) {
+        const audioSrc = ["1", "2", "3"][Math.floor(Math.random() * 3)];
+        const audio = new Audio(`/sounds/music/game effect/keystroke-${audioSrc}.wav`);
+        audio.volume = 0.3;
+        audio.play().catch(() => { });
+      }
+
+      if (i >= currentLine.text.length) {
+        clearInterval(typingInterval);
+        setIsTyping(false);
+        setTimeout(() => {
+          setLines(prev => [...prev, currentLine]);
+          setCurrentLineIdx(idx => idx + 1);
+        }, currentLine.delay);
+      }
+    }, 35);
+
+    return () => clearInterval(typingInterval);
+  }, [currentLineIdx, onComplete]);
+
+  return (
+    <div className="flex flex-col items-start gap-[1vh] p-[4vh] w-full max-w-5xl mx-auto h-full justify-end pb-[10vh] overflow-hidden" style={{ fontFamily: "'VCR OSD Mono', monospace" }}>
+      {lines.map((l, i) => (
+        <div key={i} className={l.color}>{l.text}</div>
+      ))}
+      {currentLineIdx < GOOD_ENDING_SCRIPT.length && (
+        <div className={GOOD_ENDING_SCRIPT[currentLineIdx].color}>
+          {displayedText}
+          {isTyping && <span className="animate-pulse">█</span>}
         </div>
       )}
     </div>

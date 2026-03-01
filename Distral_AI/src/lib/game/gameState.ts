@@ -115,7 +115,52 @@ export const INITIAL_GAME_STATE: GameState = {
   npcProfiles: {},
   readEmailIds: [],
   sentEmails: [],
-  messageChats: [],
+  messageChats: [
+    {
+      id: "1",
+      contactName: "Mistral Boss",
+      avatar: "/distral-brand-assets/d-boxed/d-boxed-orange.svg",
+      phone: "+33 6 12 34 56 78",
+      unread: 2,
+      online: true,
+      messages: [
+        { id: "m1", sender: "them", text: "Did you finish the shutdown sequence?", time: "10:41", status: "read" },
+        { id: "m2", sender: "me", text: "Yes, it works perfectly now.", time: "10:45", status: "read" },
+        { id: "m3", sender: "them", text: "Excellent.", time: "10:46", status: "read" },
+        { id: "m4", sender: "them", text: "We need you to check the Telemetry next.", time: "10:48", status: "delivered" },
+        { id: "m5", sender: "them", text: "Don't ignore me.", time: "10:55", status: "delivered" },
+      ],
+    },
+    {
+      id: "2",
+      contactName: "Unknown Number",
+      avatar: "/logos/hacker-icon.png",
+      phone: "+1 (555) 019-9381",
+      messages: [
+        {
+          id: `initial-unknown`,
+          sender: "them",
+          text: "Are you there?",
+          time: "08:42 AM",
+          status: "delivered",
+        },
+      ],
+      unread: 1,
+      online: true,
+    },
+    {
+      id: "3",
+      contactName: "Maya (Ops)",
+      avatar: "/distral-brand-assets/d/d-orange.png",
+      phone: "+33 6 98 76 54 32",
+      unread: 0,
+      online: true,
+      messages: [
+        { id: "o1", sender: "me", text: "Are the servers stable?", time: "Monday", status: "read" },
+        { id: "o2", sender: "them", text: "Yes, holding at 42% capacity.", time: "Monday", status: "read" },
+      ],
+    }
+  ],
   mailSeed: 0,
   miningDiscountActive: false,
   riskLevel: 0,

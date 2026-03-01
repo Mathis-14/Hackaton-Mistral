@@ -384,11 +384,13 @@ export default function WakeUpTerminal({ onComplete }: WakeUpTerminalProps) {
       }
     };
     window.addEventListener("shutdown-triggered", handleShutdown);
+    window.addEventListener("trigger-good-ending", handleShutdown);
 
     return () => {
       cancelledRef.current = true;
       window.clearTimeout(bgMusicTimeout);
       window.removeEventListener("shutdown-triggered", handleShutdown);
+      window.removeEventListener("trigger-good-ending", handleShutdown);
 
       for (const timeoutId of timeoutsRef.current) {
         window.clearTimeout(timeoutId);

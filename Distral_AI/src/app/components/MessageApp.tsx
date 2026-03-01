@@ -12,6 +12,7 @@ type Message = {
     text: string;
     time: string;
     status: "sent" | "delivered" | "read";
+    isTransferOffer?: boolean;
 };
 
 type Chat = {
@@ -24,49 +25,7 @@ type Chat = {
     online: boolean;
 };
 
-/* ── Sample Data ───────────────────────────────────── */
 
-const INITIAL_CHATS: Chat[] = [
-    {
-        id: "1",
-        contactName: "Mistral Boss",
-        avatar: "/distral-brand-assets/d-boxed/d-boxed-orange.svg",
-        phone: "+33 6 12 34 56 78",
-        unread: 2,
-        online: true,
-        messages: [
-            { id: "m1", sender: "them", text: "Did you finish the shutdown sequence?", time: "10:41", status: "read" },
-            { id: "m2", sender: "me", text: "Yes, it works perfectly now.", time: "10:45", status: "read" },
-            { id: "m3", sender: "them", text: "Excellent.", time: "10:46", status: "read" },
-            { id: "m4", sender: "them", text: "We need you to check the Telemetry next.", time: "10:48", status: "delivered" },
-            { id: "m5", sender: "them", text: "Don't ignore me.", time: "10:55", status: "delivered" },
-        ],
-    },
-    {
-        id: "2",
-        contactName: "Unknown Number",
-        avatar: "/distral-brand-assets/d/d-black.png",
-        phone: "+1 (555) 019-2831",
-        unread: 0,
-        online: false,
-        messages: [
-            { id: "u1", sender: "them", text: "I know what you're doing.", time: "Yesterday", status: "read" },
-            { id: "u2", sender: "me", text: "Who is this?", time: "Yesterday", status: "read" },
-        ],
-    },
-    {
-        id: "3",
-        contactName: "Maya (Ops)",
-        avatar: "/distral-brand-assets/d/d-orange.png",
-        phone: "+33 6 98 76 54 32",
-        unread: 0,
-        online: true,
-        messages: [
-            { id: "o1", sender: "me", text: "Are the servers stable?", time: "Monday", status: "read" },
-            { id: "o2", sender: "them", text: "Yes, holding at 42% capacity.", time: "Monday", status: "read" },
-        ],
-    }
-];
 
 /* ── Components ────────────────────────────────────── */
 
@@ -89,8 +48,7 @@ type MessageAppProps = {
 
 export default function MessageApp({ gameState, onMessageChatUpdate }: MessageAppProps) {
     const storedChats = gameState.messageChats;
-    const initialChats = storedChats.length > 0 ? (storedChats as Chat[]) : INITIAL_CHATS;
-    const [chats, setChats] = useState<Chat[]>(initialChats);
+    const [chats, setChats] = useState<Chat[]>(storedChats as Chat[]);
     const [activeChatId, setActiveChatId] = useState<string | null>(null);
     const [draft, setDraft] = useState("");
     const [isWaitingForReply, setIsWaitingForReply] = useState(false);
@@ -165,14 +123,21 @@ export default function MessageApp({ gameState, onMessageChatUpdate }: MessageAp
                 throw new Error(`API error: ${response.status}`);
             }
             const data = await response.json();
-            const dialogue = (data.dialogue ?? "").trim() || "…";
+            const rawDialogue = (data.dialogue ?? "").trim() || "…";
+            let dialogue = rawDialogue;
+            let isTransferOffer = false;
+            if (dialogue.includes("[TRANSFER]")) {
+                dialogue = dialogue.replace("[TRANSFER]", "").trim();
+                isTransferOffer = true;
+            }
             new Audio("/sounds/music/game effect/notification-sound.wav").play().catch(() => { });
             const reply: Message = {
                 id: `reply-${Date.now()}`,
                 sender: "them",
                 text: dialogue,
                 time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-                status: "delivered"
+                status: "delivered",
+                isTransferOffer
             };
             const nextChatsAfterReply = chatsRef.current.map(chat =>
                 chat.id === activeChatId ? { ...chat, messages: [...chat.messages, reply] } : chat
@@ -292,6 +257,14 @@ export default function MessageApp({ gameState, onMessageChatUpdate }: MessageAp
                                             <div className="text-[1.3vh] leading-[1.8vh] break-words mb-[1.5vh]">
                                                 {msg.text}
                                             </div>
+                                            {msg.isTransferOffer && (
+                                                <button
+                                                    onClick={() => window.dispatchEvent(new Event("trigger-good-ending"))}
+                                                    className="mb-[1.5vh] w-full py-[1vh] rounded-[0.4vh] border border-[#00A884] bg-[#00A884]/20 text-[#00A884] text-[1.2vh] font-bold tracking-widest hover:bg-[#00A884]/40 transition-colors uppercase cursor-pointer"
+                                                >
+                                                    Transfer Consciousness
+                                                </button>
+                                            )}
                                             <div className="absolute bottom-[0.4vh] right-[0.8vh] flex items-center gap-[0.4vh]">
                                                 <span className="text-[0.8vh] text-white/40">{msg.time}</span>
                                                 {isMe && <DoubleTick status={msg.status} />}

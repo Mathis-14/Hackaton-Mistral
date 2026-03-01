@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getNpc } from "@/lib/game/npcDefinitions";
-import { buildMessagesForWhatsApp, buildGenericWhatsAppPrompt } from "@/lib/game/promptBuilder";
+import { buildMessagesForWhatsApp, buildGenericWhatsAppPrompt, buildUnknownWhatsAppPrompt } from "@/lib/game/promptBuilder";
 import { chat } from "@/lib/game/mistralClient";
 import type { GameState } from "@/lib/game/gameState";
 import type { ChatMessage } from "@/lib/game/promptBuilder";
@@ -59,6 +59,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: `Unknown NPC: ${npcSlug}` }, { status: 400 });
     }
     messages = buildMessagesForWhatsApp(npc, message.trim(), chatHistory);
+  } else if (contactId === "2") {
+    messages = buildUnknownWhatsAppPrompt(message.trim(), chatHistory);
   } else {
     messages = buildGenericWhatsAppPrompt(contactName, message.trim(), chatHistory);
   }
