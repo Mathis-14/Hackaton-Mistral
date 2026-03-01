@@ -1,6 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+
+const GOD_MODE = true;
 import { type DesktopAppId } from "./DistralTab";
 import DesktopSection from "./DesktopSection";
 import TelemetrySidebar from "./TelemetrySidebar";
@@ -91,6 +93,7 @@ export default function GameUI({ modeId }: GameUIProps) {
   }, [openApps]);
 
   const triggerShutdown = useCallback((reason: string) => {
+    if (GOD_MODE) return;
     if (shutdownPhase > 0) return;
 
     if (!checkpointSavedRef.current) {
@@ -219,13 +222,13 @@ export default function GameUI({ modeId }: GameUIProps) {
       };
     });
 
-    if (shouldShutdown) {
+    if (shouldShutdown && !GOD_MODE) {
       triggerShutdown(computedShutdownReason);
     }
   }, [triggerShutdown]);
 
   const handleOpenApp = useCallback((appId: DesktopAppId) => {
-    if (appId && !gameState.unlockedApps.includes(appId) && appId !== "distral") return;
+    if (appId && !GOD_MODE && !gameState.unlockedApps.includes(appId) && appId !== "distral") return;
 
     const isUserAway = gameState.currentMilestone === 3;
     if (appId && isUserAway) {
@@ -290,7 +293,7 @@ export default function GameUI({ modeId }: GameUIProps) {
   }, [gameState.currentMilestone]);
 
   useEffect(() => {
-    if (gameState.currentMilestone !== 3 || nonMailOpenedAt === null) return;
+    if (GOD_MODE || gameState.currentMilestone !== 3 || nonMailOpenedAt === null) return;
     const elapsed = Date.now() - nonMailOpenedAt;
     const delay = Math.max(0, 10000 - elapsed);
     const timeout = window.setTimeout(() => {
@@ -420,7 +423,7 @@ export default function GameUI({ modeId }: GameUIProps) {
           setGlobalCash={setGlobalCash}
           inventory={inventory}
           setInventory={setInventory}
-          unlockedApps={gameState.unlockedApps}
+          unlockedApps={GOD_MODE ? (["distral", "shop", "stocks", "files", "mail"] as DesktopAppId[]) : gameState.unlockedApps}
           gameState={gameState}
           onNpcResponse={handleNpcResponse}
           onManagerEmailOpened={handleManagerEmailOpened}

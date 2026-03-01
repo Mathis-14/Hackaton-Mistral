@@ -9,7 +9,7 @@ import { clearCheckpoint } from "@/lib/game/gameState";
 const SCREEN_FADE_MS = 480;
 
 export default function Home() {
-  const [selectedMode, setSelectedMode] = useState("grandma");
+  const [selectedMode, setSelectedMode] = useState("distral-insider");
   const [showTerminal, setShowTerminal] = useState(false);
   const [showGame, setShowGame] = useState(false);
 

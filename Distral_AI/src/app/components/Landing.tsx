@@ -106,7 +106,7 @@ export default function Landing({ onWakeUp }: LandingProps) {
   const [hasStarted, setHasStarted] = useState(false);
   const [logoVisible, setLogoVisible] = useState(false);
   const [showModes, setShowModes] = useState(false);
-  const [selectedMode, setSelectedMode] = useState(modes[0].id);
+  const [selectedMode, setSelectedMode] = useState("distral-insider");
   const mainMenuAudioRef = useRef<HTMLAudioElement | null>(null);
   const jingleAudioRef = useRef<HTMLAudioElement | null>(null);
 
