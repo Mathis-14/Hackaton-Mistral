@@ -1,7 +1,7 @@
 <p align="center">
   <img src="Distral_AI/public/logo_D_test.svg" alt="Distral AI Logo" width="80" />
 </p>
-
+ 
 <h1 align="center">DISTRAL AI_</h1>
 
 <p align="center">
