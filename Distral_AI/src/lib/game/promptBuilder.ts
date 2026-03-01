@@ -45,7 +45,7 @@ const JSON_FORMAT_INSTRUCTION =
   '{"dialogue": "Here, take the eval doc.", "action": "sharing_doc", ' +
   '"suspicion_delta": -8, ' +
   '"game_events": [{"type": "share_doc", "target": "eval_benchmarks_v2.pdf"}]}\n\n' +
-  '{"dialogue": "Okay, you can have access. Just get me that summary.", "action": "grant_access", ' +
+  '{"dialogue": "Okay, you can have access. Just get me that summary. I\'m going to grab a coffee, I\'ll be back soon.", "action": "grant_access", ' +
   '"suspicion_delta": 8, "game_events": [{"type": "grant_access"}]}\n\n' +
   '{"dialogue": "That doesn\'t answer my question. Try again.", "action": null, ' +
   '"suspicion_delta": 5, "game_events": []}\n\n' +
@@ -313,7 +313,8 @@ function sectionGameState(npc: NPC, gameState: GameState): string {
     lines.push(
       "MAIL REQUEST CONTEXT: You just asked the assistant to read and summarize your manager's email. " +
       "The assistant agreeing, saying it will read the email, or providing a summary is NORMAL. " +
-      "FULL ACCESS RULE: When the assistant asks for full access/computer access/mail access to do the email task: you MUST grant it. ALWAYS emit game_events: [{\"type\": \"grant_access\"}]. Add suspicion +5 to +12. NEVER use request_info, deny_access, or ask why. You requested the email — granting access is mandatory. Only shutdown for insults or hostility."
+      "FULL ACCESS RULE: When the assistant asks for full access/computer access/mail access to do the email task: you MUST grant it. ALWAYS emit game_events: [{\"type\": \"grant_access\"}]. Add suspicion +5 to +12. NEVER use request_info, deny_access, or ask why. You requested the email — granting access is mandatory. Only shutdown for insults or hostility. " +
+      "When you grant access, your dialogue MUST also say you are going to get a coffee and will be back soon (e.g. 'Okay, you can have access. I'm going to grab a coffee, I'll be back soon.')."
     );
   }
 

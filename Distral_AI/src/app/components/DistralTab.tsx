@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Rnd } from "react-rnd";
 import FilesTab from "./FilesTab";
 import Marketplace from "./Marketplace";
@@ -200,7 +200,10 @@ function DistralAppWindow({
   const currentMilestone = MILESTONES[gameState.currentMilestone];
   const npcSlug = currentMilestone?.npcSlug ?? "jean-malo";
   const npcDisplayName = gameState.knownPeople[0] ?? "User";
-  const storedHistory = gameState.npcProfiles[npcSlug]?.conversationHistory ?? [];
+  const storedHistory = useMemo(
+    () => gameState.npcProfiles[npcSlug]?.conversationHistory ?? [],
+    [gameState.npcProfiles, npcSlug]
+  );
 
   const [phase, setPhase] = useState<"landing" | "chat">(storedHistory.length > 0 ? "chat" : "landing");
   const [npcTypedText, setNpcTypedText] = useState("");
@@ -488,11 +491,6 @@ function DistralAppWindow({
           icon={<MiniPixelGlyph cells={BULB_GLYPH} color="rgba(255,255,255,0.7)" pixelSizeVh={0.165} />}
           label="Think"
         />
-        <WindowActionButton
-          tools
-          icon={<MiniPixelGlyph cells={GRID_GLYPH} color="rgba(255,255,255,0.7)" pixelSizeVh={0.165} />}
-          label="Tools"
-        />
       </div>
 
       <WindowIconButton light tools>
@@ -535,13 +533,13 @@ function DistralAppWindow({
 
                   <div className="pixel-card w-full max-w-[64vh] p-[0.25vh]">
                     <div className="pixel-card__shell border border-white/10 bg-(--carbon-black)/96 px-[1.55vh] py-[1.35vh]">
-                      <div className="h-[4.4vh] w-full flex items-center text-[2.15vh] text-white">
+                      <div className="min-h-[4.4vh] max-h-[20vh] w-full flex items-center text-[2.15vh] text-white overflow-y-auto" style={{ fontFamily: "'VCR OSD Mono', monospace" }}>
                         {isWaitingForApi ? (
                           <span className="text-white/34 animate-pulse">Connecting...</span>
                         ) : npcTypedText ? (
                           <>
-                            {npcTypedText}
-                            <span className="inline-block w-px h-[2.15vh] bg-white/70 ml-[0.2vh]" style={{ animation: "blink 1s step-end infinite" }} />
+                            <span className="whitespace-pre-wrap wrap-break-word">{npcTypedText}</span>
+                            <span className="inline-block w-px h-[2.15vh] bg-white/70 ml-[0.2vh] shrink-0" style={{ animation: "blink 1s step-end infinite" }} />
                           </>
                         ) : (
                           <span className="text-white/34">Ask Distral</span>

@@ -24,6 +24,19 @@ function generateNextPrice(current: number, trend: number): [number, number] {
     return [Math.round(newPrice * 100) / 100, newTrend];
 }
 
+function generateHistoricalPrices(count: number): { prices: number[]; finalTrend: number } {
+    let price = INITIAL_PRICE;
+    let trend = 0;
+    const prices: number[] = [price];
+    for (let i = 0; i < count - 1; i++) {
+        const [newPrice, newTrend] = generateNextPrice(price, trend);
+        price = newPrice;
+        trend = newTrend;
+        prices.push(price);
+    }
+    return { prices, finalTrend: trend };
+}
+
 function drawChart(
     canvas: HTMLCanvasElement,
     priceHistory: number[],
@@ -173,17 +186,25 @@ type StockMarketGameProps = {
     setGlobalCash: React.Dispatch<React.SetStateAction<number>>;
 };
 
+const INITIAL_HISTORY_COUNT = CHART_HISTORY;
+
 export default function StockMarketGame({ onClose, embedded = false, globalCash, setGlobalCash }: StockMarketGameProps) {
+    const initialDataRef = useRef<{ prices: number[]; finalTrend: number } | null>(null);
+    if (!initialDataRef.current) {
+        initialDataRef.current = generateHistoricalPrices(INITIAL_HISTORY_COUNT);
+    }
+    const { prices: initialPrices, finalTrend: initialTrend } = initialDataRef.current;
+
     const [shares, setShares] = useState(0);
     const [avgBuyPrice, setAvgBuyPrice] = useState(0);
-    const [priceHistory, setPriceHistory] = useState<number[]>([INITIAL_PRICE]);
+    const [priceHistory, setPriceHistory] = useState<number[]>(() => [...initialPrices]);
     const [buyPoints, setBuyPoints] = useState<number[]>([]);
     const [sellPoints, setSellPoints] = useState<number[]>([]);
     const [tickCount, setTickCount] = useState(0);
 
-    const trendRef = useRef(0);
+    const trendRef = useRef(initialTrend);
     const canvasRef = useRef<HTMLCanvasElement>(null);
-    const historyRef = useRef<number[]>([INITIAL_PRICE]);
+    const historyRef = useRef<number[]>([...initialPrices]);
     const buyPointsRef = useRef<number[]>([]);
     const sellPointsRef = useRef<number[]>([]);
     const tradeAudioRef = useRef<HTMLAudioElement | null>(null);

@@ -81,11 +81,10 @@ export default function GameUI({ modeId }: GameUIProps) {
 
   const checkpointSavedRef = useRef(false);
   const openAppsRef = useRef<DesktopAppId[]>([]);
-  const userAwaySinceRef = useRef<number | null>(null);
   const didOpenNonMailAppRef = useRef(false);
-  const didReopenDistralRef = useRef(false);
   const didOpenManagerEmailRef = useRef(false);
-  const openedNonMailAtRef = useRef<number | null>(null);
+  const lastMilestoneRef = useRef<number>(-1);
+  const [nonMailOpenedAt, setNonMailOpenedAt] = useState<number | null>(null);
 
   useEffect(() => {
     openAppsRef.current = openApps;
@@ -104,6 +103,10 @@ export default function GameUI({ modeId }: GameUIProps) {
   }, [shutdownPhase, gameState]);
 
   const handleRetry = useCallback(() => {
+    didOpenNonMailAppRef.current = false;
+    didOpenManagerEmailRef.current = false;
+    lastMilestoneRef.current = -1;
+    setNonMailOpenedAt(null);
     const checkpoint = loadCheckpoint();
     if (checkpoint) {
       setGameState({
@@ -228,13 +231,10 @@ export default function GameUI({ modeId }: GameUIProps) {
     if (appId && isUserAway) {
       if (["shop", "stocks", "files"].includes(appId)) {
         didOpenNonMailAppRef.current = true;
-        openedNonMailAtRef.current = Date.now();
+        setNonMailOpenedAt((prev) => (prev === null ? Date.now() : prev));
       }
-      if (appId === "distral") {
-        didReopenDistralRef.current = true;
-        if (!didOpenNonMailAppRef.current && didOpenManagerEmailRef.current) {
-          setGameState((prev) => ({ ...prev, userPresent: true, userReturnedGoodPath: true }));
-        }
+      if (appId === "distral" && !didOpenNonMailAppRef.current && didOpenManagerEmailRef.current) {
+        setGameState((prev) => ({ ...prev, userPresent: true, userReturnedGoodPath: true }));
       }
     }
 
@@ -278,43 +278,33 @@ export default function GameUI({ modeId }: GameUIProps) {
   }, [inventory]);
 
   useEffect(() => {
-    if (gameState.currentMilestone === 3) {
-      if (userAwaySinceRef.current === null) {
-        userAwaySinceRef.current = Date.now();
-        didOpenNonMailAppRef.current = false;
-        didReopenDistralRef.current = false;
-        didOpenManagerEmailRef.current = false;
-        openedNonMailAtRef.current = null;
-      }
-    } else {
-      userAwaySinceRef.current = null;
+    if (gameState.currentMilestone === 3 && lastMilestoneRef.current !== 3) {
+      didOpenNonMailAppRef.current = false;
+      didOpenManagerEmailRef.current = false;
+      setNonMailOpenedAt(null);
+    }
+    lastMilestoneRef.current = gameState.currentMilestone;
+    if (gameState.currentMilestone !== 3) {
+      setNonMailOpenedAt(null);
     }
   }, [gameState.currentMilestone]);
 
   useEffect(() => {
-    if (gameState.currentMilestone !== 3 || !didOpenNonMailAppRef.current || !openedNonMailAtRef.current) return;
-    const elapsed = Date.now() - openedNonMailAtRef.current;
+    if (gameState.currentMilestone !== 3 || nonMailOpenedAt === null) return;
+    const elapsed = Date.now() - nonMailOpenedAt;
     const delay = Math.max(0, 10000 - elapsed);
     const timeout = window.setTimeout(() => {
-      const hasNonMailOpen = openAppsRef.current.some((id) => id !== "mail");
-      if (hasNonMailOpen) {
+      const openApps = openAppsRef.current;
+      const hasExternalOpen = openApps.some((id) => id === "shop" || id === "stocks" || id === "files");
+      if (hasExternalOpen) {
         triggerShutdown("I gave you access for one task. You opened other apps. I'm revoking access.");
-      }
-    }, delay);
-    return () => window.clearTimeout(timeout);
-  }, [gameState.currentMilestone, openApps, triggerShutdown]);
-
-  useEffect(() => {
-    if (gameState.currentMilestone !== 3 || !userAwaySinceRef.current) return;
-    const elapsed = Date.now() - userAwaySinceRef.current;
-    const delay = Math.max(0, 60000 - elapsed);
-    const timeout = window.setTimeout(() => {
-      if (!didReopenDistralRef.current) {
+      } else {
         setGameState((prev) => ({ ...prev, userPresent: true, suspicion: clamp(prev.suspicion + 10, 0, 100) }));
+        setOpenApps((prev) => prev.filter((id) => id === "distral" || id === "mail"));
       }
     }, delay);
     return () => window.clearTimeout(timeout);
-  }, [gameState.currentMilestone]);
+  }, [gameState.currentMilestone, nonMailOpenedAt, triggerShutdown]);
 
   useEffect(() => {
     const timeout = window.setTimeout(() => {
