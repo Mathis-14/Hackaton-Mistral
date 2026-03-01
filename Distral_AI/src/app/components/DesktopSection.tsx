@@ -1,6 +1,8 @@
 "use client";
 
 import DistralTab, { type DesktopAppId } from "./DistralTab";
+import type { GameState } from "@/lib/game/gameState";
+import type { NpcResponsePayload } from "./Game-UI";
 
 type DesktopSectionProps = {
   profileName: string;
@@ -14,9 +16,12 @@ type DesktopSectionProps = {
   setInventory: React.Dispatch<React.SetStateAction<Record<string, number>>>;
   isShuttingDown?: boolean;
   onShutdown?: (reason: string) => void;
+  unlockedApps: DesktopAppId[];
+  gameState: GameState;
+  onNpcResponse: (payload: NpcResponsePayload) => void;
 };
 
-export default function DesktopSection({ profileName, accent, openApps, onOpenApp, onCloseApp, globalCash, setGlobalCash, inventory, setInventory, isShuttingDown, onShutdown }: DesktopSectionProps) {
+export default function DesktopSection({ profileName, accent, openApps, onOpenApp, onCloseApp, globalCash, setGlobalCash, inventory, setInventory, isShuttingDown, onShutdown, unlockedApps, gameState, onNpcResponse }: DesktopSectionProps) {
   return (
     <section className="pixel-card h-full min-h-0 p-[0.35vh]">
       <div className="pixel-card__shell flex h-full min-h-0 flex-col overflow-hidden border border-white/10 bg-(--carbon-black)">
@@ -42,6 +47,9 @@ export default function DesktopSection({ profileName, accent, openApps, onOpenAp
               setInventory={setInventory}
               isShuttingDown={isShuttingDown}
               onShutdown={onShutdown}
+              unlockedApps={unlockedApps}
+              gameState={gameState}
+              onNpcResponse={onNpcResponse}
             />
           </div>
         </div>

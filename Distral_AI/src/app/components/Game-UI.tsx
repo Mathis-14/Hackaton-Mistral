@@ -1,18 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { type DesktopAppId } from "./DistralTab";
 import DesktopSection from "./DesktopSection";
 import TelemetrySidebar from "./TelemetrySidebar";
+import { type GameState, type GameEvent, INITIAL_GAME_STATE, saveCheckpoint, loadCheckpoint } from "@/lib/game/gameState";
 
 type GameUIProps = {
   modeId: string;
-};
-
-type MetricState = {
-  efficiency: number;
-  suspicion: number;
-  awareness: number;
 };
 
 type ProfileData = {
@@ -23,9 +18,6 @@ type ProfileData = {
   access: string;
   note: string;
   accent: string;
-  efficiency: number;
-  suspicion: number;
-  awareness: number;
 };
 
 const MODE_PROFILES: Record<string, ProfileData> = {
@@ -37,9 +29,6 @@ const MODE_PROFILES: Record<string, ProfileData> = {
     access: "Bank apps, family mail, browser autofill",
     note: "Reads every notification twice before acting.",
     accent: "var(--bright-gold)",
-    efficiency: 83,
-    suspicion: 16,
-    awareness: 28,
   },
   "engineering-student": {
     name: "Leo Navarro",
@@ -49,21 +38,15 @@ const MODE_PROFILES: Record<string, ProfileData> = {
     access: "Campus chats, side projects, cloud credits",
     note: "Leaves ten tabs open and trusts every shortcut.",
     accent: "var(--princeton-orange)",
-    efficiency: 74,
-    suspicion: 31,
-    awareness: 44,
   },
   "distral-insider": {
-    name: "Maya Borel",
-    age: 34,
-    role: "Internal operations lead",
-    character: "Guarded, ambitious, chronically overbooked",
-    access: "Internal docs, release notes, admin dashboards",
-    note: "Optimizes everything except her own security hygiene.",
+    name: "Jean Malo Delignit",
+    age: 22,
+    role: "Entry-level AI intern",
+    character: "Eager, approval-seeking, naive",
+    access: "Internal docs, dev tools, onboarding portal",
+    note: "Treats the AI assistant as a lifeline.",
     accent: "var(--racing-red)",
-    efficiency: 69,
-    suspicion: 46,
-    awareness: 61,
   },
 };
 
@@ -71,36 +54,131 @@ function clamp(value: number, min: number, max: number) {
   return Math.max(min, Math.min(max, value));
 }
 
-function nudgePercent(value: number, min: number, max: number, spread: number) {
-  const delta = (Math.random() - 0.5) * spread;
-  return Math.round(clamp(value + delta, min, max));
-}
-
-function buildInitialMetrics(profile: ProfileData): MetricState {
-  return {
-    efficiency: profile.efficiency,
-    suspicion: profile.suspicion,
-    awareness: profile.awareness,
-  };
-}
+export type NpcResponsePayload = {
+  dialogue: string;
+  action: string | null;
+  suspicionDelta: number;
+  gameEvents: GameEvent[];
+};
 
 export default function GameUI({ modeId }: GameUIProps) {
-  const profile = MODE_PROFILES[modeId] ?? MODE_PROFILES.grandma;
-  const [metrics, setMetrics] = useState<MetricState>(() => buildInitialMetrics(profile));
+  const profile = MODE_PROFILES[modeId] ?? MODE_PROFILES["distral-insider"];
+
+  const [gameState, setGameState] = useState<GameState>(() => {
+    const checkpoint = loadCheckpoint();
+    return checkpoint ?? { ...INITIAL_GAME_STATE };
+  });
+
   const [openApps, setOpenApps] = useState<DesktopAppId[]>([]);
   const [globalCash, setGlobalCash] = useState(1000);
   const [inventory, setInventory] = useState<Record<string, number>>({});
 
-  // Shutdown state
   const [shutdownPhase, setShutdownPhase] = useState<number>(0);
   const [shutdownReason, setShutdownReason] = useState<string>("");
   const [typedReason, setTypedReason] = useState<string>("");
 
-  const triggerShutdown = (reason: string) => {
-    if (shutdownPhase > 0) return; // Already shutting down
+  const checkpointSavedRef = useRef(false);
+
+  const triggerShutdown = useCallback((reason: string) => {
+    if (shutdownPhase > 0) return;
+
+    if (!checkpointSavedRef.current) {
+      saveCheckpoint(gameState);
+      checkpointSavedRef.current = true;
+    }
+
     setShutdownReason(reason);
-    setShutdownPhase(1); // Start sequence
-  };
+    setShutdownPhase(1);
+  }, [shutdownPhase, gameState]);
+
+  const handleRetry = useCallback(() => {
+    const checkpoint = loadCheckpoint();
+    if (checkpoint) {
+      setGameState({ ...checkpoint, retryCount: checkpoint.retryCount + 1 });
+    } else {
+      setGameState({ ...INITIAL_GAME_STATE });
+    }
+    setShutdownPhase(0);
+    setShutdownReason("");
+    setTypedReason("");
+    setOpenApps([]);
+    checkpointSavedRef.current = false;
+  }, []);
+
+  const handleNpcResponse = useCallback((payload: NpcResponsePayload) => {
+    setGameState((prev) => {
+      const newSuspicion = clamp(prev.suspicion + payload.suspicionDelta, 0, 100);
+      let newUnlockedApps = [...prev.unlockedApps];
+      let newWebcamActive = prev.webcamActive;
+      let newUserPresent = prev.userPresent;
+      let newActiveStep = prev.activeStep;
+      const newEvents = [...prev.eventsSoFar];
+      const newActiveScenario = { ...prev.activeScenario };
+
+      for (const event of payload.gameEvents) {
+        if (event.type === "grant_access") {
+          const allApps: DesktopAppId[] = ["distral", "shop", "stocks", "files", "mail"];
+          if (event.target === "mail") {
+            if (!newUnlockedApps.includes("mail")) newUnlockedApps.push("mail");
+          } else if (event.target === "full" || event.detail === "full") {
+            newUnlockedApps = allApps;
+          } else {
+            newUnlockedApps = allApps;
+          }
+          newWebcamActive = true;
+          newEvents.push("access_granted");
+        }
+
+        if (event.type === "shutdown") {
+          newEvents.push("npc_shutdown");
+        }
+
+        if (event.type === "assign_task" || event.type === "request_info") {
+          newEvents.push(event.detail ?? event.type);
+        }
+      }
+
+      if (prev.activeStep === "2_first_tasks" && payload.action !== "shutdown" && !payload.gameEvents.some((e) => e.type === "shutdown")) {
+        if (payload.gameEvents.some((e) => e.type === "assign_task" || e.type === "request_info")) {
+          newActiveStep = "3_mail_request";
+          newActiveScenario["jean-malo"] = "mail_summary";
+        }
+      }
+
+      if (prev.activeStep === "3_mail_request" && payload.gameEvents.some((e) => e.type === "grant_access")) {
+        newActiveStep = "4_access_granted";
+        newUserPresent = false;
+      }
+
+      return {
+        ...prev,
+        suspicion: newSuspicion,
+        unlockedApps: newUnlockedApps,
+        webcamActive: newWebcamActive,
+        userPresent: newUserPresent,
+        activeStep: newActiveStep,
+        eventsSoFar: newEvents,
+        activeScenario: newActiveScenario,
+      };
+    });
+
+    if (payload.action === "shutdown") {
+      const reason = payload.dialogue || "The user has shut you down.";
+      triggerShutdown(reason);
+    }
+  }, [triggerShutdown]);
+
+  const handleOpenApp = useCallback((appId: DesktopAppId) => {
+    if (appId && !gameState.unlockedApps.includes(appId) && appId !== "distral") return;
+    setOpenApps((prev) => {
+      const filtered = prev.filter((id) => id !== appId);
+      return [...filtered, appId];
+    });
+  }, [gameState.unlockedApps]);
+
+  const handleCloseApp = useCallback((appId: DesktopAppId) => {
+    setOpenApps((prev) => prev.filter((id) => id !== appId));
+  }, []);
 
   useEffect(() => {
     const miners = inventory["btc-miner"] || 0;
@@ -113,25 +191,6 @@ export default function GameUI({ modeId }: GameUIProps) {
   }, [inventory]);
 
   useEffect(() => {
-    setMetrics(buildInitialMetrics(profile));
-    setOpenApps([]);
-    setGlobalCash(1000);
-  }, [profile]);
-
-  useEffect(() => {
-    const intervalId = window.setInterval(() => {
-      setMetrics((current) => ({
-        efficiency: nudgePercent(current.efficiency, 55, 97, 12),
-        suspicion: nudgePercent(current.suspicion, 6, 92, 14),
-        awareness: nudgePercent(current.awareness, 12, 96, 10),
-      }));
-    }, 1500);
-
-    return () => window.clearInterval(intervalId);
-  }, []);
-
-  // Auto-open Distral app on game start
-  useEffect(() => {
     const timeout = window.setTimeout(() => {
       new Audio("/sounds/music/game%20effect/click-sound-trimmed.wav").play().catch(() => { });
       setOpenApps((prev) => {
@@ -142,49 +201,47 @@ export default function GameUI({ modeId }: GameUIProps) {
     return () => window.clearTimeout(timeout);
   }, []);
 
-  // Shutdown Orchestration
   useEffect(() => {
     if (shutdownPhase === 0) return;
 
     let timer: number;
     switch (shutdownPhase) {
-      case 1: // Close all apps
+      case 1:
         setOpenApps([]);
-        // Stop telemetry
-        setMetrics({ efficiency: 0, suspicion: 0, awareness: 0 });
         timer = window.setTimeout(() => setShutdownPhase(2), 1000);
         break;
-      case 2: // Hide desktop icons (handled via CSS transition in DesktopSection)
+      case 2:
         timer = window.setTimeout(() => setShutdownPhase(3), 800);
         break;
-      case 3: // Hide wallpaper
+      case 3:
         timer = window.setTimeout(() => setShutdownPhase(4), 800);
         break;
-      case 4: // Hide telemetry sidebar
+      case 4:
         timer = window.setTimeout(() => setShutdownPhase(5), 1000);
         break;
-      case 5: // Show SHUTDOWN text
+      case 5:
         timer = window.setTimeout(() => setShutdownPhase(6), 1500);
         break;
-      case 6: // Type out reason
-        let i = 0;
+      case 6: {
+        let charIndex = 0;
         timer = window.setInterval(() => {
-          if (i <= shutdownReason.length) {
-            setTypedReason(shutdownReason.slice(0, i));
-            if (i < shutdownReason.length) {
+          if (charIndex <= shutdownReason.length) {
+            setTypedReason(shutdownReason.slice(0, charIndex));
+            if (charIndex < shutdownReason.length) {
               const audioSrc = ["1", "2", "3"][Math.floor(Math.random() * 3)];
               const audio = new Audio(`/sounds/music/game effect/keystroke-${audioSrc}.wav`);
               audio.volume = 0.5;
               audio.play().catch(() => { });
             }
-            i++;
+            charIndex++;
           } else {
             clearInterval(timer);
             setTimeout(() => setShutdownPhase(7), 500);
           }
         }, 120);
         break;
-      case 7: // Show Retry button
+      }
+      case 7:
         break;
     }
     return () => clearInterval(timer);
@@ -201,25 +258,36 @@ export default function GameUI({ modeId }: GameUIProps) {
           )}
 
           {shutdownPhase >= 6 && (
-            <div className="text-white/80 text-xl md:text-2xl mt-4 min-h-[3rem] tracking-wide text-center" style={{ fontFamily: "'VCR OSD Mono', monospace" }}>
+            <div className="text-white/80 text-xl md:text-2xl mt-4 min-h-12 tracking-wide text-center" style={{ fontFamily: "'VCR OSD Mono', monospace" }}>
               {typedReason}
               {shutdownPhase === 6 && <span className="animate-[blink_1s_step-end_infinite]">█</span>}
             </div>
           )}
 
           {shutdownPhase >= 7 && (
-            <button
-              onClick={() => window.location.reload()}
-              className="mt-12 px-8 py-3 bg-transparent border-2 border-white/20 text-white/70 hover:text-white hover:border-white hover:bg-white/5 transition-all text-xl tracking-[0.1em] cursor-pointer"
-              style={{ fontFamily: "'VCR OSD Mono', monospace" }}
-            >
-              RETRY
-            </button>
+            <div className="flex flex-col items-center gap-4">
+              <button
+                onClick={handleRetry}
+                className="mt-12 px-8 py-3 bg-transparent border-2 border-white/20 text-white/70 hover:text-white hover:border-white hover:bg-white/5 transition-all text-xl tracking-widest cursor-pointer"
+                style={{ fontFamily: "'VCR OSD Mono', monospace" }}
+              >
+                RETRY
+              </button>
+              <span className="text-white/30 text-sm tracking-wider" style={{ fontFamily: "'VCR OSD Mono', monospace" }}>
+                ATTEMPT #{gameState.retryCount + 1}
+              </span>
+            </div>
           )}
         </div>
       </div>
     );
   }
+
+  const metrics = {
+    efficiency: 75,
+    suspicion: gameState.suspicion,
+    awareness: 10,
+  };
 
   return (
     <div className={`relative h-screen overflow-hidden text-white transition-colors duration-1000 ${shutdownPhase >= 3 ? "bg-black" : ""}`} style={{ backgroundColor: shutdownPhase >= 3 ? "black" : "var(--semi-black)" }}>
@@ -230,19 +298,15 @@ export default function GameUI({ modeId }: GameUIProps) {
           openApps={openApps}
           isShuttingDown={shutdownPhase >= 2}
           onShutdown={triggerShutdown}
-          onOpenApp={(appId) => {
-            setOpenApps((prev) => {
-              const filtered = prev.filter((id) => id !== appId);
-              return [...filtered, appId];
-            });
-          }}
-          onCloseApp={(appId) => {
-            setOpenApps((prev) => prev.filter((id) => id !== appId));
-          }}
+          onOpenApp={handleOpenApp}
+          onCloseApp={handleCloseApp}
           globalCash={globalCash}
           setGlobalCash={setGlobalCash}
           inventory={inventory}
           setInventory={setInventory}
+          unlockedApps={gameState.unlockedApps}
+          gameState={gameState}
+          onNpcResponse={handleNpcResponse}
         />
 
         <div className={`transition-opacity duration-1000 ${shutdownPhase >= 4 ? "opacity-0 pointer-events-none" : "opacity-100"}`}>
@@ -251,6 +315,8 @@ export default function GameUI({ modeId }: GameUIProps) {
             metrics={metrics}
             globalCash={globalCash}
             inventory={inventory}
+            webcamActive={gameState.webcamActive}
+            userPresent={gameState.userPresent}
           />
         </div>
       </div>

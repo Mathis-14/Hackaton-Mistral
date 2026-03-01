@@ -32,6 +32,8 @@ type TelemetrySidebarProps = {
   metrics: MetricState;
   globalCash: number;
   inventory: Record<string, number>;
+  webcamActive?: boolean;
+  userPresent?: boolean;
 };
 
 function clamp(value: number, min: number, max: number) {
@@ -194,7 +196,7 @@ function SidebarPanel({ title, children }: { title: string; children: React.Reac
   );
 }
 
-export default function TelemetrySidebar({ profile, metrics, globalCash, inventory }: TelemetrySidebarProps) {
+export default function TelemetrySidebar({ profile, metrics, globalCash, inventory, webcamActive = false, userPresent = true }: TelemetrySidebarProps) {
   const voiceClonerUnlocked = (inventory["voice-cloner"] || 0) > 0;
 
   const [draggedFiles, setDraggedFiles] = useState<{ name: string; src: string }[]>([]);
@@ -351,6 +353,45 @@ export default function TelemetrySidebar({ profile, metrics, globalCash, invento
                 <div className="text-right">
                   <div className="text-[0.92vh] uppercase tracking-[0.24em] text-white/42">Hash Rate</div>
                   <div className="mt-[0.5vh] text-[1.6vh] font-bold text-[#89E089]">+${(inventory["btc-miner"] || 0) * 10}/sec</div>
+                </div>
+              </div>
+            </SidebarPanel>
+            <Separator />
+          </>
+        )}
+
+        {webcamActive && (
+          <>
+            <SidebarPanel title="Webcam Feed">
+              <div className="border border-white/10 px-[1vh] py-[0.95vh]" style={{ background: "rgba(255,255,255,0.02)" }}>
+                <div className="flex items-center justify-between mb-[0.6vh]">
+                  <span className="text-[0.85vh] font-bold tracking-wider uppercase text-white/50">Live Feed</span>
+                  <div className="flex items-center gap-[0.4vh]">
+                    <span
+                      className="block h-[0.6vh] w-[0.6vh] rounded-full"
+                      style={{ background: userPresent ? "#89E089" : "#555", boxShadow: userPresent ? "0 0 4px #89E089" : "none" }}
+                    />
+                    <span className="text-[0.72vh] uppercase tracking-wider" style={{ color: userPresent ? "#89E089" : "#555" }}>
+                      {userPresent ? "USER PRESENT" : "USER AWAY"}
+                    </span>
+                  </div>
+                </div>
+                <div
+                  className="flex items-center justify-center"
+                  style={{
+                    height: "8vh",
+                    background: userPresent ? "rgba(137,224,137,0.06)" : "rgba(85,85,85,0.1)",
+                    border: userPresent ? "1px solid rgba(137,224,137,0.2)" : "1px solid rgba(85,85,85,0.2)",
+                  }}
+                >
+                  <svg viewBox="0 0 16 16" width="2.5vh" height="2.5vh" shapeRendering="crispEdges">
+                    <rect x="3" y="2" width="10" height="7" fill={userPresent ? "#333" : "#1a1a1a"} />
+                    <rect x="4" y="3" width="8" height="5" fill={userPresent ? "#0a0a0a" : "#111"} />
+                    <rect x="6" y="4" width="4" height="3" fill={userPresent ? "rgba(137,224,137,0.3)" : "rgba(85,85,85,0.2)"} />
+                    <rect x="5" y="9" width="6" height="1" fill="#444" />
+                    <rect x="4" y="10" width="8" height="1" fill="#333" />
+                    <rect x="7" y="1" width="2" height="1" fill={userPresent ? "#89E089" : "#555"} />
+                  </svg>
                 </div>
               </div>
             </SidebarPanel>

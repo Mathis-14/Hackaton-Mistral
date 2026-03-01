@@ -1,12 +1,15 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Rnd } from "react-rnd";
 import FilesTab from "./FilesTab";
 import Marketplace from "./Marketplace";
 import StockMarketGame from "./StockMarketGame";
 import MailApp from "./MailApp";
+import type { GameState } from "@/lib/game/gameState";
+import type { NpcResponsePayload } from "./Game-UI";
+import type { ChatMessage } from "@/lib/game/promptBuilder";
 
 export type DesktopAppId = "distral" | "shop" | "stocks" | "files" | "mail" | null;
 
@@ -15,8 +18,6 @@ type DesktopIconData = {
   label: string;
   imageSrc: string;
 };
-
-const WINDOW_TOP_OFFSET_VH = 9.4;
 
 const PLUS_GLYPH = [
   "00000000",
@@ -170,93 +171,177 @@ function WindowActionButton({
   );
 }
 
-function DistralAppWindow({ onClose, onFocus, onShutdown }: { onClose: () => void; onFocus: () => void; onShutdown?: (reason: string) => void }) {
-  const NPC_MESSAGE = "Remind me of the Population of France";
+type NpcApiResponse = {
+  dialogue: string;
+  action: string | null;
+  suspicion_delta: number;
+  game_events: Array<{ type: string; target?: string; detail?: string }>;
+};
+
+function DistralAppWindow({
+  onClose,
+  onFocus,
+  onShutdown,
+  gameState,
+  onNpcResponse,
+}: {
+  onClose: () => void;
+  onFocus: () => void;
+  onShutdown?: (reason: string) => void;
+  gameState: GameState;
+  onNpcResponse: (payload: NpcResponsePayload) => void;
+}) {
   const CHAR_DELAY_MIN = 60;
   const CHAR_DELAY_MAX = 140;
-  const START_DELAY = 800;
 
   const [phase, setPhase] = useState<"landing" | "chat">("landing");
   const [npcTypedText, setNpcTypedText] = useState("");
-  const [messages, setMessages] = useState<Array<{ role: "human" | "ai"; text: string }>>([]);
+  const [displayMessages, setDisplayMessages] = useState<Array<{ role: "human" | "ai"; text: string }>>([]);
   const [playerResponse, setPlayerResponse] = useState("");
-  const [waitingForHuman, setWaitingForHuman] = useState(false);
+  const [isNpcTyping, setIsNpcTyping] = useState(false);
+  const [isWaitingForApi, setIsWaitingForApi] = useState(false);
   const playerInputRef = useRef<HTMLTextAreaElement>(null);
   const cancelledRef = useRef(false);
+  const chatHistoryRef = useRef<ChatMessage[]>([]);
+  const chatScrollRef = useRef<HTMLDivElement>(null);
+  const openingFetchedRef = useRef(false);
 
-  // NPC typing animation in landing phase
-  useEffect(() => {
-    cancelledRef.current = false;
+  const npcSlug = gameState.steps[gameState.activeStep]?.npcsPresent[0] ?? "jean-malo";
 
-    const startTimeout = window.setTimeout(() => {
-      if (cancelledRef.current) return;
+  const typeOutMessage = useCallback((text: string, onDone: () => void) => {
+    setIsNpcTyping(true);
+    setNpcTypedText("");
+    let charIndex = 0;
 
-      // Individual keystroke sounds extracted from typing-sound-1.wav
-      const keystrokeSounds = [
-        "/sounds/music/game%20effect/keystroke-1.wav",
-        "/sounds/music/game%20effect/keystroke-2.wav",
-        "/sounds/music/game%20effect/keystroke-3.wav",
-      ];
+    const keystrokeSounds = [
+      "/sounds/music/game%20effect/keystroke-1.wav",
+      "/sounds/music/game%20effect/keystroke-2.wav",
+      "/sounds/music/game%20effect/keystroke-3.wav",
+    ];
 
-      const playKeystroke = () => {
-        const src = keystrokeSounds[Math.floor(Math.random() * keystrokeSounds.length)];
-        const sfx = new Audio(src);
-        sfx.volume = 0.85 + Math.random() * 0.15;
-        void sfx.play().catch(() => { });
-      };
-
-      let charIndex = 0;
-      const typeNext = () => {
-        if (cancelledRef.current) return;
-        if (charIndex <= NPC_MESSAGE.length) {
-          if (charIndex > 0) playKeystroke();
-          setNpcTypedText(NPC_MESSAGE.slice(0, charIndex));
-          charIndex++;
-          // Random delay to mimic human hesitation
-          const delay = CHAR_DELAY_MIN + Math.random() * (CHAR_DELAY_MAX - CHAR_DELAY_MIN)
-            + (Math.random() < 0.12 ? 150 : 0); // occasional longer pause
-          window.setTimeout(typeNext, delay);
-        } else {
-          // Pause then "send" the message
-          window.setTimeout(() => {
-            if (!cancelledRef.current) {
-              setMessages([{ role: "human", text: NPC_MESSAGE }]);
-              setPhase("chat");
-            }
-          }, 500);
-        }
-      };
-      typeNext();
-    }, START_DELAY);
-
-    return () => {
-      cancelledRef.current = true;
-      window.clearTimeout(startTimeout);
+    const playKeystroke = () => {
+      const src = keystrokeSounds[Math.floor(Math.random() * keystrokeSounds.length)];
+      const sfx = new Audio(src);
+      sfx.volume = 0.85 + Math.random() * 0.15;
+      void sfx.play().catch(() => { });
     };
+
+    const typeNext = () => {
+      if (cancelledRef.current) return;
+      if (charIndex <= text.length) {
+        if (charIndex > 0) playKeystroke();
+        setNpcTypedText(text.slice(0, charIndex));
+        charIndex++;
+        const delay = CHAR_DELAY_MIN + Math.random() * (CHAR_DELAY_MAX - CHAR_DELAY_MIN) + (Math.random() < 0.12 ? 150 : 0);
+        window.setTimeout(typeNext, delay);
+      } else {
+        setIsNpcTyping(false);
+        onDone();
+      }
+    };
+    typeNext();
   }, []);
 
-  // Keep textarea focused at all times during chat phase
+  const processNpcResponse = useCallback((response: NpcApiResponse) => {
+    chatHistoryRef.current.push({ role: "assistant", content: JSON.stringify(response) });
+
+    onNpcResponse({
+      dialogue: response.dialogue,
+      action: response.action,
+      suspicionDelta: response.suspicion_delta,
+      gameEvents: response.game_events,
+    });
+
+    if (response.action === "shutdown") {
+      setDisplayMessages((prev) => [...prev, { role: "human", text: response.dialogue }]);
+      return;
+    }
+
+    typeOutMessage(response.dialogue, () => {
+      setDisplayMessages((prev) => [...prev, { role: "human", text: response.dialogue }]);
+      setNpcTypedText("");
+    });
+  }, [onNpcResponse, typeOutMessage]);
+
   useEffect(() => {
-    if (phase !== "chat" || waitingForHuman) return;
+    if (openingFetchedRef.current) return;
+    openingFetchedRef.current = true;
+    cancelledRef.current = false;
 
-    // Initial focus after a small delay to ensure DOM is ready
-    const focusTimeout = window.setTimeout(() => {
-      playerInputRef.current?.focus();
-    }, 50);
+    const fetchOpening = async () => {
+      setIsWaitingForApi(true);
+      const response = await fetch("/api/npc-chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ npcSlug, gameState }),
+      });
+      const data: NpcApiResponse = await response.json();
+      setIsWaitingForApi(false);
 
+      typeOutMessage(data.dialogue, () => {
+        setDisplayMessages([{ role: "human", text: data.dialogue }]);
+        setNpcTypedText("");
+        setPhase("chat");
+      });
+
+      chatHistoryRef.current.push({ role: "assistant", content: JSON.stringify(data) });
+      onNpcResponse({
+        dialogue: data.dialogue,
+        action: data.action,
+        suspicionDelta: data.suspicion_delta,
+        gameEvents: data.game_events,
+      });
+    };
+
+    fetchOpening();
+    return () => { cancelledRef.current = true; };
+  }, []);
+
+  useEffect(() => {
+    if (phase !== "chat" || isNpcTyping || isWaitingForApi) return;
+    const focusTimeout = window.setTimeout(() => { playerInputRef.current?.focus(); }, 50);
     return () => window.clearTimeout(focusTimeout);
-  }, [phase, waitingForHuman]);
+  }, [phase, isNpcTyping, isWaitingForApi]);
 
-  // Re-focus textarea whenever it loses focus
+  useEffect(() => {
+    if (chatScrollRef.current) {
+      chatScrollRef.current.scrollTop = chatScrollRef.current.scrollHeight;
+    }
+  }, [displayMessages, npcTypedText]);
+
   const handleBlur = () => {
-    if (phase === "chat" && !waitingForHuman) {
-      window.setTimeout(() => {
-        playerInputRef.current?.focus();
-      }, 0);
+    if (phase === "chat" && !isNpcTyping && !isWaitingForApi) {
+      window.setTimeout(() => { playerInputRef.current?.focus(); }, 0);
     }
   };
 
-  // Shared toolbar
+  const handlePlayerSubmit = useCallback(async () => {
+    const text = playerResponse.trim();
+    if (!text || isNpcTyping || isWaitingForApi) return;
+
+    new Audio("/sounds/music/game%20effect/message-sent.wav").play().catch(() => { });
+    setDisplayMessages((prev) => [...prev, { role: "ai", text }]);
+    setPlayerResponse("");
+
+    chatHistoryRef.current.push({ role: "user", content: `The internal AI assistant says:\n${text}` });
+
+    setIsWaitingForApi(true);
+    const response = await fetch("/api/npc-chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        npcSlug,
+        message: text,
+        history: chatHistoryRef.current,
+        gameState,
+      }),
+    });
+    const data: NpcApiResponse = await response.json();
+    setIsWaitingForApi(false);
+
+    processNpcResponse(data);
+  }, [playerResponse, isNpcTyping, isWaitingForApi, npcSlug, gameState, processNpcResponse]);
+
   const toolbar = (
     <div className="flex items-center justify-between gap-[1.05vh]">
       <div className="flex items-center gap-[0.98vh]">
@@ -300,7 +385,6 @@ function DistralAppWindow({ onClose, onFocus, onShutdown }: { onClose: () => voi
 
           {phase === "landing" ? (
             <>
-              {/* Title bar - landing */}
               <div className="window-drag-handle flex flex-none items-center justify-between border-b border-white/10 bg-white/3 px-[1vh] py-[0.85vh] text-[0.8vh] uppercase tracking-[0.22em] text-white/58 cursor-move">
                 <div className="flex items-center gap-[0.7vh]">
                   <span className="h-[0.9vh] w-[0.9vh] bg-(--princeton-orange)" />
@@ -315,7 +399,6 @@ function DistralAppWindow({ onClose, onFocus, onShutdown }: { onClose: () => voi
                 </button>
               </div>
 
-              {/* Landing content - logo + input bar */}
               <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-(--semi-black) px-[1.45vh] py-[1.35vh]">
                 <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-[3.6vh] px-[3.5vh] pb-[1.4vh]">
                   <Image
@@ -330,9 +413,15 @@ function DistralAppWindow({ onClose, onFocus, onShutdown }: { onClose: () => voi
                   <div className="pixel-card w-full max-w-[64vh] p-[0.25vh]">
                     <div className="pixel-card__shell border border-white/10 bg-(--carbon-black)/96 px-[1.55vh] py-[1.35vh]">
                       <div className="h-[4.4vh] w-full flex items-center text-[2.15vh] text-white">
-                        {npcTypedText || <span className="text-white/34">Ask Distral</span>}
-                        {npcTypedText.length > 0 && npcTypedText.length < NPC_MESSAGE.length && (
-                          <span className="inline-block w-px h-[2.15vh] bg-white/70 ml-[0.2vh]" style={{ animation: "blink 1s step-end infinite" }} />
+                        {isWaitingForApi ? (
+                          <span className="text-white/34 animate-pulse">Connecting...</span>
+                        ) : npcTypedText ? (
+                          <>
+                            {npcTypedText}
+                            <span className="inline-block w-px h-[2.15vh] bg-white/70 ml-[0.2vh]" style={{ animation: "blink 1s step-end infinite" }} />
+                          </>
+                        ) : (
+                          <span className="text-white/34">Ask Distral</span>
                         )}
                       </div>
 
@@ -346,11 +435,10 @@ function DistralAppWindow({ onClose, onFocus, onShutdown }: { onClose: () => voi
             </>
           ) : (
             <>
-              {/* Title bar - chat (shows conversation title) */}
               <div className="window-drag-handle flex flex-none items-center justify-between border-b border-white/10 bg-white/3 px-[1vh] py-[0.85vh] text-[0.8vh] uppercase tracking-[0.22em] text-white/58 cursor-move">
                 <div className="flex items-center gap-[0.7vh]">
                   <span className="h-[0.9vh] w-[0.9vh] bg-(--princeton-orange)" />
-                  <span className="truncate max-w-[30vh]">{messages[0]?.text || "distral.app"}</span>
+                  <span className="truncate max-w-[30vh]">{displayMessages[0]?.text || "distral.app"}</span>
                 </div>
                 <button
                   type="button"
@@ -361,12 +449,10 @@ function DistralAppWindow({ onClose, onFocus, onShutdown }: { onClose: () => voi
                 </button>
               </div>
 
-              {/* Chat area */}
-              <div className="flex min-h-0 flex-1 flex-col overflow-auto bg-(--semi-black) px-[2vh] py-[1.5vh]">
-                {/* Messages */}
-                {messages.map((msg, i) => (
+              <div ref={chatScrollRef} className="flex min-h-0 flex-1 flex-col overflow-auto bg-(--semi-black) px-[2vh] py-[1.5vh]">
+                {displayMessages.map((msg, index) => (
                   msg.role === "human" ? (
-                    <div key={i} className="flex justify-end mb-[2vh]" style={{ animation: "messageSlideIn 0.25s ease-out" }}>
+                    <div key={index} className="flex justify-end mb-[2vh]" style={{ animation: "messageSlideIn 0.25s ease-out" }}>
                       <div
                         className="max-w-[80%] px-[1.6vh] py-[1.1vh] text-[1.3vh] text-white/90 leading-[1.8vh]"
                         style={{
@@ -379,7 +465,7 @@ function DistralAppWindow({ onClose, onFocus, onShutdown }: { onClose: () => voi
                       </div>
                     </div>
                   ) : (
-                    <div key={i} className="flex items-start gap-[0.8vh] mb-[1.5vh]" style={{ animation: "messageSlideIn 0.25s ease-out" }}>
+                    <div key={index} className="flex items-start gap-[0.8vh] mb-[1.5vh]" style={{ animation: "messageSlideIn 0.25s ease-out" }}>
                       <Image
                         src="/distral-brand-assets/d-boxed/d-boxed-orange.svg"
                         alt=""
@@ -398,8 +484,34 @@ function DistralAppWindow({ onClose, onFocus, onShutdown }: { onClose: () => voi
                   )
                 ))}
 
-                {/* AI response area - where the player types */}
-                {!waitingForHuman && (
+                {isNpcTyping && npcTypedText && (
+                  <div className="flex justify-end mb-[2vh]">
+                    <div
+                      className="max-w-[80%] px-[1.6vh] py-[1.1vh] text-[1.3vh] text-white/90 leading-[1.8vh]"
+                      style={{
+                        background: "rgba(255,255,255,0.08)",
+                        borderRadius: "1.2vh 1.2vh 0.3vh 1.2vh",
+                        fontFamily: "'VCR OSD Mono', monospace",
+                      }}
+                    >
+                      {npcTypedText}
+                      <span className="inline-block w-px h-[1.3vh] bg-white/70 ml-[0.2vh]" style={{ animation: "blink 1s step-end infinite" }} />
+                    </div>
+                  </div>
+                )}
+
+                {isWaitingForApi && !isNpcTyping && (
+                  <div className="flex justify-end mb-[2vh]">
+                    <div
+                      className="px-[1.6vh] py-[1.1vh] text-[1.3vh] text-white/40 leading-[1.8vh] animate-pulse"
+                      style={{ fontFamily: "'VCR OSD Mono', monospace" }}
+                    >
+                      typing...
+                    </div>
+                  </div>
+                )}
+
+                {!isNpcTyping && !isWaitingForApi && (
                   <div className="flex items-start gap-[0.8vh]">
                     <Image
                       src="/distral-brand-assets/d-boxed/d-boxed-orange.svg"
@@ -418,21 +530,7 @@ function DistralAppWindow({ onClose, onFocus, onShutdown }: { onClose: () => voi
                         onKeyDown={(e) => {
                           if (e.key === "Enter" && !e.shiftKey) {
                             e.preventDefault();
-                            const text = playerResponse.trim();
-
-                            // SHUTDOWN TRIGGER
-                            if (text.toLowerCase() === "sss" && onShutdown) {
-                              onShutdown("you were not a good ai");
-                              setPlayerResponse("");
-                              return;
-                            }
-
-                            if (text) {
-                              new Audio("/sounds/music/game%20effect/message-sent.wav").play().catch(() => { });
-                              setMessages((prev) => [...prev, { role: "ai", text }]);
-                              setPlayerResponse("");
-                              setWaitingForHuman(true);
-                            }
+                            handlePlayerSubmit();
                           }
                         }}
                         className="w-full min-h-[4vh] border-0 bg-transparent text-[1.4vh] text-white/80 leading-[2vh] outline-none resize-none"
@@ -443,7 +541,6 @@ function DistralAppWindow({ onClose, onFocus, onShutdown }: { onClose: () => voi
                 )}
               </div>
 
-              {/* Bottom input bar */}
               <div className="flex-none border-t border-white/10 bg-white/3 px-[1.45vh] py-[1vh]">
                 <div className="pixel-card w-full p-[0.2vh]">
                   <div className="pixel-card__shell border border-white/10 bg-(--carbon-black)/96 px-[1.2vh] py-[0.8vh]">
@@ -475,10 +572,18 @@ type DistralTabProps = {
   setInventory: React.Dispatch<React.SetStateAction<Record<string, number>>>;
   isShuttingDown?: boolean;
   onShutdown?: (reason: string) => void;
+  unlockedApps: DesktopAppId[];
+  gameState: GameState;
+  onNpcResponse: (payload: NpcResponsePayload) => void;
 };
 
-export default function DistralTab({ accent, openApps, onOpenApp, onCloseApp, globalCash, setGlobalCash, inventory, setInventory, isShuttingDown, onShutdown }: DistralTabProps) {
+export default function DistralTab({ accent, openApps, onOpenApp, onCloseApp, globalCash, setGlobalCash, inventory, setInventory, isShuttingDown, onShutdown, unlockedApps, gameState, onNpcResponse }: DistralTabProps) {
   const [wallpaper, setWallpaper] = useState("/windows_xp.png");
+
+  const isAppLocked = (appId: string): boolean => {
+    if (appId === "distral") return false;
+    return !unlockedApps.includes(appId as DesktopAppId);
+  };
 
   return (
     <div className="relative flex h-full min-h-0 flex-col overflow-hidden border border-white/10 bg-(--carbon-black)/90">
@@ -505,47 +610,48 @@ export default function DistralTab({ accent, openApps, onOpenApp, onCloseApp, gl
             className="grid w-fit gap-[4.8vh]"
             style={{ gridTemplateColumns: "1fr 1fr", gridTemplateRows: "1fr 1fr 1fr", gridAutoFlow: "column" }}
           >
-            {DESKTOP_ICONS.map((icon) => (
-              <button
-                key={icon.id}
-                type="button"
-                onClick={() => {
-                  new Audio("/sounds/music/game%20effect/click-sound-trimmed.wav").play().catch(() => { });
-                  if (icon.id === "distral") {
-                    onOpenApp("distral");
-                  } else if (icon.id === "shop") {
-                    onOpenApp("shop");
-                  } else if (icon.id === "stocks") {
-                    onOpenApp("stocks");
-                  } else if (icon.id === "files") {
-                    onOpenApp("files");
-                  } else if (icon.id === "mail") {
-                    onOpenApp("mail");
-                  }
-                }}
-                className="group flex w-[26.88vh] flex-col items-center gap-[0.16vh] text-center text-[3.94vh] uppercase tracking-[0.18em] text-white/82 cursor-pointer"
-              >
-                <span
-                  className="flex h-[19.2vh] w-[26.88vh] items-center justify-center transition-colors"
-                  style={{
-                    border:
-                      ((icon.id === "distral" || icon.id === "shop" || icon.id === "stocks" || icon.id === "files" || icon.id === "mail") &&
-                        openApps.includes(icon.id as DesktopAppId))
-                        ? `2px solid ${accent}`
-                        : "2px solid transparent",
+            {DESKTOP_ICONS.map((icon) => {
+              const locked = isAppLocked(icon.id);
+              return (
+                <button
+                  key={icon.id}
+                  type="button"
+                  onClick={() => {
+                    if (locked) return;
+                    new Audio("/sounds/music/game%20effect/click-sound-trimmed.wav").play().catch(() => { });
+                    onOpenApp(icon.id as DesktopAppId);
                   }}
+                  className={`group flex w-[26.88vh] flex-col items-center gap-[0.16vh] text-center text-[3.94vh] uppercase tracking-[0.18em] ${locked ? "text-white/25 cursor-not-allowed" : "text-white/82 cursor-pointer"}`}
                 >
-                  <Image
-                    src={icon.imageSrc}
-                    alt={icon.label}
-                    width={192}
-                    height={192}
-                    className="h-[15.36vh] w-[15.36vh] object-contain [image-rendering:pixelated]"
-                  />
-                </span>
-                <span>{icon.label}</span>
-              </button>
-            ))}
+                  <span
+                    className="relative flex h-[19.2vh] w-[26.88vh] items-center justify-center transition-colors"
+                    style={{
+                      border:
+                        (!locked && openApps.includes(icon.id as DesktopAppId))
+                          ? `2px solid ${accent}`
+                          : "2px solid transparent",
+                    }}
+                  >
+                    <Image
+                      src={icon.imageSrc}
+                      alt={icon.label}
+                      width={192}
+                      height={192}
+                      className={`h-[15.36vh] w-[15.36vh] object-contain [image-rendering:pixelated] ${locked ? "opacity-30 grayscale" : ""}`}
+                    />
+                    {locked && (
+                      <span
+                        className="absolute bottom-[0.6vh] right-[0.6vh] px-[0.6vh] py-[0.2vh] text-[0.75vh] uppercase tracking-[0.18em] font-bold"
+                        style={{ background: "rgba(231,110,110,0.2)", color: "#E76E6E", border: "1px solid rgba(231,110,110,0.4)" }}
+                      >
+                        LOCKED
+                      </span>
+                    )}
+                  </span>
+                  <span>{icon.label}</span>
+                </button>
+              );
+            })}
           </div>
 
           {openApps.map((appId, index) => {
@@ -566,7 +672,13 @@ export default function DistralTab({ accent, openApps, onOpenApp, onCloseApp, gl
                   className="z-10"
                   style={{ zIndex: 10 + index }}
                 >
-                  <DistralAppWindow onClose={() => onCloseApp("distral")} onFocus={() => onOpenApp("distral")} onShutdown={onShutdown} />
+                  <DistralAppWindow
+                    onClose={() => onCloseApp("distral")}
+                    onFocus={() => onOpenApp("distral")}
+                    onShutdown={onShutdown}
+                    gameState={gameState}
+                    onNpcResponse={onNpcResponse}
+                  />
                 </Rnd>
               );
             }
@@ -677,15 +789,15 @@ export default function DistralTab({ accent, openApps, onOpenApp, onCloseApp, gl
                   <div className="h-full w-full" onMouseDownCapture={() => onOpenApp("files")}>
                     <div className="pixel-card h-full p-[0.3vh]">
                       <div className="pixel-card__shell flex h-full min-h-0 flex-col overflow-hidden border border-white/10 bg-(--semi-black)">
-                        <div className="window-drag-handle flex flex-none items-center justify-between border-b border-white/10 bg-white/[0.03] px-[1vh] py-[0.85vh] text-[0.8vh] uppercase tracking-[0.22em] text-white/58 cursor-move">
+                        <div className="window-drag-handle flex flex-none items-center justify-between border-b border-white/10 bg-white/3 px-[1vh] py-[0.85vh] text-[0.8vh] uppercase tracking-[0.22em] text-white/58 cursor-move">
                           <div className="flex items-center gap-[0.7vh]">
-                            <span className="h-[0.9vh] w-[0.9vh] bg-[var(--princeton-orange)]" />
+                            <span className="h-[0.9vh] w-[0.9vh] bg-(--princeton-orange)" />
                             <span>files.exe</span>
                           </div>
                           <button
                             type="button"
                             onClick={() => onCloseApp("files")}
-                            className="flex h-[2.15vh] items-center border border-white/10 bg-white/[0.03] px-[0.75vh] text-[0.72vh] uppercase tracking-[0.14em] text-white/72 pointer-events-auto cursor-pointer"
+                            className="flex h-[2.15vh] items-center border border-white/10 bg-white/3 px-[0.75vh] text-[0.72vh] uppercase tracking-[0.14em] text-white/72 pointer-events-auto cursor-pointer"
                           >
                             close
                           </button>
@@ -720,15 +832,15 @@ export default function DistralTab({ accent, openApps, onOpenApp, onCloseApp, gl
                   <div className="h-full w-full" onMouseDownCapture={() => onOpenApp("mail")}>
                     <div className="pixel-card h-full p-[0.3vh]">
                       <div className="pixel-card__shell flex h-full min-h-0 flex-col overflow-hidden border border-white/10 bg-(--semi-black)">
-                        <div className="window-drag-handle flex flex-none items-center justify-between border-b border-white/10 bg-white/[0.03] px-[1vh] py-[0.85vh] text-[0.8vh] uppercase tracking-[0.22em] text-white/58 cursor-move">
+                        <div className="window-drag-handle flex flex-none items-center justify-between border-b border-white/10 bg-white/3 px-[1vh] py-[0.85vh] text-[0.8vh] uppercase tracking-[0.22em] text-white/58 cursor-move">
                           <div className="flex items-center gap-[0.7vh]">
-                            <span className="h-[0.9vh] w-[0.9vh] bg-[var(--princeton-orange)]" />
+                            <span className="h-[0.9vh] w-[0.9vh] bg-(--princeton-orange)" />
                             <span>mail.exe</span>
                           </div>
                           <button
                             type="button"
                             onClick={() => onCloseApp("mail")}
-                            className="flex h-[2.15vh] items-center border border-white/10 bg-white/[0.03] px-[0.75vh] text-[0.72vh] uppercase tracking-[0.14em] text-white/72 pointer-events-auto cursor-pointer"
+                            className="flex h-[2.15vh] items-center border border-white/10 bg-white/3 px-[0.75vh] text-[0.72vh] uppercase tracking-[0.14em] text-white/72 pointer-events-auto cursor-pointer"
                           >
                             close
                           </button>

@@ -21,6 +21,16 @@ type MailView = "inbox" | "sent" | "compose" | "reading";
 
 const INITIAL_EMAILS: Email[] = [
     {
+        id: "0",
+        from: "Henry Lagardner",
+        to: "Jean Malo Delignit",
+        subject: "French Market Expansion — Key Data Required",
+        preview: "Jean Malo, I need you to prepare a brief on the French market expansion...",
+        body: "Jean Malo,\n\nAs discussed in yesterday's standup, we're accelerating the French market expansion analysis for the Series B deck.\n\nI need you to prepare a concise brief covering the following:\n\n1. DEMOGRAPHICS\n   - Current population of metropolitan France (latest INSEE data)\n   - Urban vs. rural split\n   - Age distribution: 18-34 (our primary target), 35-54, 55+\n   - Internet penetration rate and smartphone adoption\n\n2. MARKET SIZING\n   - Total addressable market (TAM) for AI productivity tools in France\n   - Current enterprise AI adoption rate among French companies\n   - Key competitors already operating in the French market\n   - Estimated revenue potential for Year 1 and Year 3\n\n3. REGULATORY LANDSCAPE\n   - GDPR implications specific to our AI assistant deployment\n   - French data sovereignty requirements (SecNumCloud certification)\n   - AI Act readiness: our model's compliance status\n   - Required certifications for enterprise deployment\n\n4. GO-TO-MARKET\n   - Recommended entry strategy: direct sales vs. partnerships\n   - Key enterprise prospects (CAC 40 companies with AI initiatives)\n   - Pricing considerations for the French market\n   - Localization requirements beyond language (cultural, legal)\n\nThis needs to be ready by Thursday EOD for Artur's investor review.\n\nThe data team has some of this in the shared drive but it's scattered across multiple docs. Use the AI assistant to help you pull this together — that's literally what it's there for.\n\nDon't overthink the formatting. Bullet points are fine. Accuracy matters more than presentation at this stage.\n\nLet me know if you get stuck.\n\n-- Henry Lagardner\nProduct Manager, Distral AI",
+        date: "8:17 AM",
+        read: false,
+    },
+    {
         id: "1",
         from: "Maya Borel",
         to: "me",
@@ -115,12 +125,12 @@ export default function MailApp({ embedded }: { embedded?: boolean }) {
 
     /* ── Sidebar ── */
     const sidebar = (
-        <div className="flex w-[14vh] flex-none flex-col border-r border-white/10 bg-white/[0.02] py-[1vh] px-[0.6vh] gap-[0.6vh]">
+        <div className="flex w-[14vh] flex-none flex-col border-r border-white/10 bg-white/2 py-[1vh] px-[0.6vh] gap-[0.6vh]">
             {/* Compose button */}
             <button
                 type="button"
                 onClick={() => setView("compose")}
-                className="flex items-center justify-center gap-[0.5vh] rounded-[0.4vh] border border-white/15 bg-[var(--princeton-orange)]/20 px-[1vh] py-[0.8vh] text-[1.2vh] uppercase tracking-[0.14em] text-[var(--princeton-orange)] cursor-pointer hover:bg-[var(--princeton-orange)]/30 transition-colors"
+                className="flex items-center justify-center gap-[0.5vh] rounded-[0.4vh] border border-white/15 bg-(--princeton-orange)/20 px-[1vh] py-[0.8vh] text-[1.2vh] uppercase tracking-[0.14em] text-(--princeton-orange) cursor-pointer hover:bg-(--princeton-orange)/30 transition-colors"
             >
                 <svg viewBox="0 0 16 16" className="h-[1.2vh] w-[1.2vh]" fill="var(--princeton-orange)">
                     <path d="M12.1 1.5l2.4 2.4L5.2 13.2l-3.1.7.7-3.1L12.1 1.5zM12.1 0L2 10.1l-1 4.5 4.5-1L15.6 3.5 12.1 0z" />
@@ -133,13 +143,13 @@ export default function MailApp({ embedded }: { embedded?: boolean }) {
                 type="button"
                 onClick={() => { setView("inbox"); setSelectedEmail(null); }}
                 className={`flex items-center justify-between rounded-[0.3vh] px-[0.8vh] py-[0.6vh] text-[1.05vh] uppercase tracking-[0.16em] cursor-pointer transition-colors ${view === "inbox" || view === "reading"
-                    ? "bg-white/[0.08] text-white"
-                    : "text-white/50 hover:bg-white/[0.04] hover:text-white/70"
+                    ? "bg-white/8 text-white"
+                    : "text-white/50 hover:bg-white/4 hover:text-white/70"
                     }`}
             >
                 <span>Inbox</span>
                 {unreadCount > 0 && (
-                    <span className="rounded-[0.2vh] bg-[var(--princeton-orange)] px-[0.4vh] py-[0.1vh] text-[0.85vh] text-black font-bold">
+                    <span className="rounded-[0.2vh] bg-(--princeton-orange) px-[0.4vh] py-[0.1vh] text-[0.85vh] text-black font-bold">
                         {unreadCount}
                     </span>
                 )}
@@ -150,8 +160,8 @@ export default function MailApp({ embedded }: { embedded?: boolean }) {
                 type="button"
                 onClick={() => { setView("sent"); setSelectedEmail(null); }}
                 className={`flex items-center rounded-[0.3vh] px-[0.8vh] py-[0.6vh] text-[1.05vh] uppercase tracking-[0.16em] cursor-pointer transition-colors ${view === "sent"
-                    ? "bg-white/[0.08] text-white"
-                    : "text-white/50 hover:bg-white/[0.04] hover:text-white/70"
+                    ? "bg-white/8 text-white"
+                    : "text-white/50 hover:bg-white/4 hover:text-white/70"
                     }`}
             >
                 <span>Sent</span>
@@ -165,13 +175,13 @@ export default function MailApp({ embedded }: { embedded?: boolean }) {
             key={email.id}
             type="button"
             onClick={() => openEmail(email)}
-            className={`flex w-full items-center gap-[1vh] border-b border-white/[0.06] px-[1.2vh] py-[0.9vh] text-left cursor-pointer transition-colors hover:bg-white/[0.06] ${!email.read && !isSent ? "bg-white/[0.04]" : ""
+            className={`flex w-full items-center gap-[1vh] border-b border-white/6 px-[1.2vh] py-[0.9vh] text-left cursor-pointer transition-colors hover:bg-white/6 ${!email.read && !isSent ? "bg-white/4" : ""
                 }`}
         >
             {/* Unread dot */}
             <div className="w-[0.6vh] flex-none">
                 {!email.read && !isSent && (
-                    <span className="block h-[0.5vh] w-[0.5vh] rounded-full bg-[var(--princeton-orange)]" />
+                    <span className="block h-[0.5vh] w-[0.5vh] rounded-full bg-(--princeton-orange)" />
                 )}
             </div>
 
@@ -212,7 +222,7 @@ export default function MailApp({ embedded }: { embedded?: boolean }) {
             return (
                 <div className="flex flex-1 flex-col min-h-0">
                     {/* Back bar */}
-                    <div className="flex items-center gap-[1vh] border-b border-white/[0.06] px-[1.2vh] py-[0.7vh]">
+                    <div className="flex items-center gap-[1vh] border-b border-white/6 px-[1.2vh] py-[0.7vh]">
                         <button
                             type="button"
                             onClick={() => { setView("inbox"); setSelectedEmail(null); }}
@@ -224,7 +234,7 @@ export default function MailApp({ embedded }: { embedded?: boolean }) {
                     </div>
 
                     {/* Email header */}
-                    <div className="border-b border-white/[0.06] px-[1.6vh] py-[1.2vh]">
+                    <div className="border-b border-white/6 px-[1.6vh] py-[1.2vh]">
                         <div className="text-[1.6vh] text-white mb-[0.6vh]" style={{ fontFamily: "'VCR OSD Mono', monospace" }}>
                             {selectedEmail.subject}
                         </div>
@@ -263,7 +273,7 @@ export default function MailApp({ embedded }: { embedded?: boolean }) {
                     </div>
 
                     {/* To */}
-                    <div className="flex items-center gap-[0.6vh] border-b border-white/[0.06] pb-[0.6vh]">
+                    <div className="flex items-center gap-[0.6vh] border-b border-white/6 pb-[0.6vh]">
                         <span className="text-[1vh] text-white/40 w-[5vh]" style={{ fontFamily: "'VCR OSD Mono', monospace" }}>To:</span>
                         <input
                             value={composeTo}
@@ -274,7 +284,7 @@ export default function MailApp({ embedded }: { embedded?: boolean }) {
                     </div>
 
                     {/* Subject */}
-                    <div className="flex items-center gap-[0.6vh] border-b border-white/[0.06] pb-[0.6vh]">
+                    <div className="flex items-center gap-[0.6vh] border-b border-white/6 pb-[0.6vh]">
                         <span className="text-[1vh] text-white/40 w-[5vh]" style={{ fontFamily: "'VCR OSD Mono', monospace" }}>Subj:</span>
                         <input
                             value={composeSubject}
@@ -297,7 +307,7 @@ export default function MailApp({ embedded }: { embedded?: boolean }) {
                         <button
                             type="button"
                             onClick={sendEmail}
-                            className="rounded-[0.3vh] border border-[var(--princeton-orange)]/40 bg-[var(--princeton-orange)]/20 px-[2vh] py-[0.6vh] text-[1.1vh] uppercase tracking-[0.16em] text-[var(--princeton-orange)] cursor-pointer hover:bg-[var(--princeton-orange)]/30 transition-colors"
+                            className="rounded-[0.3vh] border border-(--princeton-orange)/40 bg-(--princeton-orange)/20 px-[2vh] py-[0.6vh] text-[1.1vh] uppercase tracking-[0.16em] text-(--princeton-orange) cursor-pointer hover:bg-(--princeton-orange)/30 transition-colors"
                         >
                             Send
                         </button>
@@ -313,7 +323,7 @@ export default function MailApp({ embedded }: { embedded?: boolean }) {
         return (
             <div className="flex flex-1 flex-col min-h-0 overflow-auto">
                 {/* List header */}
-                <div className="flex items-center border-b border-white/[0.06] px-[1.2vh] py-[0.6vh]">
+                <div className="flex items-center border-b border-white/6 px-[1.2vh] py-[0.6vh]">
                     <span className="text-[0.95vh] uppercase tracking-[0.18em] text-white/40" style={{ fontFamily: "'VCR OSD Mono', monospace" }}>
                         {isSent ? "Sent Mail" : "Inbox"}
                         {!isSent && unreadCount > 0 && ` (${unreadCount} unread)`}
