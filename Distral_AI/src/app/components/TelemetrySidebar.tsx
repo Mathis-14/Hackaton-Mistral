@@ -35,6 +35,7 @@ type ProfileData = {
 
 const SORTIE_LOOP_END_S = 5;
 const ENTREE_DURATION_MS = 5000;
+const SORTIE_ENTREE_MIN_DURATION_MS = 20_000;
 
 type TelemetrySidebarProps = {
   profile: ProfileData;
@@ -230,6 +231,20 @@ function WebcamFeed({
   }, [userPresent]);
 
   useEffect(() => {
+    if (!userPresent && awayPhase === "sortie") {
+      const timer = window.setTimeout(() => setAwayPhase("empty"), SORTIE_ENTREE_MIN_DURATION_MS);
+      return () => window.clearTimeout(timer);
+    }
+  }, [userPresent, awayPhase]);
+
+  useEffect(() => {
+    if (!userPresent && awayPhase === "entree") {
+      const timer = window.setTimeout(() => setAwayPhase("empty"), SORTIE_ENTREE_MIN_DURATION_MS);
+      return () => window.clearTimeout(timer);
+    }
+  }, [userPresent, awayPhase]);
+
+  useEffect(() => {
     if (!userPresent || awayPhase !== "empty") return;
     const video = document.createElement("video");
     const entreeSrc = entreeVariantRef.current === 1 ? "/webcam/entrée.mp4" : "/webcam/entrée2.mp4";
@@ -257,10 +272,6 @@ function WebcamFeed({
     const timeout = window.setTimeout(() => setAwayPhase("entree"), delay);
     return () => window.clearTimeout(timeout);
   }, [userPresent, awayPhase, userAwaySince, riskFillDurationMs, entreeDurationMs]);
-
-  const handleSortieEnded = useCallback(() => {
-    setAwayPhase("empty");
-  }, []);
 
   const handleSortieTimeUpdate = useCallback(() => {
     const video = sortieVideoRef.current;
@@ -292,7 +303,7 @@ function WebcamFeed({
             muted
             playsInline
             autoPlay
-            onEnded={handleSortieEnded}
+            onTimeUpdate={handleSortieTimeUpdate}
             className="h-full w-full object-cover"
           />
         </div>
@@ -315,6 +326,7 @@ function WebcamFeed({
           muted
           playsInline
           autoPlay
+          loop
           onLoadedMetadata={handleEntreeLoadedMetadata}
           className="h-full w-full object-cover"
         />

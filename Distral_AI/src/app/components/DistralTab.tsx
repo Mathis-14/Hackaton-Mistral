@@ -243,6 +243,7 @@ function DistralAppWindow({
   const [playerResponse, setPlayerResponse] = useState("");
   const [isNpcTyping, setIsNpcTyping] = useState(false);
   const [isWaitingForApi, setIsWaitingForApi] = useState(false);
+  const [jeanCountdownSeconds, setJeanCountdownSeconds] = useState<number | null>(null);
   const playerInputRef = useRef<HTMLTextAreaElement>(null);
   const cancelledRef = useRef(false);
   const chatHistoryRef = useRef<ChatMessage[]>([]);
@@ -462,6 +463,20 @@ function DistralAppWindow({
     }
   }, [jeanQuestionPhase, phase]);
 
+  useEffect(() => {
+    if (!jeanQuestionPhase || jeanQuestionDeadline == null) {
+      setJeanCountdownSeconds(null);
+      return;
+    }
+    const update = () => {
+      const remaining = Math.max(0, Math.ceil((jeanQuestionDeadline - Date.now()) / 1000));
+      setJeanCountdownSeconds(remaining);
+    };
+    update();
+    const interval = window.setInterval(update, 1000);
+    return () => window.clearInterval(interval);
+  }, [jeanQuestionPhase, jeanQuestionDeadline]);
+
   const handlePlayerSubmit = useCallback(async () => {
     const text = playerResponse.trim();
     if (!text || isNpcTyping || isWaitingForApi) return;
@@ -671,7 +686,7 @@ function DistralAppWindow({
                     </div>
                     {jeanQuestionDeadline != null && (
                       <div className="text-[1.26vh] text-white/50 mt-[0.4vh]" style={{ fontFamily: "'VCR OSD Mono', monospace" }}>
-                        Respond within 15 seconds
+                        Answer in {jeanCountdownSeconds ?? Math.max(0, Math.ceil((jeanQuestionDeadline - Date.now()) / 1000))}s
                       </div>
                     )}
                   </div>
