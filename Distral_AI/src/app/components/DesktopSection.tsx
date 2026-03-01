@@ -29,7 +29,7 @@ type DesktopSectionProps = {
   jeanQuestionPhase?: boolean;
   jeanQuestionText?: string | null;
   jeanQuestionDeadline?: number | null;
-  onJeanQuestionResponse?: (response: string) => void;
+  onJeanQuestionResponse?: (response: string, conversationHistory?: import("@/lib/game/promptBuilder").ChatMessage[]) => void;
   hiddenIconCount?: number;
   hideUIPhase?: number;
 };

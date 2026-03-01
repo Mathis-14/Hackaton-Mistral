@@ -558,8 +558,10 @@ export default function GameUI({ modeId }: GameUIProps) {
     lastMilestoneRef.current = gameState.currentMilestone;
   }, [gameState.currentMilestone]);
 
+  const npcSlugForJean = MILESTONES[3]?.npcSlug ?? "jean-malo";
+
   const endJeanQuestionPhase = useCallback(
-    (suspicionDelta: number) => {
+    (suspicionDelta: number, conversationHistory?: ChatMessage[]) => {
       jeanReturnTriggeredRef.current = false;
       const riskFillDurationMs = Math.floor(RISK_DURATION_MIN_MS + Math.random() * (RISK_DURATION_MAX_MS - RISK_DURATION_MIN_MS));
       setGameState((prev) => {
@@ -567,7 +569,7 @@ export default function GameUI({ modeId }: GameUIProps) {
         if (newSuspicion >= 100 && !GOD_MODE) {
           window.setTimeout(() => triggerShutdown("Suspicion reached critical level. Access revoked."), 0);
         }
-        return {
+        const base = {
           ...prev,
           userPresent: false,
           suspicion: newSuspicion,
@@ -578,6 +580,19 @@ export default function GameUI({ modeId }: GameUIProps) {
           jeanQuestionText: null,
           jeanQuestionDeadline: null,
         };
+        if (conversationHistory && conversationHistory.length > 0) {
+          return {
+            ...base,
+            npcProfiles: {
+              ...prev.npcProfiles,
+              [npcSlugForJean]: {
+                conversationHistory,
+                interactionCount: prev.npcProfiles[npcSlugForJean]?.interactionCount ?? 0,
+              },
+            },
+          };
+        }
+        return base;
       });
       setOpenApps((prev) => prev.filter((id) => id === "distral" || id === "mail"));
       if (jeanQuestionTimeoutRef.current != null) {
@@ -589,7 +604,7 @@ export default function GameUI({ modeId }: GameUIProps) {
   );
 
   const handleJeanQuestionResponse = useCallback(
-    async (playerResponse: string) => {
+    async (playerResponse: string, conversationHistory?: ChatMessage[]) => {
       const startedAt = jeanQuestionStartedAtRef.current;
       if (startedAt == null) return;
       const responseTimeMs = Date.now() - startedAt;
@@ -611,9 +626,9 @@ export default function GameUI({ modeId }: GameUIProps) {
         });
         const data = (await response.json()) as { suspicion_delta?: number };
         const delta = typeof data.suspicion_delta === "number" ? data.suspicion_delta : 0;
-        endJeanQuestionPhase(delta);
+        endJeanQuestionPhase(delta, conversationHistory);
       } catch {
-        endJeanQuestionPhase(5);
+        endJeanQuestionPhase(5, conversationHistory);
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps -- questionText from gameStateRef

@@ -210,6 +210,7 @@ function DistralAppWindow({
   jeanQuestionText,
   jeanQuestionDeadline,
   onJeanQuestionResponse,
+  userPresent = true,
 }: {
   onClose: () => void;
   onFocus: () => void;
@@ -219,7 +220,8 @@ function DistralAppWindow({
   jeanQuestionPhase?: boolean;
   jeanQuestionText?: string | null;
   jeanQuestionDeadline?: number | null;
-  onJeanQuestionResponse?: (response: string) => void;
+  onJeanQuestionResponse?: (response: string, conversationHistory: ChatMessage[]) => void;
+  userPresent?: boolean;
 }) {
   const CHAR_DELAY_MIN = 16;
   const CHAR_DELAY_MAX = 40;
@@ -477,19 +479,28 @@ function DistralAppWindow({
     return () => window.clearInterval(interval);
   }, [jeanQuestionPhase, jeanQuestionDeadline]);
 
+  const canSubmitChat = userPresent && !isNpcTyping && !isWaitingForApi;
+
   const handlePlayerSubmit = useCallback(async () => {
     const text = playerResponse.trim();
-    if (!text || isNpcTyping || isWaitingForApi) return;
+    if (!text || !canSubmitChat) return;
 
     if (jeanQuestionPhase && onJeanQuestionResponse) {
       new Audio("/sounds/music/game%20effect/message-sent.wav").play().catch(() => {});
-      setDisplayMessages((prev) => [...prev, { role: "ai", text }]);
+      setDisplayMessages((prev) => {
+        const next = [...prev];
+        if (jeanQuestionText && jeanQuestionText !== "...") {
+          next.push({ role: "human", text: jeanQuestionText });
+        }
+        next.push({ role: "ai", text });
+        return next;
+      });
       setPlayerResponse("");
       if (jeanQuestionText && jeanQuestionText !== "...") {
         pushToChatHistory({ role: "assistant", content: jeanQuestionText });
       }
       pushToChatHistory({ role: "user", content: `${ASSISTANT_PREFIX}${text}` });
-      onJeanQuestionResponse(text);
+      onJeanQuestionResponse(text, [...chatHistoryRef.current]);
       return;
     }
 
@@ -526,7 +537,7 @@ function DistralAppWindow({
       console.error("[DistralApp] handlePlayerSubmit failed:", error);
       setIsWaitingForApi(false);
     }
-  }, [playerResponse, isNpcTyping, isWaitingForApi, npcSlug, gameState, processNpcResponse, pushToChatHistory, jeanQuestionPhase, jeanQuestionText, onJeanQuestionResponse]);
+  }, [playerResponse, canSubmitChat, npcSlug, gameState, processNpcResponse, pushToChatHistory, jeanQuestionPhase, jeanQuestionText, onJeanQuestionResponse]);
 
   const toolbar = (
     <div className="flex items-center justify-between gap-[1.05vh]">
@@ -720,7 +731,7 @@ function DistralAppWindow({
                 )}
 
                 {!isNpcTyping && !isWaitingForApi && (
-                  <div className="flex items-start gap-[0.8vh]">
+                  <div className={`flex items-start gap-[0.8vh] ${!userPresent ? "opacity-50 pointer-events-none" : ""}`}>
                     <Image
                       src="/distral-brand-assets/d-boxed/d-boxed-orange.svg"
                       alt=""
@@ -733,7 +744,8 @@ function DistralAppWindow({
                       <textarea
                         ref={playerInputRef}
                         value={playerResponse}
-                        placeholder={`Respond to ${npcDisplayName}`}
+                        placeholder={userPresent ? `Respond to ${npcDisplayName}` : "User away — cannot respond"}
+                        disabled={!userPresent}
                         onChange={(e) => {
                           setPlayerResponse(e.target.value);
                           e.target.style.height = "auto";
@@ -747,7 +759,7 @@ function DistralAppWindow({
                           }
                         }}
                         rows={1}
-                        className="w-full min-h-[2vh] max-h-[20vh] border-0 bg-transparent text-[1.89vh] text-white/80 leading-[2.8vh] placeholder:text-[1.89vh] placeholder:leading-[2.8vh] placeholder:text-white/40 outline-none resize-none overflow-y-auto"
+                        className="w-full min-h-[2vh] max-h-[20vh] border-0 bg-transparent text-[1.89vh] text-white/80 leading-[2.8vh] placeholder:text-[1.89vh] placeholder:leading-[2.8vh] placeholder:text-white/40 outline-none resize-none overflow-y-auto disabled:cursor-not-allowed"
                         style={{ fontFamily: "'VCR OSD Mono', monospace", caretColor: "var(--princeton-orange)" }}
                       />
                     </div>
@@ -799,7 +811,7 @@ type DistralTabProps = {
   jeanQuestionPhase?: boolean;
   jeanQuestionText?: string | null;
   jeanQuestionDeadline?: number | null;
-  onJeanQuestionResponse?: (response: string) => void;
+  onJeanQuestionResponse?: (response: string, conversationHistory?: import("@/lib/game/promptBuilder").ChatMessage[]) => void;
   hiddenIconCount?: number;
   hideUIPhase?: number;
 };
@@ -909,6 +921,7 @@ export default function DistralTab({ accent, openApps, onOpenApp, onCloseApp, gl
                     jeanQuestionText={jeanQuestionText}
                     jeanQuestionDeadline={jeanQuestionDeadline}
                     onJeanQuestionResponse={onJeanQuestionResponse}
+                    userPresent={gameState.userPresent}
                   />
                 </Rnd>
               );
