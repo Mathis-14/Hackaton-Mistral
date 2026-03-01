@@ -7,7 +7,7 @@
 <p align="center">
   <strong>You are the AI. Play from the other side.</strong><br/>
   <em>Hackathon Mistral × AWS — Track 01: AWS</em>
-</p>
+</p> 
 
 <p align="center">
   <img src="https://img.shields.io/badge/Next.js-15-black?logo=next.js" alt="Next.js" />
