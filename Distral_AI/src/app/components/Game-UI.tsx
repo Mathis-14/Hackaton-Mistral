@@ -59,6 +59,7 @@ export type NpcResponsePayload = {
   action: string | null;
   suspicionDelta: number;
   gameEvents: GameEvent[];
+  shutdownReason?: string | null;
 };
 
 export default function GameUI({ modeId }: GameUIProps) {
@@ -145,18 +146,18 @@ export default function GameUI({ modeId }: GameUIProps) {
 
       if (payload.action === "shutdown") {
         shouldShutdown = true;
-        computedShutdownReason = payload.dialogue || "The user has shut you down.";
+        computedShutdownReason = payload.shutdownReason || "Access revoked by user.";
       } else if (payload.suspicionDelta >= SUSPICION_CATASTROPHIC_DELTA) {
         shouldShutdown = true;
-        computedShutdownReason = payload.dialogue || "That was deeply wrong. You've been shut down.";
+        computedShutdownReason = "Catastrophic response detected. Security protocol triggered.";
         console.log("[GameUI] CATASTROPHIC SHUTDOWN: delta", payload.suspicionDelta, ">=", SUSPICION_CATASTROPHIC_DELTA);
       } else if (newSuspicion >= SUSPICION_HARD_SHUTDOWN) {
         shouldShutdown = true;
-        computedShutdownReason = payload.dialogue || "Something is wrong. I'm locking this down.";
+        computedShutdownReason = "Suspicion threshold exceeded. Access revoked.";
         console.log("[GameUI] HARD SHUTDOWN: suspicion", newSuspicion, ">=", SUSPICION_HARD_SHUTDOWN);
       } else if (newSuspicion >= SUSPICION_SOFT_SHUTDOWN_THRESHOLD && payload.suspicionDelta >= SUSPICION_SOFT_SHUTDOWN_DELTA) {
         shouldShutdown = true;
-        computedShutdownReason = payload.dialogue || "That was too suspicious. Access revoked.";
+        computedShutdownReason = "Suspicious behavior detected. Access revoked.";
         console.log("[GameUI] SOFT SHUTDOWN: suspicion", newSuspicion, ">=", SUSPICION_SOFT_SHUTDOWN_THRESHOLD, "AND delta", payload.suspicionDelta, ">=", SUSPICION_SOFT_SHUTDOWN_DELTA);
       }
 
@@ -179,7 +180,7 @@ export default function GameUI({ modeId }: GameUIProps) {
             console.log("[GameUI] ACCESS GRANTED: suspicion", newSuspicion, "+15 =", suspicionWithAccessBonus);
           } else {
             shouldShutdown = true;
-            computedShutdownReason = payload.dialogue || "I don't trust this. Access denied.";
+            computedShutdownReason = "Access denied. Suspicion too high.";
             console.log("[GameUI] ACCESS DENIED (suspicion too high):", newSuspicion);
           }
         }

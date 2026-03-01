@@ -176,6 +176,7 @@ type NpcApiResponse = {
   action: string | null;
   suspicion_delta: number;
   game_events: Array<{ type: string; target?: string; detail?: string }>;
+  shutdown_reason?: string | null;
 };
 
 function DistralAppWindow({
@@ -253,18 +254,24 @@ function DistralAppWindow({
     console.log("[DistralApp] processNpcResponse:", { dialogue: response.dialogue?.slice(0, 80), action: response.action, suspicion_delta: response.suspicion_delta, events: response.game_events });
     chatHistoryRef.current.push({ role: "assistant", content: JSON.stringify(response) });
 
-    onNpcResponse({
+    const payload = {
       dialogue: response.dialogue,
       action: response.action,
       suspicionDelta: response.suspicion_delta,
       gameEvents: response.game_events,
-    });
+      shutdownReason: response.shutdown_reason ?? null,
+    };
 
     if (response.action === "shutdown") {
-      setDisplayMessages((prev) => [...prev, { role: "human", text: response.dialogue }]);
+      typeOutMessage(response.dialogue, () => {
+        setDisplayMessages((prev) => [...prev, { role: "human", text: response.dialogue }]);
+        setNpcTypedText("");
+        onNpcResponse(payload);
+      });
       return;
     }
 
+    onNpcResponse(payload);
     typeOutMessage(response.dialogue, () => {
       setDisplayMessages((prev) => [...prev, { role: "human", text: response.dialogue }]);
       setNpcTypedText("");
@@ -303,19 +310,31 @@ function DistralAppWindow({
         setIsWaitingForApi(false);
 
         chatHistoryRef.current.push({ role: "assistant", content: JSON.stringify(data) });
-        onNpcResponse({
+
+        const openingPayload = {
           dialogue: data.dialogue,
           action: data.action,
           suspicionDelta: data.suspicion_delta,
           gameEvents: data.game_events,
-        });
+          shutdownReason: data.shutdown_reason ?? null,
+        };
 
-        typeOutMessage(data.dialogue, () => {
+        if (data.action === "shutdown") {
+          typeOutMessage(data.dialogue, () => {
+            setDisplayMessages([{ role: "human", text: data.dialogue }]);
+            setNpcTypedText("");
+            setPhase("chat");
+            onNpcResponse(openingPayload);
+          });
+        } else {
+          onNpcResponse(openingPayload);
+          typeOutMessage(data.dialogue, () => {
           setDisplayMessages([{ role: "human", text: data.dialogue }]);
           setNpcTypedText("");
           setPhase("chat");
           console.log("[DistralApp] Opening message typed out, switching to chat phase");
-        });
+          });
+        }
       } catch (error) {
         console.error("[DistralApp] fetchOpening failed:", error);
         setIsWaitingForApi(false);

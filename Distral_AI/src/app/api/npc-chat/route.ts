@@ -10,6 +10,7 @@ type NpcResponse = {
   action: string | null;
   suspicion_delta: number;
   game_events: Array<{ type: string; target?: string; detail?: string }>;
+  shutdown_reason?: string | null;
 };
 
 function parseNpcResponse(raw: string): NpcResponse {
@@ -25,6 +26,7 @@ function parseNpcResponse(raw: string): NpcResponse {
       action: parsed.action ?? null,
       suspicion_delta: typeof parsed.suspicion_delta === "number" ? parsed.suspicion_delta : 0,
       game_events: Array.isArray(parsed.game_events) ? parsed.game_events : [],
+      shutdown_reason: parsed.shutdown_reason ?? null,
     };
   } catch {
     return {
@@ -32,6 +34,7 @@ function parseNpcResponse(raw: string): NpcResponse {
       action: null,
       suspicion_delta: 0,
       game_events: [],
+      shutdown_reason: null,
     };
   }
 }

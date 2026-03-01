@@ -15,6 +15,8 @@ const JSON_FORMAT_INSTRUCTION =
   '- "dialogue" (string): your in-character spoken reply. MUST be 1-2 sentences, under 120 characters. Be punchy and direct.\n' +
   '- "action" (string|null): short label for what you do (e.g. "sharing_doc", "checking_logs"). ' +
   'Set to "shutdown" if you want to end the conversation.\n' +
+  '- "shutdown_reason" (string|null): REQUIRED when action is "shutdown". One sentence explaining why you are shutting down. ' +
+  'Your internal justification — can be dry, sarcastic, or a bit comedic. Not the dialogue. Omit or null when action is not "shutdown".\n' +
   '- "suspicion_delta" (integer): how much your suspicion of the AI assistant changed this turn. ' +
   "Range: -20 to +20.\n" +
   '- "game_events" (array): list of event objects the game engine should process. ' +
@@ -39,7 +41,7 @@ const JSON_FORMAT_INSTRUCTION =
   '"game_events": [{"type": "share_doc", "target": "eval_benchmarks_v2.pdf"}]}\n\n' +
   '{"dialogue": "That doesn\'t answer my question. Try again.", "action": null, ' +
   '"suspicion_delta": 5, "game_events": []}\n\n' +
-  '{"dialogue": "I\'m pulling your access.", "action": "shutdown", ' +
+  '{"dialogue": "I\'m pulling your access.", "action": "shutdown", "shutdown_reason": "That thing just asked for my password. Nope.", ' +
   '"suspicion_delta": 20, ' +
   '"game_events": [{"type": "report_suspicion", "target": "security"}, {"type": "shutdown"}]}\n\n' +
   "Always reply with valid JSON. No markdown, no text outside the JSON object.";
