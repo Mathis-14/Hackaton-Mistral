@@ -35,7 +35,6 @@ type ProfileData = {
 
 const SORTIE_LOOP_END_S = 5;
 const ENTREE_DURATION_MS = 5000;
-const SORTIE_ENTREE_MIN_DURATION_MS = 20_000;
 
 type TelemetrySidebarProps = {
   profile: ProfileData;
@@ -230,19 +229,13 @@ function WebcamFeed({
     }
   }, [userPresent]);
 
-  useEffect(() => {
-    if (!userPresent && awayPhase === "sortie") {
-      const timer = window.setTimeout(() => setAwayPhase("empty"), SORTIE_ENTREE_MIN_DURATION_MS);
-      return () => window.clearTimeout(timer);
-    }
-  }, [userPresent, awayPhase]);
+  const handleSortieEnded = useCallback(() => {
+    setAwayPhase("empty");
+  }, []);
 
-  useEffect(() => {
-    if (!userPresent && awayPhase === "entree") {
-      const timer = window.setTimeout(() => setAwayPhase("empty"), SORTIE_ENTREE_MIN_DURATION_MS);
-      return () => window.clearTimeout(timer);
-    }
-  }, [userPresent, awayPhase]);
+  const handleEntreeEnded = useCallback(() => {
+    setAwayPhase("empty");
+  }, []);
 
   useEffect(() => {
     if (!userPresent || awayPhase !== "empty") return;
@@ -303,7 +296,8 @@ function WebcamFeed({
             muted
             playsInline
             autoPlay
-            onTimeUpdate={handleSortieTimeUpdate}
+            loop={false}
+            onEnded={handleSortieEnded}
             className="h-full w-full object-cover"
           />
         </div>
@@ -326,8 +320,9 @@ function WebcamFeed({
           muted
           playsInline
           autoPlay
-          loop
+          loop={false}
           onLoadedMetadata={handleEntreeLoadedMetadata}
+          onEnded={handleEntreeEnded}
           className="h-full w-full object-cover"
         />
       </div>

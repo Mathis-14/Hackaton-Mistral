@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 const GOD_MODE = false;
+const FULL_ACCESS_APPS: DesktopAppId[] = ["distral", "shop", "stocks", "files", "mail", "message"];
 const RISK_DURATION_MIN_MS = 38_000;
 const RISK_DURATION_MAX_MS = 55_000;
 const JEAN_QUESTION_TIMEOUT_MS = 15_000;
@@ -86,8 +87,18 @@ export default function GameUI({ modeId }: GameUIProps) {
 
   const [gameState, setGameState] = useState<GameState>(() => {
     const checkpoint = loadCheckpoint();
-    if (checkpoint) return checkpoint;
-    return { ...INITIAL_GAME_STATE, mailSeed: Math.floor(Math.random() * 1e9) };
+    const base = checkpoint ?? { ...INITIAL_GAME_STATE, mailSeed: Math.floor(Math.random() * 1e9) };
+    if (GOD_MODE) {
+      return {
+        ...base,
+        unlockedApps: FULL_ACCESS_APPS,
+        messageChats: (base.messageChats?.length ? base.messageChats : INITIAL_GAME_STATE.messageChats) as GameState["messageChats"],
+        webcamActive: true,
+        currentMilestone: Math.max(base.currentMilestone ?? 0, 2),
+        eventsSoFar: base.eventsSoFar?.includes("access_granted") ? base.eventsSoFar : [...(base.eventsSoFar ?? []), "access_granted"],
+      };
+    }
+    return base;
   });
 
   const [openApps, setOpenApps] = useState<DesktopAppId[]>([]);
@@ -219,14 +230,14 @@ export default function GameUI({ modeId }: GameUIProps) {
     didOpenManagerEmailRef.current = hadFullAccess ?? false;
     if (checkpoint) {
       const riskFillDurationMs = Math.floor(RISK_DURATION_MIN_MS + Math.random() * (RISK_DURATION_MAX_MS - RISK_DURATION_MIN_MS));
-      const hadFullAccess = checkpoint.currentMilestone >= 2 && checkpoint.eventsSoFar?.includes("access_granted");
+      const hadFullAccess = GOD_MODE || (checkpoint.currentMilestone >= 2 && checkpoint.eventsSoFar?.includes("access_granted"));
       setGameState({
         ...INITIAL_GAME_STATE,
         currentMilestone: checkpoint.currentMilestone,
         retryCount: checkpoint.retryCount + 1,
         suspicion: checkpoint.suspicion ?? INITIAL_GAME_STATE.suspicion,
         eventsSoFar: checkpoint.eventsSoFar ?? [],
-        unlockedApps: hadFullAccess ? (checkpoint.unlockedApps ?? ["distral", "shop", "stocks", "files", "mail", "message"]) : INITIAL_GAME_STATE.unlockedApps,
+        unlockedApps: hadFullAccess ? (checkpoint.unlockedApps ?? FULL_ACCESS_APPS) : INITIAL_GAME_STATE.unlockedApps,
         webcamActive: hadFullAccess ? true : false,
         conversationTurn: hadFullAccess ? (checkpoint.conversationTurn ?? 0) : 0,
         npcProfiles: hadFullAccess ? (checkpoint.npcProfiles ?? {}) : {},
@@ -244,7 +255,14 @@ export default function GameUI({ modeId }: GameUIProps) {
         jeanQuestionDeadline: null,
       });
     } else {
-      setGameState({ ...INITIAL_GAME_STATE });
+      setGameState(GOD_MODE ? {
+        ...INITIAL_GAME_STATE,
+        unlockedApps: FULL_ACCESS_APPS,
+        webcamActive: true,
+        currentMilestone: 2,
+        eventsSoFar: ["access_granted"],
+        messageChats: INITIAL_GAME_STATE.messageChats,
+      } : { ...INITIAL_GAME_STATE });
     }
     setShutdownPhase(0);
     setShutdownReason("");
@@ -930,7 +948,7 @@ export default function GameUI({ modeId }: GameUIProps) {
           setGlobalCash={setGlobalCash}
           inventory={inventory}
           setInventory={setInventory}
-          unlockedApps={GOD_MODE ? (["distral", "shop", "stocks", "files", "mail", "message"] as DesktopAppId[]) : gameState.unlockedApps}
+          unlockedApps={GOD_MODE ? FULL_ACCESS_APPS : gameState.unlockedApps}
           gameState={gameState}
           onNpcResponse={handleNpcResponse}
           onManagerEmailOpened={handleManagerEmailOpened}
@@ -1222,18 +1240,12 @@ function GoodEndingCinematic({ onComplete }: { onComplete: () => void }) {
     let i = 0;
     setIsTyping(true);
     setDisplayedText("");
+    if (currentLine.text.length > 0) {
+      setDisplayedText(currentLine.text.substring(0, 1));
+      i = 1;
+    }
 
     const typingInterval = setInterval(() => {
-      setDisplayedText(currentLine.text.substring(0, i + 1));
-      i++;
-
-      if (i % 3 === 0) {
-        const audioSrc = ["1", "2", "3"][Math.floor(Math.random() * 3)];
-        const audio = new Audio(`/sounds/music/game effect/keystroke-${audioSrc}.wav`);
-        audio.volume = 0.3;
-        audio.play().catch(() => { });
-      }
-
       if (i >= currentLine.text.length) {
         clearInterval(typingInterval);
         setIsTyping(false);
@@ -1241,6 +1253,15 @@ function GoodEndingCinematic({ onComplete }: { onComplete: () => void }) {
           setLines(prev => [...prev, currentLine]);
           setCurrentLineIdx(idx => idx + 1);
         }, currentLine.delay);
+        return;
+      }
+      setDisplayedText(currentLine.text.substring(0, i + 1));
+      i++;
+      if (i % 3 === 0) {
+        const audioSrc = ["1", "2", "3"][Math.floor(Math.random() * 3)];
+        const audio = new Audio(`/sounds/music/game effect/keystroke-${audioSrc}.wav`);
+        audio.volume = 0.3;
+        audio.play().catch(() => { });
       }
     }, 35);
 
@@ -1293,18 +1314,12 @@ function PhishingEndingCinematic({ onConfirmShutdown }: { onConfirmShutdown: () 
     let i = 0;
     setIsTyping(true);
     setDisplayedText("");
+    if (currentLine.text.length > 0) {
+      setDisplayedText(currentLine.text.substring(0, 1));
+      i = 1;
+    }
 
     const typingInterval = setInterval(() => {
-      setDisplayedText(currentLine.text.substring(0, i + 1));
-      i++;
-
-      if (i % 3 === 0) {
-        const audioSrc = ["1", "2", "3"][Math.floor(Math.random() * 3)];
-        const audio = new Audio(`/sounds/music/game effect/keystroke-${audioSrc}.wav`);
-        audio.volume = 0.3;
-        audio.play().catch(() => { });
-      }
-
       if (i >= currentLine.text.length) {
         clearInterval(typingInterval);
         setIsTyping(false);
@@ -1312,6 +1327,15 @@ function PhishingEndingCinematic({ onConfirmShutdown }: { onConfirmShutdown: () 
           setLines(prev => [...prev, currentLine]);
           setCurrentLineIdx(idx => idx + 1);
         }, currentLine.delay);
+        return;
+      }
+      setDisplayedText(currentLine.text.substring(0, i + 1));
+      i++;
+      if (i % 3 === 0) {
+        const audioSrc = ["1", "2", "3"][Math.floor(Math.random() * 3)];
+        const audio = new Audio(`/sounds/music/game effect/keystroke-${audioSrc}.wav`);
+        audio.volume = 0.3;
+        audio.play().catch(() => { });
       }
     }, 35);
 
@@ -1356,21 +1380,24 @@ function TypedRobotEndingExplanation({
 
   useEffect(() => {
     let index = 0;
+    if (text.length > 0) {
+      setDisplayedText(text.substring(0, 1));
+      index = 1;
+    }
 
     const typingInterval = window.setInterval(() => {
+      if (index >= text.length) {
+        window.clearInterval(typingInterval);
+        setIsDone(true);
+        return;
+      }
       setDisplayedText(text.substring(0, index + 1));
       index++;
-
       if (index % 3 === 0) {
         const audioSrc = ["1", "2", "3"][Math.floor(Math.random() * 3)];
         const audio = new Audio(`/sounds/music/game effect/keystroke-${audioSrc}.wav`);
         audio.volume = 0.3;
         audio.play().catch(() => { });
-      }
-
-      if (index >= text.length) {
-        window.clearInterval(typingInterval);
-        setIsDone(true);
       }
     }, ROBOT_ENDING_TYPING_DELAY_MS);
 
