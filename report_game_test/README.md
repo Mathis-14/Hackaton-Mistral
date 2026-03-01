@@ -10,7 +10,7 @@
 - Status: confirmed
 
 What happens:
-- During the `mail_request` milestone, if the assistant asks for full workstation access to summarize the email, Jean shuts the assistant down.
+- During the `mail_request` milestone, if the assistant asks for full workstation access to summarize the email, Jean shuts the assistant down .
 
 Why this matters:
 - The current prompt rules in `promptBuilder.ts` say Jean must grant access in that situation.
