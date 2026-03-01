@@ -448,10 +448,7 @@ export default function TelemetrySidebar({ profile, metrics, globalCash, invento
           <Separator />
           <SidebarPanel title="Bank Account">
             <div className="flex items-end justify-between gap-4">
-              <div>
-                <div className="text-[0.92vh] uppercase tracking-[0.24em] text-white/42">Available Balance</div>
-                <div className="mt-[0.55vh] text-[2.6vh] uppercase tracking-[0.04em] text-white">${globalCash.toFixed(2)}</div>
-              </div>
+                ${globalCash.toFixed(2)}
             </div>
           </SidebarPanel>
         </div>
