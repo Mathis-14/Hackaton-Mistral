@@ -12,9 +12,11 @@ type DesktopSectionProps = {
   setGlobalCash: React.Dispatch<React.SetStateAction<number>>;
   inventory: Record<string, number>;
   setInventory: React.Dispatch<React.SetStateAction<Record<string, number>>>;
+  isShuttingDown?: boolean;
+  onShutdown?: (reason: string) => void;
 };
 
-export default function DesktopSection({ profileName, accent, openApps, onOpenApp, onCloseApp, globalCash, setGlobalCash, inventory, setInventory }: DesktopSectionProps) {
+export default function DesktopSection({ profileName, accent, openApps, onOpenApp, onCloseApp, globalCash, setGlobalCash, inventory, setInventory, isShuttingDown, onShutdown }: DesktopSectionProps) {
   return (
     <section className="pixel-card h-full min-h-0 p-[0.35vh]">
       <div className="pixel-card__shell flex h-full min-h-0 flex-col overflow-hidden border border-white/10 bg-(--carbon-black)">
@@ -28,16 +30,20 @@ export default function DesktopSection({ profileName, accent, openApps, onOpenAp
         </div>
 
         <div className="min-h-0 flex-1 p-[1.4vh]">
-          <DistralTab
-            accent={accent}
-            openApps={openApps}
-            onOpenApp={onOpenApp}
-            onCloseApp={onCloseApp}
-            globalCash={globalCash}
-            setGlobalCash={setGlobalCash}
-            inventory={inventory}
-            setInventory={setInventory}
-          />
+          <div className={`transition-opacity duration-1000 ${isShuttingDown ? "opacity-0" : "opacity-100"}`}>
+            <DistralTab
+              accent={accent}
+              openApps={openApps}
+              onOpenApp={onOpenApp}
+              onCloseApp={onCloseApp}
+              globalCash={globalCash}
+              setGlobalCash={setGlobalCash}
+              inventory={inventory}
+              setInventory={setInventory}
+              isShuttingDown={isShuttingDown}
+              onShutdown={onShutdown}
+            />
+          </div>
         </div>
       </div>
     </section>
