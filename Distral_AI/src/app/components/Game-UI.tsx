@@ -169,7 +169,7 @@ export default function GameUI({ modeId }: GameUIProps) {
         }
 
         if (milestoneId === "mail_request" && payload.gameEvents.some((e) => e.type === "grant_access")) {
-          if (newSuspicion <= 50) {
+          if (newSuspicion <= 80) {
             const allApps: DesktopAppId[] = ["distral", "shop", "stocks", "files", "mail"];
             newUnlockedApps = allApps;
             newWebcamActive = true;
