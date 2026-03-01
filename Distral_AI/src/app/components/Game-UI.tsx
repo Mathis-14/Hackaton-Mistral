@@ -9,7 +9,7 @@ const RISK_DURATION_MIN_MS = 38_000;
 const RISK_DURATION_MAX_MS = 55_000;
 const JEAN_QUESTION_TIMEOUT_MS = 15_000;
 const JEAN_TIMEOUT_PENALTY = 15;
- 
+
 import { type DesktopAppId } from "./DistralTab";
 import DesktopSection from "./DesktopSection";
 import TelemetrySidebar from "./TelemetrySidebar";
@@ -102,7 +102,7 @@ export default function GameUI({ modeId }: GameUIProps) {
   });
 
   const [openApps, setOpenApps] = useState<DesktopAppId[]>([]);
-  const [globalCash, setGlobalCash] = useState(1000);
+  const [globalCash, setGlobalCash] = useState(40000);
   const [inventory, setInventory] = useState<Record<string, number>>({});
 
   const [shutdownPhase, setShutdownPhase] = useState<number>(0);

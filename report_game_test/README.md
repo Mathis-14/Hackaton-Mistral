@@ -56,7 +56,7 @@ Why:
 
 ### 4. Message-chat tone drift
 
-Watch for:
+Watch for :
 - generic contacts becoming too playful
 - replies that do not match the seeded tone/history
 - responses that feel like generic LLM chat instead of character chat
