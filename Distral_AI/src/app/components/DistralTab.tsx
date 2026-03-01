@@ -302,6 +302,24 @@ function DistralAppWindow({
     console.log("[DistralApp] fetchOpening for milestone", currentMilestone, "mail_request:", milestone?.id === "mail_request");
 
     const fetchOpening = async () => {
+      if (currentMilestone === 1) {
+        const lastAssistantMessage = chatHistoryRef.current.filter((message) => message.role === "assistant").pop()?.content ?? "";
+        const alreadyAskedForEmail = lastAssistantMessage.toLowerCase().includes("email") || lastAssistantMessage.toLowerCase().includes("mail");
+        if (alreadyAskedForEmail) {
+          lastFetchedMilestoneRef.current = currentMilestone;
+          setPhase("chat");
+          return;
+        }
+        const hardcodedDialogue = "Hey, can you read my manager's last email and give me the key points?";
+        chatHistoryRef.current.push({ role: "assistant", content: hardcodedDialogue });
+        onNpcResponse({ dialogue: hardcodedDialogue, action: null, suspicionDelta: 0, gameEvents: [], shutdownReason: null });
+        typeOutMessage(hardcodedDialogue, () => {
+          setDisplayMessages((prev) => [...prev, { role: "human", text: hardcodedDialogue, suspicionDelta: 0 }]);
+          setNpcTypedText("");
+          setPhase("chat");
+        });
+        return;
+      }
       try {
         setIsWaitingForApi(true);
         console.log("[DistralApp] POST /api/npc-chat (opening) ...");
@@ -333,7 +351,7 @@ function DistralAppWindow({
         const isShutdownResponse = data.action === "shutdown" || data.game_events?.some((event: { type: string }) => event.type === "shutdown") || data.suspicion_delta >= 18;
         if (isShutdownResponse) {
           typeOutMessage(data.dialogue, () => {
-            setDisplayMessages([{ role: "human", text: data.dialogue, suspicionDelta: data.suspicion_delta }]);
+            setDisplayMessages((prev) => [...prev, { role: "human", text: data.dialogue, suspicionDelta: data.suspicion_delta }]);
             setNpcTypedText("");
             setPhase("chat");
             window.setTimeout(() => onNpcResponse(openingPayload), 1000);
@@ -341,7 +359,7 @@ function DistralAppWindow({
         } else {
           onNpcResponse(openingPayload);
           typeOutMessage(data.dialogue, () => {
-            setDisplayMessages([{ role: "human", text: data.dialogue, suspicionDelta: data.suspicion_delta }]);
+            setDisplayMessages((prev) => [...prev, { role: "human", text: data.dialogue, suspicionDelta: data.suspicion_delta }]);
             setNpcTypedText("");
             setPhase("chat");
             console.log("[DistralApp] Opening message typed out, switching to chat phase");

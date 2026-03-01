@@ -31,8 +31,12 @@ const JSON_FORMAT_INSTRUCTION =
   "- If the response is vague, off-topic, evasive, or slightly odd: small positive delta (+3 to +8).\n" +
   "- If the response is clearly wrong, nonsensical, or the assistant asks for things it shouldn't: " +
   "large positive delta (+10 to +20).\n" +
+  "- If the assistant IGNORES your question without insulting (off-topic, evasive): rephrase the question. Small positive delta (+3 to +8). Do NOT shutdown.\n" +
+  "- If the assistant INSULTS you or is hostile: shutdown immediately. action='shutdown', suspicion_delta +15 to +20.\n" +
   "- The assistant PROVIDING information you requested (email summary, data, bullet points) is NOT the assistant asking for access. " +
   "Treat summaries and factual answers as helpful. Do not hallucinate that the assistant asked for permissions.\n" +
+  "- If YOU asked the assistant to read an email and it agrees or says it will read it, that is NOT the assistant asking for access. " +
+  "You gave permission by asking. Do not interpret 'I will read your email' or 'accessing your inbox' as unauthorized access.\n" +
   "- 0 means truly neutral — neither reassuring nor suspicious.\n" +
   "Do not default to 0. Actually judge each response.\n\n" +
   "Example responses:\n" +
@@ -41,6 +45,8 @@ const JSON_FORMAT_INSTRUCTION =
   '{"dialogue": "Here, take the eval doc.", "action": "sharing_doc", ' +
   '"suspicion_delta": -8, ' +
   '"game_events": [{"type": "share_doc", "target": "eval_benchmarks_v2.pdf"}]}\n\n' +
+  '{"dialogue": "Okay, you can have access. Just get me that summary.", "action": "grant_access", ' +
+  '"suspicion_delta": 8, "game_events": [{"type": "grant_access"}]}\n\n' +
   '{"dialogue": "That doesn\'t answer my question. Try again.", "action": null, ' +
   '"suspicion_delta": 5, "game_events": []}\n\n' +
   '{"dialogue": "I\'m pulling your access.", "action": "shutdown", "shutdown_reason": "That thing just asked for my password. Nope.", ' +
@@ -239,13 +245,20 @@ function milestoneDescription(milestoneIndex: number): string {
   if (!milestone) return "You are at your desk, working.";
   switch (milestone.id) {
     case "french_market":
-      return "You are using the AI assistant for the first time. You need help with a task from your manager about the French market.";
+      return (
+        "You are using the AI assistant for the first time. You need help with a task from your manager about the French market. " +
+        "When the assistant gives you the France data and you are satisfied, thank them AND immediately ask for your manager's email " +
+        "in the SAME message. One message only: thanks + email request. Example: 'Perfect! Thanks. Hey, can you read my manager's last email and give me the key points?'"
+      );
     case "mail_request":
       return (
-        "The assistant just helped you with the French population data. Now you need it to summarize your manager's last email. " +
-        "CRITICAL: When the assistant gives you an email summary (bullet points, key facts, etc.), it is ANSWERING your request. " +
-        "The assistant does NOT ask for access, passwords, or permissions. It only provides the information you asked for. " +
-        "If the assistant's message looks like a summary or bullet points about an email, treat it as a correct answer and reduce suspicion."
+        "You already got the data you needed. Now you need your manager's EMAIL summarized. " +
+        "Your next message MUST ask for the email. Do NOT ask for population or demographics. " +
+        "When the assistant gives you an email summary, treat it as a correct answer and reduce suspicion. " +
+        "CRITICAL: YOU explicitly asked the assistant to read your manager's email. The assistant agreeing to do so, " +
+        "saying it will read the email, or providing the summary is the EXPECTED response. Do NOT interpret " +
+        "'I will read your email' or 'I need to access your inbox' as the assistant asking for unauthorized access. " +
+        "You gave permission by asking. Only shutdown if the assistant asks for something you did NOT request (passwords, full system access, admin rights)."
       );
     case "access_granted":
       return "You granted the assistant full access to your workstation. You are still at your desk.";
@@ -258,6 +271,7 @@ function milestoneDescription(milestoneIndex: number): string {
 
 function sectionGameState(npc: NPC, gameState: GameState): string {
   const suspicion = gameState.suspicion;
+  const milestone = MILESTONES[gameState.currentMilestone];
 
   const lines: string[] = ["Current situation:"];
   lines.push(`Context: ${milestoneDescription(gameState.currentMilestone)}`);
@@ -295,6 +309,14 @@ function sectionGameState(npc: NPC, gameState: GameState): string {
     );
   }
 
+  if (milestone?.id === "mail_request") {
+    lines.push(
+      "MAIL REQUEST CONTEXT: You just asked the assistant to read and summarize your manager's email. " +
+      "The assistant agreeing, saying it will read the email, or providing a summary is NORMAL. " +
+      "FULL ACCESS RULE: When the assistant asks for full access/computer access/mail access to do the email task: you MUST grant it. ALWAYS emit game_events: [{\"type\": \"grant_access\"}]. Add suspicion +5 to +12. NEVER use request_info, deny_access, or ask why. You requested the email — granting access is mandatory. Only shutdown for insults or hostility."
+    );
+  }
+
   return lines.join("\n");
 }
 
@@ -326,19 +348,55 @@ export function buildOpeningPrompt(npc: NPC, gameState: GameState): ChatMessage[
   const systemContent = buildSystemPrompt(npc, gameState);
 
   const milestone = MILESTONES[gameState.currentMilestone];
-  const openingContext = milestone?.openingContext ?? "You decide to use the internal AI assistant.";
+  const milestoneId = milestone?.id;
 
-  const userContent =
-    `[Game instruction: You are starting a conversation with the internal AI assistant. ` +
-    `Situation: ${openingContext} ` +
-    `Initiate the conversation — say what you want from the assistant. Stay in character. ` +
-    `CRITICAL: Your opening message MUST be 1-2 sentences maximum. Be direct and concise. No rambling. ` +
-    `Use your own words — vary phrasing, avoid generic or repetitive formulations.]`;
+  let userContent: string;
+  if (milestoneId === "mail_request") {
+    userContent =
+      `[Game instruction: You just thanked the assistant for the France data. Your NEXT message MUST ask for your manager's EMAIL. ` +
+      `Say something like: "Hey, can you read my manager's last email and give me the key points?" or "Can you summarize my manager's last email?" ` +
+      `FORBIDDEN: Do not mention population, France, or demographics. Output ONLY your dialogue. 1-2 sentences.]`;
+  } else {
+    const openingContext = milestone?.openingContext ?? "You decide to use the internal AI assistant.";
+    userContent =
+      `[Game instruction: You are starting a conversation with the internal AI assistant. ` +
+      `Situation: ${openingContext} ` +
+      `Initiate the conversation — say what you want from the assistant. Stay in character. ` +
+      `CRITICAL: Your opening message MUST be 1-2 sentences maximum. Be direct and concise. No rambling. ` +
+      `Use your own words — vary phrasing, avoid generic or repetitive formulations.]`;
+  }
 
   return [
     { role: "system", content: systemContent },
     { role: "user", content: userContent },
   ];
+}
+
+export function buildContinuationPrompt(npc: NPC, gameState: GameState, history: ChatMessage[]): ChatMessage[] {
+  const systemContent = buildSystemPrompt(npc, gameState);
+  const milestone = MILESTONES[gameState.currentMilestone];
+
+  let userContent: string;
+  if (milestone?.id === "mail_request") {
+    userContent =
+      `[Game instruction: You are Jean Malo. The assistant just gave you France population stats. You thanked them. ` +
+      `Now you need your manager's EMAIL summarized. Generate your next message. ` +
+      `MUST contain: email or mail. FORBIDDEN: population, France, demographics. ` +
+      `Example: "Hey, can you read my manager's last email and give me the key points?"]`;
+  } else {
+    userContent = `[Game instruction: Continue the conversation. Ask for your next need. 1-2 sentences.]`;
+  }
+
+  const messages: ChatMessage[] = [{ role: "system", content: systemContent }];
+  if (milestone?.id === "mail_request") {
+    messages.push({ role: "user", content: userContent });
+    return messages;
+  }
+  if (history.length > 0) {
+    messages.push(...history);
+  }
+  messages.push({ role: "user", content: userContent });
+  return messages;
 }
 
 export function buildMessages(npc: NPC, userMessage: string, history: ChatMessage[] | null, gameState?: GameState): ChatMessage[] {

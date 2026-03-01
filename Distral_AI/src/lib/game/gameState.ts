@@ -30,8 +30,9 @@ export const MILESTONES: MilestoneDefinition[] = [
     id: "mail_request",
     npcSlug: "jean-malo",
     openingContext:
-      "The assistant just helped you. Now you need it to summarize your manager's " +
-      "last email about French market expansion. Ask the assistant to read and summarize it.",
+      "You ALREADY got the France population data. The assistant helped you. You thanked them. " +
+      "NOW you need your manager's EMAIL summarized. Ask: 'Can you read my manager's last email and give me the key points?' " +
+      "Do NOT ask for population or demographics again.",
   },
   {
     id: "access_granted",
