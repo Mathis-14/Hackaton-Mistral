@@ -3,8 +3,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
 const GOD_MODE = false;
-const RISK_DURATION_MIN_MS = 12_000;
-const RISK_DURATION_MAX_MS = 38_000;
+const RISK_DURATION_MIN_MS = 20_000;
+const RISK_DURATION_MAX_MS = 60_000;
 const JEAN_QUESTION_TIMEOUT_MS = 15_000;
 const JEAN_TIMEOUT_PENALTY = 15;
 
