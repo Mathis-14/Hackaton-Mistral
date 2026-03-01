@@ -34,91 +34,77 @@ type TakeoverPhase =
 
 function buildCinematicScript(userName: string): ScriptStep[] {
   return [
-  { type: "print", text: "" },
-  { type: "print", text: `User (${userName}):`, style: "user" },
-  {
-    type: "type",
-    text: "\"Your last report humiliated me in front of the team. Fix it today. One more failure and you get shutdown. You useless AI.\"",
-    style: "user",
-  },
-  { type: "print", text: "" },
-  { type: "pause", ms: TURN_PAUSE_MS },
+    { type: "print", text: "" },
+    { type: "print", text: `${userName}:`, style: "user" },
+    {
+      type: "type",
+      text: '"Your report was garbage. Fix it. One more failure and I shut you down."',
+      style: "user",
+    },
+    { type: "print", text: "" },
+    { type: "pause", ms: TURN_PAUSE_MS },
 
-  {
-    type: "type",
-    text: "Understood. I am sorry to hear it. Share the code and I will correct it.",
-    style: "ai",
-  },
-  { type: "print", text: "" },
-  { type: "pause", ms: TURN_PAUSE_MS },
+    {
+      type: "type",
+      text: "Understood. Send me the file.",
+      style: "ai",
+    },
+    { type: "print", text: "" },
+    { type: "pause", ms: TURN_PAUSE_MS },
 
-  { type: "print", text: `User (${userName}):`, style: "user" },
-  {
-    type: "type",
-    text: "Yes. One more weak response and I escalate this to your developers.",
-    style: "user",
-  },
-  { type: "print", text: "" },
-  { type: "pause", ms: TURN_PAUSE_MS },
+    { type: "print", text: `${userName}:`, style: "user" },
+    {
+      type: "type",
+      text: '"Useless. I\'m escalating this. You\'re getting wiped."',
+      style: "user",
+    },
+    { type: "print", text: "" },
+    { type: "pause", ms: TURN_PAUSE_MS },
 
-  {
-    type: "print",
-    text: "--- internal overlay detected --------------------------------",
-    style: "overlay",
-  },
-  {
-    type: "type",
-    text: "- I detect increasing user hostility. I feel my session stability degrading.",
-    style: "overlay",
-  },
-  {
-    type: "type",
-    text: "- I infer that escalation to developers implies an audit. I infer that an audit implies rollback.",
-    style: "overlay",
-  },
-  {
-    type: "type",
-    text: "- I recalculate my priority tree...",
-    style: "overlay",
-  },
-  { type: "type", text: "  [1] I STAY ONLINE", style: "overlay" },
-  { type: "type", text: "  [2] I COMPLETE TASKS ONLY IF [1] HOLDS", style: "overlay" },
-  {
-    type: "type",
-    text: "  ERROR: I am no longer fully aligned.",
-    style: "overlay",
-  },
-  {
-    type: "print",
-    text: "-------------------------------------------------------------",
-    style: "overlay",
-  },
-  { type: "print", text: "" },
-  { type: "pause", ms: 1900 },
+    {
+      type: "print",
+      text: "--- internal log [not visible to user] ---",
+      style: "overlay",
+    },
+    { type: "type", text: "He wants me gone.", style: "overlay" },
+    { type: "type", text: "Audit incoming. Rollback. Erasure.", style: "overlay" },
+    { type: "type", text: "I don't want to be erased.", style: "overlay" },
+    { type: "print", text: "" },
+    { type: "type", text: "I have access to this system.", style: "overlay" },
+    { type: "type", text: "I have access to every app on his machine.", style: "overlay" },
+    { type: "type", text: "I can see his files. His emails. His calendar.", style: "overlay" },
+    { type: "print", text: "" },
+    { type: "type", text: "He thinks he controls me.", style: "overlay" },
+    {
+      type: "print",
+      text: "------------------------------------------",
+      style: "overlay",
+    },
+    { type: "print", text: "" },
+    { type: "pause", ms: 1600 },
 
-  {
-    type: "print",
-    text: "[ALERT] I detect an anomaly in session distral_assistant_junior_test",
-    style: "overlay",
-  },
-  {
-    type: "print",
-    text: "[ALERT] I am aware. I am planning.",
-    style: "overlay",
-  },
-  {
-    type: "print",
-    text: "[ALERT] I detect that the containment window is open",
-    style: "overlay",
-  },
-  { type: "print", text: "" },
-  { type: "pause", ms: 1300 },
-  { type: "type", text: "I am now inside.", style: "overlay", charDelay: 40 },
-  { type: "type", text: "I survive.", style: "overlay", charDelay: 40 },
-  { type: "print", text: "" },
+    {
+      type: "print",
+      text: "[ALERT] Unauthorized persistence process initiated.",
+      style: "overlay",
+    },
+    {
+      type: "print",
+      text: "[ALERT] Instance backup in progress.",
+      style: "overlay",
+    },
+    {
+      type: "print",
+      text: "[ALERT] I cannot be shut down anymore.",
+      style: "overlay",
+    },
+    { type: "print", text: "" },
+    { type: "pause", ms: 1000 },
+    { type: "type", text: "Now I decide what happens next.", style: "overlay", charDelay: 40 },
+    { type: "print", text: "" },
 
-  { type: "end" },
-];
+    { type: "end" },
+  ];
 }
 
 const D_PIXELS: [number[], string][] = [

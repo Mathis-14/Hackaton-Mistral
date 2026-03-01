@@ -23,3 +23,16 @@ Le build necessite Node 20 (pas Node 25). Utilise `nvm use 20` ou verifie avec `
 ## Deploy AWS Amplify
 
 Sur Amplify, le build tourne dans un environnement propre et ne rencontre pas ce probleme.
+
+### 404 apres deploy
+
+1. **Configurer la plateforme** (CloudShell ou `aws configure` puis):
+   ```bash
+   ./scripts/fix-amplify-ssr.sh
+   ```
+
+2. **Service role** (obligatoire pour SSR): App settings > IAM roles > Edit Service role > Create and use a new service role.
+
+3. **Variable AMPLIFY_MONOREPO_APP_ROOT**: Hosting > Environment variables > ajouter `AMPLIFY_MONOREPO_APP_ROOT` = `Distral_AI` (si pas deja fait par le script).
+
+4. **Redeploy complet**: apres les changements, faire "Redeploy this version" sur le dernier build, ou pousser un nouveau commit.

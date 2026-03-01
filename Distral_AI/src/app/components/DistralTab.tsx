@@ -609,7 +609,7 @@ function DistralAppWindow({
                 <button
                   type="button"
                   onClick={onClose}
-                  className="flex h-[2.15vh] items-center border border-white/10 bg-white/3 px-[0.75vh] text-[0.72vh] uppercase tracking-[0.14em] text-white/72 cursor-pointer"
+                  className="flex h-[2.15vh] items-center border border-white/10 bg-white/3 px-[1.75vh] text-[0.72vh] uppercase tracking-[0.14em] text-white/72 cursor-pointer"
                 >
                   close
                 </button>
