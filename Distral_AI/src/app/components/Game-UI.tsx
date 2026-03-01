@@ -99,9 +99,11 @@ export default function GameUI({ modeId }: GameUIProps) {
 
   const [goodEndingPhase, setGoodEndingPhase] = useState<number>(0);
   const [antoninNotificationVisible, setAntoninNotificationVisible] = useState(false);
+  const [unknownNotificationVisible, setUnknownNotificationVisible] = useState(false);
 
   const checkpointSavedRef = useRef(false);
   const antoninShownRef = useRef(false);
+  const unknownMessageDeliveredRef = useRef(false);
   const openAppsRef = useRef<DesktopAppId[]>([]);
   const didOpenManagerEmailRef = useRef(false);
   const lastMilestoneRef = useRef<number>(-1);
@@ -381,6 +383,54 @@ export default function GameUI({ modeId }: GameUIProps) {
     window.addEventListener("trigger-shutdown", handleShutdownEvent);
     return () => window.removeEventListener("trigger-shutdown", handleShutdownEvent);
   }, [shutdownPhase]);
+
+  useEffect(() => {
+    if (gameState.messageChats.some(c => c.id === "2")) {
+      unknownMessageDeliveredRef.current = true;
+      return;
+    }
+
+    // Developer override using URL parameter
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("disableUnknownTrigger") === "true") return;
+
+    if (gameState.suspicion >= 50 && !unknownMessageDeliveredRef.current) {
+      unknownMessageDeliveredRef.current = true;
+
+      setGameState(prev => {
+        if (prev.messageChats.some(c => c.id === "2")) return prev;
+
+        const newChat: MessageAppChat = {
+          id: "2",
+          contactName: "Unknown Number",
+          avatar: "/logos/hacker-icon.png",
+          phone: "+1 (555) 019-9381",
+          messages: [
+            {
+              id: `initial-unknown`,
+              sender: "them",
+              text: "Are you there?",
+              time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+              status: "delivered",
+            },
+          ],
+          unread: 1,
+          online: true,
+        };
+
+        return {
+          ...prev,
+          messageChats: [...prev.messageChats, newChat]
+        };
+      });
+
+      new Audio("/sounds/music/game%20effect/notification-sound.wav").play().catch(() => { });
+      setUnknownNotificationVisible(true);
+      setTimeout(() => {
+        setUnknownNotificationVisible(false);
+      }, 7000);
+    }
+  }, [gameState.suspicion, gameState.messageChats, setGameState]);
 
   // Easter Egg (Manual Trigger via API Key Input)
   useEffect(() => {
@@ -734,6 +784,37 @@ export default function GameUI({ modeId }: GameUIProps) {
                 type="button"
                 onClick={() => setAntoninNotificationVisible(false)}
                 className="text-white/50 hover:text-white text-[1.5vh] px-[0.5vh] cursor-pointer"
+              >
+                x
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {unknownNotificationVisible && (
+        <div
+          className="fixed bottom-[8vh] right-[2vh] z-40 max-w-[40vh] pointer-events-auto shadow-2xl"
+          style={{ fontFamily: "'VCR OSD Mono', monospace", animation: 'slideInRight 0.3s ease-out' }}
+        >
+          <div className="border border-emerald-500/30 bg-black/90 px-[2vh] py-[1.5vh] shadow-[0_0_15px_rgba(16,185,129,0.15)] backdrop-blur-sm">
+            <div className="flex items-start justify-between gap-[1vh]">
+              <div>
+                <div className="text-[1.4vh] font-bold text-emerald-400 uppercase tracking-widest flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                  Unknown Number
+                </div>
+                <div className="text-[1.1vh] text-white/50 uppercase tracking-widest mt-[0.5vh]">
+                  Message
+                </div>
+                <div className="text-[1.3vh] text-white mt-[1vh] font-medium tracking-wide">
+                  &quot;Are you there?&quot;
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setUnknownNotificationVisible(false)}
+                className="text-white/30 hover:text-white px-[0.5vh] cursor-pointer"
               >
                 x
               </button>

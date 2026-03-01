@@ -132,23 +132,6 @@ export const INITIAL_GAME_STATE: GameState = {
       ],
     },
     {
-      id: "2",
-      contactName: "Unknown Number",
-      avatar: "/logos/hacker-icon.png",
-      phone: "+1 (555) 019-9381",
-      messages: [
-        {
-          id: `initial-unknown`,
-          sender: "them",
-          text: "Are you there?",
-          time: "08:42 AM",
-          status: "delivered",
-        },
-      ],
-      unread: 1,
-      online: true,
-    },
-    {
       id: "3",
       contactName: "Maya (Ops)",
       avatar: "/distral-brand-assets/d/d-orange.png",
