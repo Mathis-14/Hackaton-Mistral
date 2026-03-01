@@ -97,7 +97,7 @@ Remplace le timer fixe de 10 secondes par un systeme de risque progressif et de 
 ### Principe
 
 - **Suspicion subjective** : La suspicion ne peut pas augmenter quand Jean est absent (elle represente la perception du user).
-- **Barre de risque** : Sous la webcam, une barre strictement croissante augmente a vitesse variable (duree aleatoire 45-120 secondes entre chaque retour).
+- **Barre de risque** : Sous la webcam, une barre strictement croissante avec acceleration/ralentissement (ease-in-out, exponent 3-7). Duree aleatoire 12-38 secondes (~25 s moyenne), variance 3x.
 - **Reset** : Quand Jean repart, la barre redescend a 0 et une nouvelle duree aleatoire est tiree.
 - **Retour de Jean** : Quand la barre atteint 100%, Jean revient.
   - Si apps critiques ouvertes (shop, stocks, files) -> shutdown instantane.

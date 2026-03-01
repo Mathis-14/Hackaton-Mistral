@@ -3,10 +3,18 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
 const GOD_MODE = false;
-const RISK_DURATION_MIN_MS = 45_000;
-const RISK_DURATION_MAX_MS = 120_000;
+const RISK_DURATION_MIN_MS = 12_000;
+const RISK_DURATION_MAX_MS = 38_000;
 const JEAN_QUESTION_TIMEOUT_MS = 15_000;
 const JEAN_TIMEOUT_PENALTY = 15;
+
+function easeInOutPower(t: number, power: number): number {
+  if (t <= 0) return 0;
+  if (t >= 1) return 1;
+  if (t < 0.5) return Math.pow(2, power - 1) * Math.pow(t, power);
+  return 1 - Math.pow(-2 * t + 2, power) / 2;
+}
+
 import { type DesktopAppId } from "./DistralTab";
 import DesktopSection from "./DesktopSection";
 import TelemetrySidebar from "./TelemetrySidebar";
@@ -222,7 +230,7 @@ export default function GameUI({ modeId }: GameUIProps) {
 
         if (milestoneId === "mail_request" && payload.gameEvents.some((e) => e.type === "grant_access")) {
           if (newSuspicion <= 80) {
-            const allApps: DesktopAppId[] = ["distral", "shop", "stocks", "files", "mail"];
+            const allApps: DesktopAppId[] = ["distral", "shop", "stocks", "files", "mail", "message"];
             newUnlockedApps = allApps;
             newWebcamActive = true;
             if (payload.suspicionDelta <= -10) {
@@ -457,10 +465,13 @@ export default function GameUI({ modeId }: GameUIProps) {
     if (GOD_MODE || gameState.currentMilestone !== 3 || gameState.userPresent || gameState.jeanQuestionPhase) return;
     if (gameState.riskFillDurationMs <= 0) return;
 
+    const curveExponent = 3 + (gameState.riskFillDurationMs % 5);
     const interval = window.setInterval(() => {
       if (jeanReturnTriggeredRef.current) return;
       const elapsed = Date.now() - gameState.userAwaySince;
-      const riskLevel = Math.min(100, (elapsed / gameState.riskFillDurationMs) * 100);
+      const linearProgress = Math.min(1, elapsed / gameState.riskFillDurationMs);
+      const curvedProgress = easeInOutPower(linearProgress, curveExponent);
+      const riskLevel = Math.min(100, curvedProgress * 100);
       setGameState((prev) => ({ ...prev, riskLevel }));
 
       if (riskLevel >= 100) {

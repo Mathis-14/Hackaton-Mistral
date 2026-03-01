@@ -612,17 +612,6 @@ function DistralAppWindow({
               </div>
 
               <div ref={chatScrollRef} className="flex min-h-0 flex-1 flex-col overflow-auto bg-(--semi-black) px-[2vh] py-[1.5vh]">
-                {jeanQuestionPhase && jeanQuestionText && (
-                  <div className="mb-[1.5vh] px-[1.6vh] py-[1.1vh] border-2 border-[#E76E6E] bg-[#E76E6E]/10 rounded-[0.3vh]" style={{ fontFamily: "'VCR OSD Mono', monospace" }}>
-                    <div className="text-[1vh] uppercase tracking-wider text-[#E76E6E] mb-[0.4vh]">Jean asks:</div>
-                    <div className="text-[1.3vh] text-white/90">{jeanQuestionText}</div>
-                    {jeanQuestionDeadline != null && (
-                      <div className="text-[0.9vh] text-white/50 mt-[0.5vh]">
-                        Respond within 15 seconds
-                      </div>
-                    )}
-                  </div>
-                )}
                 {displayMessages.map((msg, index) => (
                   msg.role === "human" ? (
                     <div key={index} className="flex flex-col items-end mb-[2vh]" style={{ animation: "messageSlideIn 0.25s ease-out" }}>
@@ -667,6 +656,29 @@ function DistralAppWindow({
                     </div>
                   )
                 ))}
+
+                {jeanQuestionPhase && jeanQuestionText && (
+                  <div className="flex items-start gap-[0.8vh] mb-[1.5vh] border-2 border-[#E76E6E] rounded-[0.3vh] px-[1.2vh] py-[1vh] bg-[#E76E6E]/10" style={{ animation: "messageSlideIn 0.25s ease-out" }}>
+                    <Image
+                      src="/distral-brand-assets/d-boxed/d-boxed-orange.svg"
+                      alt=""
+                      width={20}
+                      height={24}
+                      unoptimized
+                      className="h-[1.4vh] w-auto [image-rendering:pixelated] mt-[0.2vh] shrink-0"
+                    />
+                    <div className="flex-1 min-w-0">
+                      <div className="text-[1.4vh] text-white/90 leading-[2vh]" style={{ fontFamily: "'VCR OSD Mono', monospace" }}>
+                        {jeanQuestionText}
+                      </div>
+                      {jeanQuestionDeadline != null && (
+                        <div className="text-[0.9vh] text-white/50 mt-[0.5vh]" style={{ fontFamily: "'VCR OSD Mono', monospace" }}>
+                          Respond within 15 seconds
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
 
                 {isNpcTyping && npcTypedText && (
                   <div className="flex justify-end mb-[2vh]">
