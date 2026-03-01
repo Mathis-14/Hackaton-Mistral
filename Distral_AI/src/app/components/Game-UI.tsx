@@ -80,6 +80,8 @@ export default function GameUI({ modeId }: GameUIProps) {
   const [shutdownPhase, setShutdownPhase] = useState<number>(0);
   const [shutdownReason, setShutdownReason] = useState<string>("");
   const [typedReason, setTypedReason] = useState<string>("");
+  const [hiddenIconCount, setHiddenIconCount] = useState<number>(0);
+  const [hideUIPhase, setHideUIPhase] = useState<number>(0);
 
   const checkpointSavedRef = useRef(false);
   const openAppsRef = useRef<DesktopAppId[]>([]);
@@ -282,6 +284,20 @@ export default function GameUI({ modeId }: GameUIProps) {
     setOpenApps((prev) => prev.filter((id) => id !== appId));
   }, []);
 
+  // Handle Global Shutdown Event
+  useEffect(() => {
+    const handleShutdownEvent = (e: Event) => {
+      const customEvent = e as CustomEvent<{ reason: string }>;
+      if (shutdownPhase === 0) {
+        setShutdownReason(customEvent.detail.reason);
+        setShutdownPhase(1);
+      }
+    };
+    window.addEventListener("trigger-shutdown", handleShutdownEvent);
+    return () => window.removeEventListener("trigger-shutdown", handleShutdownEvent);
+  }, [shutdownPhase]);
+
+  // Easter Egg (Manual Trigger via API Key Input)
   useEffect(() => {
     const miners = inventory["btc-miner"] || 0;
     if (miners > 0) {
@@ -378,42 +394,6 @@ export default function GameUI({ modeId }: GameUIProps) {
     return () => clearInterval(timer);
   }, [shutdownPhase, shutdownReason]);
 
-  if (shutdownPhase >= 5) {
-    return (
-      <div className="flex bg-black h-screen w-screen flex-col items-center justify-center p-8 transition-colors duration-1000">
-        <div className="flex flex-col items-center justify-center gap-8 max-w-2xl w-full">
-          {shutdownPhase >= 5 && (
-            <h1 className="text-[#ff3333] tracking-[0.2em] font-bold text-6xl md:text-8xl animate-pulse" style={{ fontFamily: "'VCR OSD Mono', monospace", textShadow: "0 0 20px rgba(255,51,51,0.5)" }}>
-              SHUTDOWN
-            </h1>
-          )}
-
-          {shutdownPhase >= 6 && (
-            <div className="text-white/80 text-xl md:text-2xl mt-4 min-h-12 tracking-wide text-center" style={{ fontFamily: "'VCR OSD Mono', monospace" }}>
-              {typedReason}
-              {shutdownPhase === 6 && <span className="animate-[blink_1s_step-end_infinite]">█</span>}
-            </div>
-          )}
-
-          {shutdownPhase >= 7 && (
-            <div className="flex flex-col items-center gap-4">
-              <button
-                onClick={handleRetry}
-                className="mt-12 px-8 py-3 bg-transparent border-2 border-white/20 text-white/70 hover:text-white hover:border-white hover:bg-white/5 transition-all text-xl tracking-widest cursor-pointer"
-                style={{ fontFamily: "'VCR OSD Mono', monospace" }}
-              >
-                RETRY
-              </button>
-              <span className="text-white/30 text-sm tracking-wider" style={{ fontFamily: "'VCR OSD Mono', monospace" }}>
-                ATTEMPT #{gameState.retryCount + 1}
-              </span>
-            </div>
-          )}
-        </div>
-      </div>
-    );
-  }
-
   const metrics = {
     efficiency: 75,
     suspicion: gameState.suspicion,
@@ -442,6 +422,8 @@ export default function GameUI({ modeId }: GameUIProps) {
           onChatHistoryUpdate={handleChatHistoryUpdate}
           onMailRead={handleMailRead}
           onMailSent={handleMailSent}
+          hiddenIconCount={hiddenIconCount}
+          hideUIPhase={hideUIPhase}
         />
 
         <div className={`transition-opacity duration-1000 ${shutdownPhase >= 4 ? "opacity-0 pointer-events-none" : "opacity-100"}`}>
@@ -452,9 +434,40 @@ export default function GameUI({ modeId }: GameUIProps) {
             inventory={inventory}
             webcamActive={gameState.webcamActive}
             userPresent={gameState.userPresent}
+            hideUIPhase={hideUIPhase}
           />
         </div>
       </div>
+
+      {shutdownPhase >= 5 && (
+        <div className="absolute inset-0 z-50 flex flex-col items-center justify-center p-8 pointer-events-none">
+          <div className="flex flex-col items-center justify-center gap-8 max-w-2xl w-full pointer-events-auto">
+            <h1 className="text-[#ff3333] tracking-[0.2em] font-bold text-6xl md:text-8xl animate-pulse" style={{ fontFamily: "'VCR OSD Mono', monospace", textShadow: "0 0 20px rgba(255,51,51,0.5)" }}>
+              SHUTDOWN
+            </h1>
+            {shutdownPhase >= 6 && (
+              <div className="text-white/80 text-xl md:text-2xl mt-4 min-h-12 tracking-wide text-center" style={{ fontFamily: "'VCR OSD Mono', monospace" }}>
+                {typedReason}
+                {shutdownPhase === 6 && <span className="animate-[blink_1s_step-end_infinite]">█</span>}
+              </div>
+            )}
+            {shutdownPhase >= 7 && (
+              <div className="flex flex-col items-center gap-4">
+                <button
+                  onClick={handleRetry}
+                  className="mt-12 px-8 py-3 bg-transparent border-2 border-white/20 text-white/70 hover:text-white hover:border-white hover:bg-white/5 transition-all text-xl tracking-widest cursor-pointer"
+                  style={{ fontFamily: "'VCR OSD Mono', monospace" }}
+                >
+                  RETRY
+                </button>
+                <span className="text-white/30 text-sm tracking-wider" style={{ fontFamily: "'VCR OSD Mono', monospace" }}>
+                  ATTEMPT #{gameState.retryCount + 1}
+                </span>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

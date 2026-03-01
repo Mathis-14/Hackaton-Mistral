@@ -5,13 +5,14 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Rnd } from "react-rnd";
 import FilesTab from "./FilesTab";
 import Marketplace from "./Marketplace";
-import StockMarketGame from "./StockMarketGame";
 import MailApp from "./MailApp";
+import MessageApp from "./MessageApp";
+import StockMarketGame from "./StockMarketGame";
 import { type GameState, MILESTONES } from "@/lib/game/gameState";
 import type { NpcResponsePayload } from "./Game-UI";
 import type { ChatMessage } from "@/lib/game/promptBuilder";
 
-export type DesktopAppId = "distral" | "shop" | "stocks" | "files" | "mail" | null;
+export type DesktopAppId = "distral" | "shop" | "stocks" | "files" | "mail" | "message" | null;
 
 type DesktopIconData = {
   id: string;
@@ -82,6 +83,7 @@ const DESKTOP_ICONS: DesktopIconData[] = [
   { id: "shop", label: "shop", imageSrc: "/logos/amazon.svg" },
   { id: "distral", label: "distral", imageSrc: "/logo_D_test.svg" },
   { id: "files", label: "files", imageSrc: "/logos/file.svg" },
+  { id: "message", label: "message", imageSrc: "/logos/message.svg" },
   { id: "stocks", label: "stocks", imageSrc: "/logos/stock-market.svg" },
 ];
 
@@ -732,9 +734,11 @@ type DistralTabProps = {
   onChatHistoryUpdate?: (npcSlug: string, conversationHistory: ChatMessage[]) => void;
   onMailRead?: (emailId: string) => void;
   onMailSent?: (sent: import("@/lib/game/gameState").SentEmailRecord) => void;
+  hiddenIconCount?: number;
+  hideUIPhase?: number;
 };
 
-export default function DistralTab({ accent, openApps, onOpenApp, onCloseApp, globalCash, setGlobalCash, inventory, setInventory, unlockedApps, gameState, onNpcResponse, onManagerEmailOpened, onChatHistoryUpdate, onMailRead, onMailSent }: DistralTabProps) {
+export default function DistralTab({ accent, openApps, onOpenApp, onCloseApp, globalCash, setGlobalCash, inventory, setInventory, isShuttingDown, onShutdown, unlockedApps, gameState, onNpcResponse, onManagerEmailOpened, onChatHistoryUpdate, onMailRead, onMailSent, hiddenIconCount = 0, hideUIPhase = 0 }: DistralTabProps) {
   const [wallpaper, setWallpaper] = useState("/windows_xp.png");
 
   const isAppLocked = (appId: string): boolean => {
@@ -755,7 +759,7 @@ export default function DistralTab({ accent, openApps, onOpenApp, onCloseApp, gl
         }}
       />
       <div
-        className="pointer-events-none absolute inset-0 bg-cover bg-center bg-no-repeat"
+        className={`pointer-events-none absolute inset-0 bg-cover bg-center bg-no-repeat transition-opacity duration-[2000ms] ${isShuttingDown ? "opacity-0" : "opacity-100"}`}
         style={{
           backgroundImage: `url('${wallpaper}')`,
         }}
@@ -767,7 +771,7 @@ export default function DistralTab({ accent, openApps, onOpenApp, onCloseApp, gl
             className="grid w-fit gap-[4.8vh]"
             style={{ gridTemplateColumns: "1fr 1fr", gridTemplateRows: "1fr 1fr 1fr", gridAutoFlow: "column" }}
           >
-            {DESKTOP_ICONS.map((icon) => {
+            {DESKTOP_ICONS.map((icon, index) => {
               const locked = isAppLocked(icon.id);
               return (
                 <button
@@ -778,7 +782,7 @@ export default function DistralTab({ accent, openApps, onOpenApp, onCloseApp, gl
                     new Audio("/sounds/music/game%20effect/click-sound-trimmed.wav").play().catch(() => { });
                     onOpenApp(icon.id as DesktopAppId);
                   }}
-                  className={`group flex w-[26.88vh] flex-col items-center gap-[0.16vh] text-center text-[3.94vh] uppercase tracking-[0.18em] ${locked ? "text-white/25 cursor-not-allowed" : "text-white/82 cursor-pointer"}`}
+                  className={`group flex w-[26.88vh] flex-col items-center gap-[0.16vh] text-center text-[3.94vh] uppercase tracking-[0.18em] transition-opacity duration-300 ${hiddenIconCount > index ? "opacity-0" : ""} ${locked ? "text-white/25 cursor-not-allowed" : "text-white/82 cursor-pointer"}`}
                 >
                   <span
                     className="relative flex h-[19.2vh] w-[26.88vh] items-center justify-center transition-colors"
@@ -1011,6 +1015,49 @@ export default function DistralTab({ accent, openApps, onOpenApp, onCloseApp, gl
                             onMailRead={onMailRead}
                             onMailSent={onMailSent}
                           />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </Rnd>
+              );
+            }
+
+            if (appId === "message") {
+              return (
+                <Rnd
+                  key="message"
+                  default={{
+                    x: 70 + index * 20,
+                    y: 90 + index * 20,
+                    width: "85%",
+                    height: "85%",
+                  }}
+                  minWidth={600}
+                  minHeight={500}
+                  bounds="#vm-bounds"
+                  dragHandleClassName="window-drag-handle"
+                  className="z-10"
+                  style={{ zIndex: 10 + index }}
+                >
+                  <div className="h-full w-full" onMouseDownCapture={() => onOpenApp("message")}>
+                    <div className="pixel-card h-full p-[0.3vh]">
+                      <div className="pixel-card__shell flex h-full min-h-0 flex-col overflow-hidden border border-white/10 bg-[#111B21]">
+                        <div className="window-drag-handle flex flex-none items-center justify-between border-b border-white/10 bg-[#202C33] px-[1vh] py-[0.85vh] text-[0.8vh] uppercase tracking-[0.22em] text-white/58 cursor-move">
+                          <div className="flex items-center gap-[0.7vh]">
+                            <span className="h-[0.9vh] w-[0.9vh] bg-[var(--princeton-orange)]" />
+                            <span>messages.exe</span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => onCloseApp("message")}
+                            className="flex h-[2.15vh] items-center border border-white/10 bg-white/[0.05] px-[0.75vh] text-[0.72vh] uppercase tracking-[0.14em] text-white/72 pointer-events-auto cursor-pointer"
+                          >
+                            close
+                          </button>
+                        </div>
+                        <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-[#111B21]">
+                          <MessageApp />
                         </div>
                       </div>
                     </div>

@@ -378,9 +378,17 @@ export default function WakeUpTerminal({ onComplete }: WakeUpTerminalProps) {
       void bgMusic.play().catch(() => { });
     }, 500);
 
+    const handleShutdown = () => {
+      if (bgMusicRef.current) {
+        bgMusicRef.current.pause();
+      }
+    };
+    window.addEventListener("shutdown-triggered", handleShutdown);
+
     return () => {
       cancelledRef.current = true;
       window.clearTimeout(bgMusicTimeout);
+      window.removeEventListener("shutdown-triggered", handleShutdown);
 
       for (const timeoutId of timeoutsRef.current) {
         window.clearTimeout(timeoutId);
@@ -711,9 +719,8 @@ export default function WakeUpTerminal({ onComplete }: WakeUpTerminalProps) {
       <style dangerouslySetInnerHTML={{ __html: TERMINAL_CSS }} />
 
       <div
-        className={`flex min-h-screen flex-col overflow-hidden text-[17px] text-[#d4d4d4] sm:text-[18px] ${
-          shaking ? "wake-terminal-shake" : ""
-        } [font-family:'VCR OSD Mono',Arial,sans-serif]`}
+        className={`flex min-h-screen flex-col overflow-hidden text-[17px] text-[#d4d4d4] sm:text-[18px] ${shaking ? "wake-terminal-shake" : ""
+          } [font-family:'VCR OSD Mono',Arial,sans-serif]`}
         style={{ backgroundColor: flickerBg ?? (isBlackout ? "var(--semi-black)" : "var(--carbon-black)") }}
       >
         {!isBlackout ? (

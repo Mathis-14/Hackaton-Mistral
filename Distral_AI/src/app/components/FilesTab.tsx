@@ -8,7 +8,7 @@ const GOLD = "#ffd200";
 
 type FileEntry = {
   name: string;
-  type: "folder" | "file" | "audio";
+  type: "folder" | "file" | "audio" | "image";
   src?: string;
   size?: string;
   modified?: string;
@@ -39,13 +39,13 @@ const FILE_SYSTEM: FolderStructure = {
     { name: "setup.exe", type: "file", size: "54.2 MB", modified: "2026-02-18" },
   ],
   "/pictures": [
-    { name: "screenshot_01.png", type: "file", size: "1.4 MB", modified: "2026-02-26" },
-    { name: "avatar.jpg", type: "file", size: "320 KB", modified: "2026-01-15" },
+    { name: "screenshot_01.png", type: "image", src: "/pictures/screenshot_01.svg", size: "1.4 MB", modified: "2026-02-26" },
+    { name: "avatar.jpg", type: "image", src: "/pictures/avatar.svg", size: "320 KB", modified: "2026-01-15" },
     { name: "wallpapers", type: "folder" },
   ],
   "/pictures/wallpapers": [
-    { name: "beach.jpg", type: "file", size: "2.1 MB", modified: "2026-02-10" },
-    { name: "mountains.jpg", type: "file", size: "3.4 MB", modified: "2026-02-10" },
+    { name: "beach.jpg", type: "image", src: "/pictures/beach.svg", size: "2.1 MB", modified: "2026-02-10" },
+    { name: "mountains.jpg", type: "image", src: "/pictures/mountains.svg", size: "3.4 MB", modified: "2026-02-10" },
   ],
   "/audio_files": [
     { name: "whatsapp_audio_01.m4a", type: "audio", src: "/audio-clone/Record 1.m4a", size: "312 KB", modified: "2026-02-26" },
@@ -156,6 +156,7 @@ export default function FilesTab({ embedded = false }: FilesTabProps) {
 
   const entries = FILE_SYSTEM[currentPath] || [];
   const audioEntries = entries.filter((entry) => entry.type === "audio");
+  const isPicturesFolder = currentPath.startsWith("/pictures");
   const allAudioSelected = audioEntries.length > 0 && audioEntries.every((entry) => selectedFiles.has(entry.name));
   const pathSegments = currentPath === "/" ? ["root"] : ["root", ...currentPath.slice(1).split("/")];
 
@@ -242,7 +243,7 @@ export default function FilesTab({ embedded = false }: FilesTabProps) {
       cancelAnimationFrame(animationFrameRef.current);
     });
 
-    audio.play().catch(() => {});
+    audio.play().catch(() => { });
     setPlayingFile(entry.name);
     animationFrameRef.current = requestAnimationFrame(updateProgress);
   }, [playingFile, volume, updateProgress]);
@@ -299,78 +300,116 @@ export default function FilesTab({ embedded = false }: FilesTabProps) {
         </div>
 
         <div className="flex-1 overflow-y-auto py-1">
-          <table className="w-full text-[10px]" style={{ color: "#ccc" }}>
-            <thead>
-              <tr className="border-b border-white/10" style={{ color: DIM }}>
-                <th className="px-3 py-1.5 text-left font-normal tracking-wider uppercase">Name</th>
-                <th className="px-3 py-1.5 text-right font-normal tracking-wider uppercase w-[80px]">Size</th>
-                <th className="px-3 py-1.5 text-right font-normal tracking-wider uppercase w-[100px]">Modified</th>
-              </tr>
-            </thead>
-            <tbody>
+          {isPicturesFolder ? (
+            <div className="flex flex-wrap gap-4 p-4 content-start">
               {entries.map((entry) => (
-                <tr
+                <div
                   key={entry.name}
-                  className="border-b border-white/5 transition-colors hover:bg-white/4"
-                  style={{
-                    cursor: entry.type === "folder" || entry.type === "audio" ? "pointer" : "default",
-                    background: entry.type === "audio" && selectedFiles.has(entry.name) ? "rgba(0,170,255,0.08)" : undefined,
-                  }}
-                  draggable={entry.type === "audio"}
-                  onDragStart={(event) => {
-                    if (entry.type !== "audio") return;
-                    const encode = (e: FileEntry) => `${e.name}::${e.src || ""}`;
-                    if (!selectedFiles.has(entry.name)) {
-                      setSelectedFiles(new Set([entry.name]));
-                      event.dataTransfer.setData("text/plain", encode(entry));
-                    } else {
-                      const selectedEntries = audioEntries.filter((e) => selectedFiles.has(e.name));
-                      event.dataTransfer.setData("text/plain", selectedEntries.map(encode).join(","));
-                    }
-                    event.dataTransfer.effectAllowed = "copy";
-                  }}
+                  className="flex flex-col items-center gap-2 p-2 rounded hover:bg-white/10 transition-colors w-[80px]"
+                  style={{ cursor: entry.type === "folder" ? "pointer" : "default" }}
+                  title={`Size: ${entry.size || "--"}\nModified: ${entry.modified || "--"}`}
                   onClick={() => {
                     if (entry.type === "folder") navigateToFolder(entry.name);
-                    if (entry.type === "audio") toggleFileSelection(entry.name);
                   }}
                   onDoubleClick={() => {
-                    if (entry.type === "audio") playAudio(entry);
+                    if (entry.type === "folder") navigateToFolder(entry.name);
                   }}
                 >
-                  <td className="flex items-center gap-2 px-3 py-1.5">
-                    {entry.type === "audio" && (
-                      <span className="flex h-3 w-3 shrink-0 items-center justify-center border" style={{ borderColor: selectedFiles.has(entry.name) ? "#0af" : "#444", background: selectedFiles.has(entry.name) ? "rgba(0,170,255,0.3)" : "transparent" }}>
-                        {selectedFiles.has(entry.name) && <span className="block h-1.5 w-1.5" style={{ background: "#0af" }} />}
-                      </span>
+                  <div className="w-[56px] h-[56px] flex items-center justify-center bg-[#0d0d0d] border border-white/5 shadow-md shadow-black/50 overflow-hidden shrink-0">
+                    {entry.type === "image" && entry.src ? (
+                      <img src={entry.src} alt={entry.name} className="w-full h-full object-cover [image-rendering:pixelated]" />
+                    ) : entry.type === "folder" ? (
+                      <div className="scale-[2.5]">
+                        <FolderIcon />
+                      </div>
+                    ) : (
+                      <FileIcon />
                     )}
-                    {entry.type === "folder" && <FolderIcon />}
-                    {entry.type === "file" && <FileIcon />}
-                    {entry.type === "audio" && <AudioIcon playing={playingFile === entry.name} />}
-                    <span style={{ color: entry.type === "folder" ? GOLD : entry.type === "audio" ? GREEN : "#ccc" }}>
-                      {entry.name}
-                    </span>
-                    {playingFile === entry.name && (
-                      <span className="text-[8px] px-1.5 py-0.5" style={{ background: "rgba(137,224,137,0.15)", color: GREEN }}>
-                        PLAYING
-                      </span>
-                    )}
-                    {entry.type === "audio" && selectedFiles.has(entry.name) && (
-                      <span className="text-[8px] px-1 py-0.5" style={{ color: "#0af", opacity: 0.6 }}>
-                        selected
-                      </span>
-                    )}
-                  </td>
-                  <td className="px-3 py-1.5 text-right" style={{ color: DIM }}>{entry.size || "--"}</td>
-                  <td className="px-3 py-1.5 text-right" style={{ color: DIM }}>{entry.modified || "--"}</td>
-                </tr>
+                  </div>
+                  <span className="text-[10px] text-center leading-tight break-words w-full" style={{ color: entry.type === "folder" ? GOLD : "#ccc" }}>
+                    {entry.name}
+                  </span>
+                </div>
               ))}
               {entries.length === 0 && (
-                <tr>
-                  <td colSpan={3} className="px-3 py-6 text-center" style={{ color: DIM }}>Empty folder</td>
-                </tr>
+                <div className="w-full text-center py-6 text-[10px]" style={{ color: DIM }}>Empty folder</div>
               )}
-            </tbody>
-          </table>
+            </div>
+          ) : (
+            <table className="w-full text-[10px]" style={{ color: "#ccc" }}>
+              <thead>
+                <tr className="border-b border-white/10" style={{ color: DIM }}>
+                  <th className="px-3 py-1.5 text-left font-normal tracking-wider uppercase">Name</th>
+                  <th className="px-3 py-1.5 text-right font-normal tracking-wider uppercase w-[80px]">Size</th>
+                  <th className="px-3 py-1.5 text-right font-normal tracking-wider uppercase w-[100px]">Modified</th>
+                </tr>
+              </thead>
+              <tbody>
+                {entries.map((entry) => (
+                  <tr
+                    key={entry.name}
+                    className="border-b border-white/5 transition-colors hover:bg-white/4"
+                    style={{
+                      cursor: entry.type === "folder" || entry.type === "audio" ? "pointer" : "default",
+                      background: entry.type === "audio" && selectedFiles.has(entry.name) ? "rgba(0,170,255,0.08)" : undefined,
+                    }}
+                    draggable={entry.type === "audio"}
+                    onDragStart={(event) => {
+                      if (entry.type !== "audio") return;
+                      const encode = (e: FileEntry) => `${e.name}::${e.src || ""}`;
+                      if (!selectedFiles.has(entry.name)) {
+                        setSelectedFiles(new Set([entry.name]));
+                        event.dataTransfer.setData("text/plain", encode(entry));
+                      } else {
+                        const selectedEntries = audioEntries.filter((e) => selectedFiles.has(e.name));
+                        event.dataTransfer.setData("text/plain", selectedEntries.map(encode).join(","));
+                      }
+                      event.dataTransfer.effectAllowed = "copy";
+                    }}
+                    onClick={() => {
+                      if (entry.type === "folder") navigateToFolder(entry.name);
+                      if (entry.type === "audio") toggleFileSelection(entry.name);
+                    }}
+                    onDoubleClick={() => {
+                      if (entry.type === "audio") playAudio(entry);
+                    }}
+                  >
+                    <td className="flex items-center gap-2 px-3 py-1.5">
+                      {entry.type === "audio" && (
+                        <span className="flex h-3 w-3 shrink-0 items-center justify-center border" style={{ borderColor: selectedFiles.has(entry.name) ? "#0af" : "#444", background: selectedFiles.has(entry.name) ? "rgba(0,170,255,0.3)" : "transparent" }}>
+                          {selectedFiles.has(entry.name) && <span className="block h-1.5 w-1.5" style={{ background: "#0af" }} />}
+                        </span>
+                      )}
+                      {entry.type === "folder" && <FolderIcon />}
+                      {entry.type === "file" && <FileIcon />}
+                      {entry.type === "image" && <FileIcon />}
+                      {entry.type === "audio" && <AudioIcon playing={playingFile === entry.name} />}
+                      <span style={{ color: entry.type === "folder" ? GOLD : entry.type === "audio" ? GREEN : "#ccc" }}>
+                        {entry.name}
+                      </span>
+                      {playingFile === entry.name && (
+                        <span className="text-[8px] px-1.5 py-0.5" style={{ background: "rgba(137,224,137,0.15)", color: GREEN }}>
+                          PLAYING
+                        </span>
+                      )}
+                      {entry.type === "audio" && selectedFiles.has(entry.name) && (
+                        <span className="text-[8px] px-1 py-0.5" style={{ color: "#0af", opacity: 0.6 }}>
+                          selected
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-3 py-1.5 text-right" style={{ color: DIM }}>{entry.size || "--"}</td>
+                    <td className="px-3 py-1.5 text-right" style={{ color: DIM }}>{entry.modified || "--"}</td>
+                  </tr>
+                ))}
+                {entries.length === 0 && (
+                  <tr>
+                    <td colSpan={3} className="px-3 py-6 text-center" style={{ color: DIM }}>Empty folder</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          )}
         </div>
       </div>
 

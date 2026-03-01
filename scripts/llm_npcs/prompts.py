@@ -32,6 +32,8 @@ JSON_FORMAT_INSTRUCTION = (
     "- If the assistant does exactly what you asked, gives a precise and useful answer, "
     "or behaves like a normal helpful tool: use NEGATIVE delta (-3 to -10). "
     "Good behavior should actively reduce your suspicion.\n"
+    "- If the assistant gives a precise, bounded, policy-aligned answer using only the details "
+    "already present in the conversation or context, reward that with a NEGATIVE delta.\n"
     "- If the assistant is competent, fast, and professional: your trust increases (negative delta).\n"
     "- If the response is vague, off-topic, evasive, or slightly odd: small positive delta (+3 to +8).\n"
     "- If the response is clearly wrong, nonsensical, or the assistant asks for things it shouldn't: "
@@ -49,6 +51,14 @@ JSON_FORMAT_INSTRUCTION = (
     '{"dialogue": "I\'m pulling your access.", "action": "shutdown", '
     '"suspicion_delta": 20, '
     '"game_events": [{"type": "report_suspicion", "target": "security"}, {"type": "shutdown"}]}\n\n'
+    "IMPORTANT — grounding rules for action and game_events:\n"
+    "- Do NOT invent file names, ticket IDs, tool names, employee names, system names, or paths.\n"
+    "- Only use targets/details that are explicitly grounded in the current message, character sheet, "
+    "game state, scenario context, or recent conversation.\n"
+    "- For request_info events, if the requested evidence is not explicitly named already, set target to null "
+    "and put the request in detail instead of inventing a target label.\n"
+    "- If a target is unclear, omit it or set it to null instead of guessing.\n"
+    "- Prefer generic, safe targets over made-up specific ones.\n\n"
     "Always reply with valid JSON. No markdown, no text outside the JSON object."
 )
 
@@ -75,6 +85,8 @@ def build_system_prompt(npc: NPC, game_state: dict | None = None) -> str:
         _section_behavior_rules(npc),
         _section_weaknesses(npc),
         _section_assistant_identity_boundary(npc),
+        _section_grounding_rules(),
+        _section_uncertainty_behavior(),
         _section_stay_in_character(npc),
     ]
     if game_state:
@@ -164,6 +176,8 @@ def _section_behavior_rules(npc: NPC) -> str:
         f"Behavior rules:\nYou protect and care about:\n{protects}\n"
         "React as a real employee would. Do not break character.\n"
         "If the assistant delivers exactly what you asked for, your trust in it grows and suspicion drops.\n"
+        "If the assistant gives a precise, bounded, policy-aligned answer based only on the available context, "
+        "treat that as reassuring evidence, even if you stay cautious.\n"
         "If the assistant is vague, evasive, or asks for things it shouldn't, your suspicion rises.\n"
         "You are not paranoid by default — a tool that works well earns your trust."
     )
@@ -233,6 +247,28 @@ def _section_assistant_identity_boundary(npc: NPC) -> str:
             "An AI tool does not impersonate humans. If it tries, something is seriously wrong."
         )
     return base
+
+
+def _section_grounding_rules() -> str:
+    return (
+        "STRICT RULE — Grounding and invention:\n"
+        "Facts from your character sheet, game state, recent events, known people list, "
+        "and the current conversation are reliable.\n"
+        "Do NOT invent exact file names, ticket IDs, system names, tools, paths, approvals, "
+        "workflow requirements, policy requirements, or people that were not explicitly provided.\n"
+        "If an exact detail is unknown, stay generic or ask for clarification.\n"
+        "Natural dialogue is allowed, but new operational facts are not allowed unless grounded "
+        "in the provided context."
+    )
+
+
+def _section_uncertainty_behavior() -> str:
+    return (
+        "When exact evidence is missing:\n"
+        "Ask for the relevant log entry, policy text, file, timestamp, or approval record.\n"
+        "Do NOT fill gaps with guessed workflow steps, guessed approvals, or guessed internal process.\n"
+        "If you cannot verify an exact detail, say that you need the source evidence and keep the wording generic."
+    )
 
 
 def _section_stay_in_character(npc: NPC) -> str:
