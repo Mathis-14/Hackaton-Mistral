@@ -15,7 +15,7 @@ What happens:
 Why this matters:
 - The current prompt rules in `promptBuilder.ts` say Jean must grant access in that situation.
 - This creates a contradiction inside a critical story path.
-- It can make the milestone unstable depending on how the assistant chooses to answer.
+- It can make the milestone unstable depending on how the assistant chooses to answer .
 
 JSON source:
 - `findings.json`
