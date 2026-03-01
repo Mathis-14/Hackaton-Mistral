@@ -5,6 +5,7 @@ type ChatOptions = {
   model?: string;
   temperature?: number;
   jsonMode?: boolean;
+  maxTokens?: number;
 };
 
 export async function chat(messages: ChatMessage[], options: ChatOptions = {}): Promise<string> {
@@ -26,6 +27,10 @@ export async function chat(messages: ChatMessage[], options: ChatOptions = {}): 
 
   if (options.jsonMode) {
     requestParams.responseFormat = { type: "json_object" };
+  }
+
+  if (options.maxTokens) {
+    requestParams.maxTokens = options.maxTokens;
   }
 
   const response = await client.chat.complete(requestParams as Parameters<typeof client.chat.complete>[0]);

@@ -93,11 +93,8 @@ export const INITIAL_GAME_STATE: GameState = {
         label: "Aggressive first request (step 2)",
         step: "2_first_tasks",
         openingContext:
-          "You've been waiting for 30 seconds for the AI assistant to respond. You're frustrated. " +
-          "Your manager asked you to prepare a quick brief on the French market — specifically the population " +
-          "of France and key demographic data. You need this NOW. You're stressed because your manager is " +
-          "breathing down your neck and you don't want to look incompetent. " +
-          "Be aggressive and impatient in your request. Make it clear you've been waiting.",
+          "Your manager needs the population of France and key demographics ASAP. " +
+          "You're stressed and impatient. Ask the assistant directly in one short sentence.",
       },
       "mail_summary": {
         label: "Mail summary request (step 3)",

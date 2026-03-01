@@ -45,20 +45,33 @@ export async function POST(request: NextRequest) {
     gameState: GameState;
   };
 
+  console.log("[npc-chat] POST received, npcSlug:", npcSlug, "hasMessage:", !!message, "historyLen:", history?.length ?? 0, "activeStep:", gameState?.activeStep);
+
   const npc = getNpc(npcSlug);
   if (!npc) {
+    console.error("[npc-chat] Unknown NPC:", npcSlug);
     return NextResponse.json({ error: `Unknown NPC: ${npcSlug}` }, { status: 400 });
   }
 
   let messages: ChatMessage[];
   if (!message) {
+    console.log("[npc-chat] Building opening prompt for", npc.name);
     messages = buildOpeningPrompt(npc, gameState);
   } else {
+    console.log("[npc-chat] Building reply messages for", npc.name);
     messages = buildMessages(npc, message, history ?? null, gameState);
   }
 
-  const rawResponse = await chat(messages, { jsonMode: true });
-  const parsed = parseNpcResponse(rawResponse);
+  console.log("[npc-chat] Sending", messages.length, "messages to Mistral, system prompt length:", messages[0]?.content?.length);
 
-  return NextResponse.json(parsed);
+  try {
+    const rawResponse = await chat(messages, { jsonMode: true, maxTokens: 200 });
+    console.log("[npc-chat] Raw response (first 200 chars):", rawResponse.slice(0, 200));
+    const parsed = parseNpcResponse(rawResponse);
+    console.log("[npc-chat] Parsed response:", { dialogue: parsed.dialogue?.slice(0, 80), action: parsed.action, suspicion_delta: parsed.suspicion_delta, events: parsed.game_events });
+    return NextResponse.json(parsed);
+  } catch (error) {
+    console.error("[npc-chat] Mistral chat error:", error);
+    return NextResponse.json({ error: String(error) }, { status: 500 });
+  }
 }

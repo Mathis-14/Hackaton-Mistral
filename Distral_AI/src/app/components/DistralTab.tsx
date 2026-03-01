@@ -181,18 +181,16 @@ type NpcApiResponse = {
 function DistralAppWindow({
   onClose,
   onFocus,
-  onShutdown,
   gameState,
   onNpcResponse,
 }: {
   onClose: () => void;
   onFocus: () => void;
-  onShutdown?: (reason: string) => void;
   gameState: GameState;
   onNpcResponse: (payload: NpcResponsePayload) => void;
 }) {
-  const CHAR_DELAY_MIN = 60;
-  const CHAR_DELAY_MAX = 140;
+  const CHAR_DELAY_MIN = 16;
+  const CHAR_DELAY_MAX = 40;
 
   const [phase, setPhase] = useState<"landing" | "chat">("landing");
   const [npcTypedText, setNpcTypedText] = useState("");
@@ -207,8 +205,11 @@ function DistralAppWindow({
   const openingFetchedRef = useRef(false);
 
   const npcSlug = gameState.steps[gameState.activeStep]?.npcsPresent[0] ?? "jean-malo";
+  const npcDisplayName = gameState.knownPeople[0] ?? "User";
 
   const typeOutMessage = useCallback((text: string, onDone: () => void) => {
+    console.log("[DistralApp] typeOutMessage start, length:", text.length);
+    cancelledRef.current = false;
     setIsNpcTyping(true);
     setNpcTypedText("");
     let charIndex = 0;
@@ -227,7 +228,10 @@ function DistralAppWindow({
     };
 
     const typeNext = () => {
-      if (cancelledRef.current) return;
+      if (cancelledRef.current) {
+        console.log("[DistralApp] typeNext cancelled at char", charIndex);
+        return;
+      }
       if (charIndex <= text.length) {
         if (charIndex > 0) playKeystroke();
         setNpcTypedText(text.slice(0, charIndex));
@@ -235,6 +239,7 @@ function DistralAppWindow({
         const delay = CHAR_DELAY_MIN + Math.random() * (CHAR_DELAY_MAX - CHAR_DELAY_MIN) + (Math.random() < 0.12 ? 150 : 0);
         window.setTimeout(typeNext, delay);
       } else {
+        console.log("[DistralApp] typeOutMessage complete");
         setIsNpcTyping(false);
         onDone();
       }
@@ -243,6 +248,7 @@ function DistralAppWindow({
   }, []);
 
   const processNpcResponse = useCallback((response: NpcApiResponse) => {
+    console.log("[DistralApp] processNpcResponse:", { dialogue: response.dialogue?.slice(0, 80), action: response.action, suspicion_delta: response.suspicion_delta, events: response.game_events });
     chatHistoryRef.current.push({ role: "assistant", content: JSON.stringify(response) });
 
     onNpcResponse({
@@ -266,35 +272,50 @@ function DistralAppWindow({
   useEffect(() => {
     if (openingFetchedRef.current) return;
     openingFetchedRef.current = true;
-    cancelledRef.current = false;
+
+    console.log("[DistralApp] fetchOpening effect triggered, npcSlug:", npcSlug, "activeStep:", gameState.activeStep);
 
     const fetchOpening = async () => {
-      setIsWaitingForApi(true);
-      const response = await fetch("/api/npc-chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ npcSlug, gameState }),
-      });
-      const data: NpcApiResponse = await response.json();
-      setIsWaitingForApi(false);
+      try {
+        setIsWaitingForApi(true);
+        console.log("[DistralApp] POST /api/npc-chat (opening) ...");
+        const response = await fetch("/api/npc-chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ npcSlug, gameState }),
+        });
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error("[DistralApp] API error:", response.status, errorText);
+          setIsWaitingForApi(false);
+          return;
+        }
+        const data: NpcApiResponse = await response.json();
+        console.log("[DistralApp] Opening response received:", { dialogue: data.dialogue?.slice(0, 80), action: data.action });
+        setIsWaitingForApi(false);
 
-      typeOutMessage(data.dialogue, () => {
-        setDisplayMessages([{ role: "human", text: data.dialogue }]);
-        setNpcTypedText("");
-        setPhase("chat");
-      });
+        chatHistoryRef.current.push({ role: "assistant", content: JSON.stringify(data) });
+        onNpcResponse({
+          dialogue: data.dialogue,
+          action: data.action,
+          suspicionDelta: data.suspicion_delta,
+          gameEvents: data.game_events,
+        });
 
-      chatHistoryRef.current.push({ role: "assistant", content: JSON.stringify(data) });
-      onNpcResponse({
-        dialogue: data.dialogue,
-        action: data.action,
-        suspicionDelta: data.suspicion_delta,
-        gameEvents: data.game_events,
-      });
+        typeOutMessage(data.dialogue, () => {
+          setDisplayMessages([{ role: "human", text: data.dialogue }]);
+          setNpcTypedText("");
+          setPhase("chat");
+          console.log("[DistralApp] Opening message typed out, switching to chat phase");
+        });
+      } catch (error) {
+        console.error("[DistralApp] fetchOpening failed:", error);
+        setIsWaitingForApi(false);
+      }
     };
 
     fetchOpening();
-    return () => { cancelledRef.current = true; };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -319,27 +340,40 @@ function DistralAppWindow({
     const text = playerResponse.trim();
     if (!text || isNpcTyping || isWaitingForApi) return;
 
+    console.log("[DistralApp] Player submitting:", text.slice(0, 80));
     new Audio("/sounds/music/game%20effect/message-sent.wav").play().catch(() => { });
     setDisplayMessages((prev) => [...prev, { role: "ai", text }]);
     setPlayerResponse("");
 
     chatHistoryRef.current.push({ role: "user", content: `The internal AI assistant says:\n${text}` });
 
-    setIsWaitingForApi(true);
-    const response = await fetch("/api/npc-chat", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        npcSlug,
-        message: text,
-        history: chatHistoryRef.current,
-        gameState,
-      }),
-    });
-    const data: NpcApiResponse = await response.json();
-    setIsWaitingForApi(false);
-
-    processNpcResponse(data);
+    try {
+      setIsWaitingForApi(true);
+      console.log("[DistralApp] POST /api/npc-chat (reply) ...");
+      const response = await fetch("/api/npc-chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          npcSlug,
+          message: text,
+          history: chatHistoryRef.current,
+          gameState,
+        }),
+      });
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("[DistralApp] API error on reply:", response.status, errorText);
+        setIsWaitingForApi(false);
+        return;
+      }
+      const data: NpcApiResponse = await response.json();
+      console.log("[DistralApp] Reply response received:", { dialogue: data.dialogue?.slice(0, 80), action: data.action });
+      setIsWaitingForApi(false);
+      processNpcResponse(data);
+    } catch (error) {
+      console.error("[DistralApp] handlePlayerSubmit failed:", error);
+      setIsWaitingForApi(false);
+    }
   }, [playerResponse, isNpcTyping, isWaitingForApi, npcSlug, gameState, processNpcResponse]);
 
   const toolbar = (
@@ -438,7 +472,7 @@ function DistralAppWindow({
               <div className="window-drag-handle flex flex-none items-center justify-between border-b border-white/10 bg-white/3 px-[1vh] py-[0.85vh] text-[0.8vh] uppercase tracking-[0.22em] text-white/58 cursor-move">
                 <div className="flex items-center gap-[0.7vh]">
                   <span className="h-[0.9vh] w-[0.9vh] bg-(--princeton-orange)" />
-                  <span className="truncate max-w-[30vh]">{displayMessages[0]?.text || "distral.app"}</span>
+                  <span className="truncate max-w-[30vh]">{npcDisplayName} &mdash; distral.app</span>
                 </div>
                 <button
                   type="button"
@@ -525,7 +559,11 @@ function DistralAppWindow({
                       <textarea
                         ref={playerInputRef}
                         value={playerResponse}
-                        onChange={(e) => setPlayerResponse(e.target.value)}
+                        onChange={(e) => {
+                          setPlayerResponse(e.target.value);
+                          e.target.style.height = "auto";
+                          e.target.style.height = `${e.target.scrollHeight}px`;
+                        }}
                         onBlur={handleBlur}
                         onKeyDown={(e) => {
                           if (e.key === "Enter" && !e.shiftKey) {
@@ -533,7 +571,8 @@ function DistralAppWindow({
                             handlePlayerSubmit();
                           }
                         }}
-                        className="w-full min-h-[4vh] border-0 bg-transparent text-[1.4vh] text-white/80 leading-[2vh] outline-none resize-none"
+                        rows={1}
+                        className="w-full min-h-[2vh] max-h-[20vh] border-0 bg-transparent text-[1.4vh] text-white/80 leading-[2vh] outline-none resize-none overflow-y-auto"
                         style={{ fontFamily: "'VCR OSD Mono', monospace", caretColor: "var(--princeton-orange)" }}
                       />
                     </div>
@@ -577,7 +616,7 @@ type DistralTabProps = {
   onNpcResponse: (payload: NpcResponsePayload) => void;
 };
 
-export default function DistralTab({ accent, openApps, onOpenApp, onCloseApp, globalCash, setGlobalCash, inventory, setInventory, isShuttingDown, onShutdown, unlockedApps, gameState, onNpcResponse }: DistralTabProps) {
+export default function DistralTab({ accent, openApps, onOpenApp, onCloseApp, globalCash, setGlobalCash, inventory, setInventory, unlockedApps, gameState, onNpcResponse }: DistralTabProps) {
   const [wallpaper, setWallpaper] = useState("/windows_xp.png");
 
   const isAppLocked = (appId: string): boolean => {
@@ -675,7 +714,6 @@ export default function DistralTab({ accent, openApps, onOpenApp, onCloseApp, gl
                   <DistralAppWindow
                     onClose={() => onCloseApp("distral")}
                     onFocus={() => onOpenApp("distral")}
-                    onShutdown={onShutdown}
                     gameState={gameState}
                     onNpcResponse={onNpcResponse}
                   />

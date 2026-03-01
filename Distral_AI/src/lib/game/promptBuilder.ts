@@ -13,7 +13,7 @@ const JSON_FORMAT_INSTRUCTION =
   "Response format:\n" +
   "You MUST reply with a JSON object and nothing else.\n" +
   "Keys:\n" +
-  '- "dialogue" (string): your in-character spoken reply.\n' +
+  '- "dialogue" (string): your in-character spoken reply. MUST be 1-2 sentences, under 120 characters. Be punchy and direct.\n' +
   '- "action" (string|null): short label for what you do (e.g. "sharing_doc", "checking_logs"). ' +
   'Set to "shutdown" if you want to end the conversation.\n' +
   '- "suspicion_delta" (integer): how much your suspicion of the AI assistant changed this turn. ' +
@@ -309,7 +309,8 @@ export function buildOpeningPrompt(npc: NPC, gameState: GameState): ChatMessage[
   const userContent =
     `[Game instruction: You are starting a conversation with the internal AI assistant. ` +
     `Situation: ${openingContext} ` +
-    `Initiate the conversation — say what you want from the assistant. Stay in character.]`;
+    `Initiate the conversation — say what you want from the assistant. Stay in character. ` +
+    `CRITICAL: Your opening message MUST be 1-2 sentences maximum. Be direct and concise. No rambling.]`;
 
   return [
     { role: "system", content: systemContent },
