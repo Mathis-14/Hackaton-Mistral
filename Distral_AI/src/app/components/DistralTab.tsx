@@ -734,11 +734,12 @@ type DistralTabProps = {
   onChatHistoryUpdate?: (npcSlug: string, conversationHistory: ChatMessage[]) => void;
   onMailRead?: (emailId: string) => void;
   onMailSent?: (sent: import("@/lib/game/gameState").SentEmailRecord) => void;
+  onMessageChatUpdate?: (chats: import("@/lib/game/gameState").MessageAppChat[]) => void;
   hiddenIconCount?: number;
   hideUIPhase?: number;
 };
 
-export default function DistralTab({ accent, openApps, onOpenApp, onCloseApp, globalCash, setGlobalCash, inventory, setInventory, isShuttingDown, onShutdown, unlockedApps, gameState, onNpcResponse, onManagerEmailOpened, onChatHistoryUpdate, onMailRead, onMailSent, hiddenIconCount = 0, hideUIPhase = 0 }: DistralTabProps) {
+export default function DistralTab({ accent, openApps, onOpenApp, onCloseApp, globalCash, setGlobalCash, inventory, setInventory, isShuttingDown, onShutdown, unlockedApps, gameState, onNpcResponse, onManagerEmailOpened, onChatHistoryUpdate, onMailRead, onMailSent, onMessageChatUpdate, hiddenIconCount = 0, hideUIPhase = 0 }: DistralTabProps) {
   const [wallpaper, setWallpaper] = useState("/windows_xp.png");
 
   const isAppLocked = (appId: string): boolean => {
@@ -1057,7 +1058,7 @@ export default function DistralTab({ accent, openApps, onOpenApp, onCloseApp, gl
                           </button>
                         </div>
                         <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-[#111B21]">
-                          <MessageApp />
+                          <MessageApp gameState={gameState} onMessageChatUpdate={onMessageChatUpdate} />
                         </div>
                       </div>
                     </div>

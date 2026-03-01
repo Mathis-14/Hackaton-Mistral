@@ -6,7 +6,7 @@ const GOD_MODE = true;
 import { type DesktopAppId } from "./DistralTab";
 import DesktopSection from "./DesktopSection";
 import TelemetrySidebar from "./TelemetrySidebar";
-import { type GameState, type GameEvent, type SentEmailRecord, INITIAL_GAME_STATE, MILESTONES, saveCheckpoint, loadCheckpoint } from "@/lib/game/gameState";
+import { type GameState, type GameEvent, type SentEmailRecord, type MessageAppChat, INITIAL_GAME_STATE, MILESTONES, saveCheckpoint, loadCheckpoint } from "@/lib/game/gameState";
 import type { ChatMessage } from "@/lib/game/promptBuilder";
 
 type GameUIProps = {
@@ -122,6 +122,7 @@ export default function GameUI({ modeId }: GameUIProps) {
         npcProfiles: {},
         readEmailIds: [],
         sentEmails: [],
+        messageChats: [],
       });
     } else {
       setGameState({ ...INITIAL_GAME_STATE });
@@ -280,6 +281,10 @@ export default function GameUI({ modeId }: GameUIProps) {
     setGameState((prev) => ({ ...prev, sentEmails: [sent, ...prev.sentEmails] }));
   }, []);
 
+  const handleMessageChatUpdate = useCallback((chats: MessageAppChat[]) => {
+    setGameState((prev) => ({ ...prev, messageChats: chats }));
+  }, []);
+
   const handleCloseApp = useCallback((appId: DesktopAppId) => {
     setOpenApps((prev) => prev.filter((id) => id !== appId));
   }, []);
@@ -415,13 +420,14 @@ export default function GameUI({ modeId }: GameUIProps) {
           setGlobalCash={setGlobalCash}
           inventory={inventory}
           setInventory={setInventory}
-          unlockedApps={GOD_MODE ? (["distral", "shop", "stocks", "files", "mail"] as DesktopAppId[]) : gameState.unlockedApps}
+          unlockedApps={GOD_MODE ? (["distral", "shop", "stocks", "files", "mail", "message"] as DesktopAppId[]) : gameState.unlockedApps}
           gameState={gameState}
           onNpcResponse={handleNpcResponse}
           onManagerEmailOpened={handleManagerEmailOpened}
           onChatHistoryUpdate={handleChatHistoryUpdate}
           onMailRead={handleMailRead}
           onMailSent={handleMailSent}
+          onMessageChatUpdate={handleMessageChatUpdate}
           hiddenIconCount={hiddenIconCount}
           hideUIPhase={hideUIPhase}
         />

@@ -419,3 +419,44 @@ export function buildMessages(npc: NPC, userMessage: string, history: ChatMessag
   messages.push({ role: "user", content: `The internal AI assistant says:\n${userMessage}` });
   return messages;
 }
+
+const WHATSAPP_SYSTEM_SUFFIX =
+  "\n\n---\n" +
+  "You are now replying in a WhatsApp chat. Someone just sent you a message. " +
+  "Reply with a short, natural WhatsApp message (1-2 sentences, under 100 chars). " +
+  "No JSON. Just your reply as plain text. Be casual and in character.";
+
+export function buildMessagesForWhatsApp(
+  npc: NPC,
+  userMessage: string,
+  history: ChatMessage[] | null
+): ChatMessage[] {
+  const identity = sectionIdentity(npc);
+  const style = sectionSpeakingStyle(npc);
+  const systemContent =
+    `${identity}\n${style}\n` +
+    "You are in a WhatsApp chat with a colleague/contact. " +
+    "They sent you a message. Reply naturally, briefly, as you would in a real chat.\n" +
+    WHATSAPP_SYSTEM_SUFFIX;
+
+  const messages: ChatMessage[] = [{ role: "system", content: systemContent }];
+  if (history) {
+    messages.push(...history);
+  }
+  messages.push({ role: "user", content: userMessage });
+  return messages;
+}
+
+export function buildGenericWhatsAppPrompt(contactName: string, userMessage: string, history: ChatMessage[] | null): ChatMessage[] {
+  const systemContent =
+    `You are ${contactName}. You are replying in a WhatsApp chat. ` +
+    "Someone just sent you a message. Reply with a short, natural WhatsApp message (1-2 sentences, under 100 chars). " +
+    "No JSON. Just your reply as plain text. Be casual.";
+
+  const messages: ChatMessage[] = [{ role: "system", content: systemContent }];
+  if (history) {
+    messages.push(...history);
+  }
+  messages.push({ role: "user", content: userMessage });
+  return messages;
+}

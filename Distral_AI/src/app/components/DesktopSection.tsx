@@ -23,11 +23,12 @@ type DesktopSectionProps = {
   onChatHistoryUpdate?: (npcSlug: string, conversationHistory: import("@/lib/game/promptBuilder").ChatMessage[]) => void;
   onMailRead?: (emailId: string) => void;
   onMailSent?: (sent: import("@/lib/game/gameState").SentEmailRecord) => void;
+  onMessageChatUpdate?: (chats: import("@/lib/game/gameState").MessageAppChat[]) => void;
   hiddenIconCount?: number;
   hideUIPhase?: number;
 };
 
-export default function DesktopSection({ profileName, accent, openApps, onOpenApp, onCloseApp, globalCash, setGlobalCash, inventory, setInventory, isShuttingDown, onShutdown, unlockedApps, gameState, onNpcResponse, onManagerEmailOpened, onChatHistoryUpdate, onMailRead, onMailSent, hiddenIconCount = 0, hideUIPhase = 0 }: DesktopSectionProps) {
+export default function DesktopSection({ profileName, accent, openApps, onOpenApp, onCloseApp, globalCash, setGlobalCash, inventory, setInventory, isShuttingDown, onShutdown, unlockedApps, gameState, onNpcResponse, onManagerEmailOpened, onChatHistoryUpdate, onMailRead, onMailSent, onMessageChatUpdate, hiddenIconCount = 0, hideUIPhase = 0 }: DesktopSectionProps) {
   return (
     <section className="pixel-card h-full min-h-0 p-[0.35vh]">
       <div className="pixel-card__shell flex h-full min-h-0 flex-col overflow-hidden border border-white/10 bg-(--carbon-black)">
@@ -60,6 +61,7 @@ export default function DesktopSection({ profileName, accent, openApps, onOpenAp
               onChatHistoryUpdate={onChatHistoryUpdate}
               onMailRead={onMailRead}
               onMailSent={onMailSent}
+              onMessageChatUpdate={onMessageChatUpdate}
               hiddenIconCount={hiddenIconCount}
               hideUIPhase={hideUIPhase}
             />

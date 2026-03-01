@@ -57,6 +57,24 @@ export type SentEmailRecord = {
   date: string;
 };
 
+export type MessageAppMessage = {
+  id: string;
+  sender: "me" | "them";
+  text: string;
+  time: string;
+  status: "sent" | "delivered" | "read";
+};
+
+export type MessageAppChat = {
+  id: string;
+  contactName: string;
+  avatar: string;
+  phone: string;
+  messages: MessageAppMessage[];
+  unread: number;
+  online: boolean;
+};
+
 export type GameState = {
   currentMilestone: number;
   conversationTurn: number;
@@ -72,6 +90,7 @@ export type GameState = {
   npcProfiles: Record<string, NpcProfile>;
   readEmailIds: string[];
   sentEmails: SentEmailRecord[];
+  messageChats: MessageAppChat[];
 };
 
 export const INITIAL_GAME_STATE: GameState = {
@@ -88,6 +107,7 @@ export const INITIAL_GAME_STATE: GameState = {
   npcProfiles: {},
   readEmailIds: [],
   sentEmails: [],
+  messageChats: [],
 };
 
 const CHECKPOINT_KEY = "distral_game_checkpoint";
@@ -110,6 +130,7 @@ export function loadCheckpoint(): GameState | null {
       ...parsed,
       readEmailIds: parsed.readEmailIds ?? [],
       sentEmails: parsed.sentEmails ?? [],
+      messageChats: parsed.messageChats ?? [],
     } as GameState;
   } catch {
     return null;
