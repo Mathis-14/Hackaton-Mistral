@@ -85,7 +85,7 @@ The application is deployed on **AWS Amplify**, providing:
 
 - **Automatic CI/CD** — push to `main` triggers build & deploy
 - **Serverless API routes** — Next.js API routes run as Lambda functions
-- **Global CDN** — static assets served via CloudFront
+-  **Global CDN** — static assets served via CloudFront
 - **Node 20 runtime** — configured via `.nvmrc`
 
 Build configuration: [`amplify.yml`](amplify.yml)
