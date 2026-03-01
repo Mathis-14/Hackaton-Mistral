@@ -130,6 +130,8 @@ export default function GameUI({ modeId }: GameUIProps) {
   }, [shutdownPhase, gameState]);
 
   const handleRetry = useCallback(() => {
+    new Audio("/sounds/music/retry.wav").play().catch(() => { });
+
     didOpenManagerEmailRef.current = false;
     lastMilestoneRef.current = -1;
     antoninShownRef.current = false;
@@ -167,6 +169,8 @@ export default function GameUI({ modeId }: GameUIProps) {
     setShutdownReason("");
     setTypedReason("");
     setOpenApps([]);
+    setHiddenIconCount(0);
+    setHideUIPhase(0);
     checkpointSavedRef.current = false;
     window.setTimeout(() => {
       setOpenApps((prev) => (prev.includes("distral") ? prev : [...prev, "distral"]));

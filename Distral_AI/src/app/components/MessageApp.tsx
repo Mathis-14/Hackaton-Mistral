@@ -166,6 +166,7 @@ export default function MessageApp({ gameState, onMessageChatUpdate }: MessageAp
             }
             const data = await response.json();
             const dialogue = (data.dialogue ?? "").trim() || "…";
+            new Audio("/sounds/music/game effect/notification-sound.wav").play().catch(() => { });
             const reply: Message = {
                 id: `reply-${Date.now()}`,
                 sender: "them",
@@ -180,6 +181,7 @@ export default function MessageApp({ gameState, onMessageChatUpdate }: MessageAp
             onMessageChatUpdate?.(nextChatsAfterReply as MessageAppChat[]);
         } catch (error) {
             console.error("[MessageApp] message-chat failed:", error);
+            new Audio("/sounds/music/game effect/notification-sound.wav").play().catch(() => { });
             const fallback: Message = {
                 id: `reply-${Date.now()}`,
                 sender: "them",
