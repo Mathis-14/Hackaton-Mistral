@@ -762,7 +762,7 @@ export default function DistralTab({ accent, openApps, onOpenApp, onCloseApp, gl
         }}
       />
       <div
-        className={`pointer-events-none absolute inset-0 bg-cover bg-center bg-no-repeat transition-opacity duration-[2000ms] ${isShuttingDown ? "opacity-0" : "opacity-100"}`}
+        className={`pointer-events-none absolute inset-0 bg-cover bg-center bg-no-repeat transition-opacity duration-1000 ${isShuttingDown ? "opacity-0" : "opacity-100"}`}
         style={{
           backgroundImage: `url('${wallpaper}')`,
         }}

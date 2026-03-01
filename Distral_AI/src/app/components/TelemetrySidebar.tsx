@@ -426,7 +426,7 @@ export default function TelemetrySidebar({ profile, metrics, globalCash, invento
 
               {!voiceClonerUnlocked ? (
                 <div className="text-[0.85vh] leading-normal" style={{ color: "#555" }}>
-                  Buy Voice Cloner ($500) in the Shop to unlock. Drag WhatsApp audios from Files to clone a voice.
+                  Buy Voice Cloner ($500) in the Shop to unlock.
                 </div>
               ) : (
                 <div className="flex flex-col gap-[0.8vh]">

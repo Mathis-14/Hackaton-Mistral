@@ -24,11 +24,17 @@ export default function MailApp({ embedded, emails, readEmailIds = [], sentEmail
   const [composeSubject, setComposeSubject] = useState("");
   const [composeBody, setComposeBody] = useState("");
 
-  const isRead = (emailId: string) => readEmailIds.includes(emailId);
-  const unreadCount = emails.filter((e) => !isRead(e.id)).length;
+  const isRead = (email: EmailDefinition | SentEmailRecord, isSent: boolean) => {
+    if (isSent) return true;
+    if (readEmailIds.includes(email.id)) return true;
+    if ("read" in email && email.read) return true;
+    return false;
+  };
+  const unreadCount = emails.filter((e) => !isRead(e, false)).length;
 
   const openEmail = (email: EmailDefinition | SentEmailRecord) => {
-    if (!isRead(email.id)) onMailRead?.(email.id);
+    const isSent = "to" in email && email.from === "me";
+    if (!isRead(email, isSent)) onMailRead?.(email.id);
     setSelectedEmail(email);
     setView("reading");
     if (email.id === "manager") onManagerEmailOpened?.();
@@ -96,7 +102,7 @@ export default function MailApp({ embedded, emails, readEmailIds = [], sentEmail
   );
 
   const emailRow = (email: EmailDefinition | SentEmailRecord, isSent: boolean = false) => {
-    const read = isSent || isRead(email.id);
+    const read = isSent || isRead(email, isSent);
     return (
       <button
         key={email.id}

@@ -177,7 +177,7 @@ export function buildInboxEmails(mailSeed: number): EmailDefinition[] {
   const withReadState = picked.map((mail, index) => ({
     ...mail,
     id: `${mail.id}-${mailSeed}`,
-    read: index < 2,
+    read: index >= 2,
   }));
   return [...MANDATORY_MAILS, ...withReadState];
 }

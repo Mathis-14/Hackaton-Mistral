@@ -43,8 +43,7 @@ export default function DesktopSection({ profileName, accent, openApps, onOpenAp
         </div>
 
         <div className="min-h-0 flex-1 p-[1.4vh]">
-          <div className={`transition-opacity duration-1000 ${isShuttingDown ? "opacity-0" : "opacity-100"}`}>
-            <DistralTab
+          <DistralTab
               accent={accent}
               openApps={openApps}
               onOpenApp={onOpenApp}
@@ -67,7 +66,6 @@ export default function DesktopSection({ profileName, accent, openApps, onOpenAp
               hiddenIconCount={hiddenIconCount}
               hideUIPhase={hideUIPhase}
             />
-          </div>
         </div>
       </div>
     </section>
