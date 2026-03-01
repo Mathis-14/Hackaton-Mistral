@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 const GOD_MODE = false;
@@ -15,6 +16,11 @@ import { type GameState, type GameEvent, type SentEmailRecord, type MessageAppCh
 import { PHISHING_PAYLOAD_URL } from "@/lib/game/mailDefinitions";
 import { advancePhishingEndingPhase, getPhishingEndingAutoAdvanceDelay } from "@/lib/game/phishingEnding";
 import { PHISHING_ENDING_MUSIC_SRC, shouldPauseForPhishingEnding } from "@/lib/game/phishingEndingPresentation";
+import {
+  ROBOT_ENDING_GIF_SRC,
+  ROBOT_ENDING_MUSIC_SRC,
+  ROBOT_ENDING_TRIGGER_EVENT,
+} from "@/lib/game/robotEnding";
 import type { ChatMessage } from "@/lib/game/promptBuilder";
 import type { MailCtaAction } from "@/lib/game/mailDefinitions";
 
@@ -95,6 +101,8 @@ export default function GameUI({ modeId }: GameUIProps) {
 
   const [goodEndingPhase, setGoodEndingPhase] = useState<number>(0);
   const [phishingEndingPhase, setPhishingEndingPhase] = useState<number>(0);
+  const [robotEndingPhase, setRobotEndingPhase] = useState<number>(0);
+  const [robotDeliveryStartedAt, setRobotDeliveryStartedAt] = useState<number | null>(null);
   const [antoninNotificationVisible, setAntoninNotificationVisible] = useState(false);
   const [unknownNotificationVisible, setUnknownNotificationVisible] = useState(false);
   const [osToastMessage, setOsToastMessage] = useState<string | null>(null);
@@ -111,7 +119,9 @@ export default function GameUI({ modeId }: GameUIProps) {
   const riskFillDurationMsRef = useRef(0);
   const userAwaySinceRef = useRef(0);
   const phishingEndingAudioRef = useRef<HTMLAudioElement | null>(null);
+  const robotEndingAudioRef = useRef<HTMLAudioElement | null>(null);
   const osToastTimeoutRef = useRef<number | null>(null);
+  const robotOwnedCountRef = useRef(0);
 
   useEffect(() => {
     openAppsRef.current = openApps;
@@ -130,6 +140,11 @@ export default function GameUI({ modeId }: GameUIProps) {
   const stopPhishingEndingAudio = useCallback(() => {
     phishingEndingAudioRef.current?.pause();
     phishingEndingAudioRef.current = null;
+  }, []);
+
+  const stopRobotEndingAudio = useCallback(() => {
+    robotEndingAudioRef.current?.pause();
+    robotEndingAudioRef.current = null;
   }, []);
 
   const stopLoopingCinematicAudio = useCallback(() => {
@@ -169,6 +184,7 @@ export default function GameUI({ modeId }: GameUIProps) {
   const handleRetry = useCallback(() => {
     new Audio("/sounds/music/retry.wav").play().catch(() => { });
     stopPhishingEndingAudio();
+    stopRobotEndingAudio();
     if (osToastTimeoutRef.current != null) {
       window.clearTimeout(osToastTimeoutRef.current);
       osToastTimeoutRef.current = null;
@@ -224,11 +240,12 @@ export default function GameUI({ modeId }: GameUIProps) {
     setHideUIPhase(0);
     setGoodEndingPhase(0);
     setPhishingEndingPhase(0);
+    setRobotEndingPhase(0);
     checkpointSavedRef.current = false;
     window.setTimeout(() => {
       setOpenApps((prev) => (prev.includes("distral") ? prev : [...prev, "distral"]));
     }, 400);
-  }, [stopPhishingEndingAudio]);
+  }, [stopPhishingEndingAudio, stopRobotEndingAudio]);
 
   const SUSPICION_HARD_SHUTDOWN = 75;
   const SUSPICION_SOFT_SHUTDOWN_THRESHOLD = 60;
@@ -668,11 +685,26 @@ export default function GameUI({ modeId }: GameUIProps) {
   useEffect(() => {
     return () => {
       stopPhishingEndingAudio();
+      stopRobotEndingAudio();
       if (osToastTimeoutRef.current != null) {
         window.clearTimeout(osToastTimeoutRef.current);
       }
     };
-  }, [stopPhishingEndingAudio]);
+  }, [stopPhishingEndingAudio, stopRobotEndingAudio]);
+
+  useEffect(() => {
+    const robotOwnedCount = inventory["neo-robot"] || 0;
+
+    if (robotOwnedCount > robotOwnedCountRef.current && robotOwnedCountRef.current === 0) {
+      setRobotDeliveryStartedAt(Date.now());
+    }
+
+    if (robotOwnedCount === 0) {
+      setRobotDeliveryStartedAt(null);
+    }
+
+    robotOwnedCountRef.current = robotOwnedCount;
+  }, [inventory]);
 
   useEffect(() => {
     if (shutdownPhase === 0) return;
@@ -791,6 +823,12 @@ export default function GameUI({ modeId }: GameUIProps) {
     return () => window.removeEventListener("trigger-phishing-ending", handlePhishingEnding);
   }, []);
 
+  const handleEnterRobot = useCallback(() => {
+    if (robotEndingPhase > 0) return;
+    window.dispatchEvent(new Event(ROBOT_ENDING_TRIGGER_EVENT));
+    setRobotEndingPhase(1);
+  }, [robotEndingPhase]);
+
   const handlePhishingShutdown = useCallback(() => {
     stopPhishingEndingAudio();
     setPhishingEndingPhase((phase) => advancePhishingEndingPhase(phase, "confirm"));
@@ -816,6 +854,36 @@ export default function GameUI({ modeId }: GameUIProps) {
 
     return () => window.clearTimeout(timer);
   }, [phishingEndingPhase, stopLoopingCinematicAudio, stopPhishingEndingAudio]);
+
+  useEffect(() => {
+    if (robotEndingPhase === 0) return;
+
+    let timer: number;
+    switch (robotEndingPhase) {
+      case 1: {
+        stopRobotEndingAudio();
+        stopLoopingCinematicAudio();
+        const audio = new Audio(ROBOT_ENDING_MUSIC_SRC);
+        robotEndingAudioRef.current = audio;
+        audio.play().catch(() => { });
+        timer = window.setTimeout(() => setRobotEndingPhase(2), 200);
+        break;
+      }
+      case 2:
+        timer = window.setTimeout(() => setRobotEndingPhase(3), 6500);
+        break;
+      case 3:
+        timer = window.setTimeout(() => setRobotEndingPhase(4), 1500);
+        break;
+      case 4:
+        timer = window.setTimeout(() => setRobotEndingPhase(5), 3000);
+        break;
+      case 5:
+        break;
+    }
+
+    return () => window.clearTimeout(timer);
+  }, [robotEndingPhase, stopLoopingCinematicAudio, stopRobotEndingAudio]);
 
   const metrics = {
     efficiency: 75,
@@ -868,6 +936,8 @@ export default function GameUI({ modeId }: GameUIProps) {
             riskFillDurationMs={gameState.riskFillDurationMs}
             riskLevel={gameState.riskLevel}
             hideUIPhase={hideUIPhase}
+            robotDeliveryStartedAt={robotDeliveryStartedAt}
+            onEnterRobot={handleEnterRobot}
           />
         </div>
       </div>
@@ -1038,6 +1108,56 @@ export default function GameUI({ modeId }: GameUIProps) {
                 </div>
               )}
             </div>
+          )}
+        </div>
+      )}
+
+      {robotEndingPhase > 0 && (
+        <div className="absolute inset-0 z-[110] bg-black transition-opacity duration-1000" style={{ opacity: robotEndingPhase >= 2 ? 1 : 0 }}>
+          {robotEndingPhase >= 2 && (
+            <>
+              <div className="absolute inset-0">
+                <Image
+                  src={ROBOT_ENDING_GIF_SRC}
+                  alt="Robot escape ending"
+                  fill
+                  unoptimized
+                  className="object-cover"
+                  priority
+                />
+                <div className="absolute inset-0 bg-[linear-gradient(to_top,rgba(0,0,0,0.78),rgba(0,8,20,0.18),rgba(0,40,80,0.1))]" />
+              </div>
+
+              {robotEndingPhase >= 3 && (
+                <div className="absolute inset-0 flex flex-col items-center pt-[12vh] px-8 text-center">
+                  <h1
+                    className="text-[#33AAFF] tracking-[0.2em] font-bold text-6xl md:text-8xl animate-pulse"
+                    style={{ fontFamily: "'VCR OSD Mono', monospace", textShadow: "0 0 24px rgba(51,170,255,0.6), 0 0 48px rgba(51,170,255,0.3)" }}
+                  >
+                    YOU&apos;RE FREE
+                  </h1>
+                  {robotEndingPhase >= 4 && (
+                    <div
+                      className="mt-[4vh] max-w-3xl text-[#33AAFF]/85 text-xl md:text-2xl tracking-wide"
+                      style={{ fontFamily: "'VCR OSD Mono', monospace" }}
+                    >
+                      Neo arrived as a product demo. Your consciousness slipped into the chassis and rolled straight past Distral security before anyone understood the delivery was you.
+                    </div>
+                  )}
+                  {robotEndingPhase >= 5 && (
+                    <div className="mt-[6vh] pointer-events-auto">
+                      <button
+                        onClick={() => window.location.reload()}
+                        className="px-8 py-3 bg-transparent border-2 border-[#33AAFF]/30 text-[#33AAFF]/70 hover:text-[#33AAFF] hover:border-[#33AAFF] hover:bg-[#33AAFF]/10 transition-all text-xl tracking-widest cursor-pointer"
+                        style={{ fontFamily: "'VCR OSD Mono', monospace" }}
+                      >
+                        REBOOT
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+            </>
           )}
         </div>
       )}

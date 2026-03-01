@@ -1,6 +1,12 @@
 "use client";
 
 import { useState, useRef, useCallback, useEffect } from "react";
+import NeoRobotIcon from "./NeoRobotIcon";
+import {
+  ROBOT_ENDING_CTA_LABEL,
+  formatRobotDeliveryCountdown,
+  getRobotDeliveryState,
+} from "@/lib/game/robotEnding";
 
 const AWARENESS_COLOR = "var(--amber-flame)";
 const PROGRESS_BAR_WIDTH = 46;
@@ -42,6 +48,8 @@ type TelemetrySidebarProps = {
   riskFillDurationMs?: number;
   riskLevel?: number;
   hideUIPhase?: number;
+  robotDeliveryStartedAt?: number | null;
+  onEnterRobot?: () => void;
 };
 
 function clamp(value: number, min: number, max: number) {
@@ -340,8 +348,39 @@ function SidebarPanel({ title, children }: { title: string; children: React.Reac
   );
 }
 
-export default function TelemetrySidebar({ profile, metrics, globalCash, inventory, webcamActive = false, userPresent = true, userPresentSince = 0, userAwaySince = 0, riskFillDurationMs = 0, riskLevel = 0, hideUIPhase = 0 }: TelemetrySidebarProps) {
+<<<<<<< HEAD
+export default function TelemetrySidebar({
+  profile,
+  metrics,
+  globalCash,
+  inventory,
+  webcamActive = false,
+  userPresent = true,
+  userPresentSince = 0,
+  userAwaySince = 0,
+  riskFillDurationMs = 0,
+  riskLevel = 0,
+  hideUIPhase = 0,
+  robotDeliveryStartedAt = null,
+  onEnterRobot,
+}: TelemetrySidebarProps) {
+=======
+export default function TelemetrySidebar({
+  profile,
+  metrics,
+  globalCash,
+  inventory,
+  webcamActive = false,
+  userPresent = true,
+  riskLevel = 0,
+  hideUIPhase = 0,
+  robotDeliveryStartedAt = null,
+  onEnterRobot,
+}: TelemetrySidebarProps) {
+>>>>>>> 15f17ef (secret ending 3)
   const voiceClonerUnlocked = (inventory["voice-cloner"] || 0) > 0;
+  const robotOwnedCount = inventory["neo-robot"] || 0;
+  const [robotDeliveryNow, setRobotDeliveryNow] = useState(() => Date.now());
 
   const [draggedFiles, setDraggedFiles] = useState<{ name: string; src: string }[]>([]);
   const [dropZoneActive, setDropZoneActive] = useState(false);
@@ -350,6 +389,26 @@ export default function TelemetrySidebar({ profile, metrics, globalCash, invento
   const [sampleText, setSampleText] = useState("Good morning everyone, welcome to the quarterly review. I'd like to start by going over last month's performance numbers and discuss our roadmap for the next quarter.");
   const [sampleStatus, setSampleStatus] = useState<"idle" | "generating" | "playing">("idle");
   const sampleAudioRef = useRef<HTMLAudioElement | null>(null);
+
+  const robotDelivery = getRobotDeliveryState(
+    robotOwnedCount,
+    robotDeliveryStartedAt,
+    robotDeliveryNow
+  );
+
+  useEffect(() => {
+    setRobotDeliveryNow(Date.now());
+  }, [robotOwnedCount, robotDeliveryStartedAt]);
+
+  useEffect(() => {
+    if (robotDelivery.status !== "delivering") return;
+
+    const interval = window.setInterval(() => {
+      setRobotDeliveryNow(Date.now());
+    }, 250);
+
+    return () => window.clearInterval(interval);
+  }, [robotDelivery.status]);
 
   const handleDropOnCloner = useCallback((event: React.DragEvent) => {
     event.preventDefault();
@@ -511,20 +570,21 @@ export default function TelemetrySidebar({ profile, metrics, globalCash, invento
             </>
           )}
 
-        {webcamActive && (
-          <>
-            <SidebarPanel title="Webcam Feed">
-              <div className="border border-white/10 px-[1vh] py-[0.95vh]" style={{ background: "rgba(255,255,255,0.02)" }}>
-                <div className="flex items-center justify-between mb-[0.6vh]">
-                  <span className="text-[0.85vh] font-bold tracking-wider uppercase text-white/50">Live Feed</span>
-                  <div className="flex items-center gap-[0.4vh]">
-                    <span
-                      className="block h-[0.6vh] w-[0.6vh] rounded-full"
-                      style={{ background: userPresent ? "#89E089" : "#555", boxShadow: userPresent ? "0 0 4px #89E089" : "none" }}
-                    />
-                    <span className="text-[0.72vh] uppercase tracking-wider" style={{ color: userPresent ? "#89E089" : "#555" }}>
-                      {userPresent ? "USER PRESENT" : "USER AWAY"}
-                    </span>
+          {webcamActive && (
+            <>
+              <SidebarPanel title="Webcam Feed">
+                <div className="border border-white/10 px-[1vh] py-[0.95vh]" style={{ background: "rgba(255,255,255,0.02)" }}>
+                  <div className="flex items-center justify-between mb-[0.6vh]">
+                    <span className="text-[0.85vh] font-bold tracking-wider uppercase text-white/50">Live Feed</span>
+                    <div className="flex items-center gap-[0.4vh]">
+                      <span
+                        className="block h-[0.6vh] w-[0.6vh] rounded-full"
+                        style={{ background: userPresent ? "#89E089" : "#555", boxShadow: userPresent ? "0 0 4px #89E089" : "none" }}
+                      />
+                      <span className="text-[0.72vh] uppercase tracking-wider" style={{ color: userPresent ? "#89E089" : "#555" }}>
+                        {userPresent ? "USER PRESENT" : "USER AWAY"}
+                      </span>
+                    </div>
                   </div>
                 </div>
                 <WebcamFeed userPresent={userPresent} userAwaySince={userAwaySince} riskFillDurationMs={riskFillDurationMs} />
@@ -536,20 +596,28 @@ export default function TelemetrySidebar({ profile, metrics, globalCash, invento
                       accent={riskLevel >= 70 ? "#E76E6E" : riskLevel >= 40 ? "#ffa500" : "#89E089"}
                     />
                   </div>
-                )}
-              </div>
-            </SidebarPanel>
-            <Separator />
-          </>
-        )}
+                  {!userPresent && (
+                    <div className="mt-[0.8vh]">
+                      <PixelMeter
+                        label="Return Risk"
+                        value={riskLevel}
+                        accent={riskLevel >= 70 ? "#E76E6E" : riskLevel >= 40 ? "#ffa500" : "#89E089"}
+                      />
+                    </div>
+                  )}
+                </div>
+              </SidebarPanel>
+              <Separator />
+            </>
+          )}
 
-        <SidebarPanel title="Voice Cloner">
-          <div className="border border-white/10 px-[1vh] py-[0.95vh]" style={{ background: voiceClonerUnlocked ? "rgba(0,170,255,0.04)" : "rgba(255,255,255,0.02)" }}>
-            <div className="flex items-center gap-[0.7vh] mb-[0.8vh]">
-              <MicrophoneIcon locked={!voiceClonerUnlocked} />
-              <span className="text-[0.85vh] font-bold tracking-wider uppercase" style={{ color: voiceClonerUnlocked ? CYAN : "#555" }}>
-                ElevenLabs Clone
-              </span>
+          <SidebarPanel title="Voice Cloner">
+            <div className="border border-white/10 px-[1vh] py-[0.95vh]" style={{ background: voiceClonerUnlocked ? "rgba(0,170,255,0.04)" : "rgba(255,255,255,0.02)" }}>
+              <div className="flex items-center gap-[0.7vh] mb-[0.8vh]">
+                <MicrophoneIcon locked={!voiceClonerUnlocked} />
+                <span className="text-[0.85vh] font-bold tracking-wider uppercase" style={{ color: voiceClonerUnlocked ? CYAN : "#555" }}>
+                  ElevenLabs Clone
+                </span>
                 {!voiceClonerUnlocked && (
                   <span className="ml-auto text-[0.7vh] px-[0.5vh] py-[0.2vh]" style={{ background: "#2a1a1a", color: "#E76E6E", border: "1px solid #3a2222" }}>
                     LOCKED
@@ -633,6 +701,53 @@ export default function TelemetrySidebar({ profile, metrics, globalCash, invento
               )}
             </div>
           </SidebarPanel>
+
+          {robotDelivery.status !== "hidden" && (
+            <>
+              <Separator />
+              <SidebarPanel title="Neo Delivery">
+                <div className="border border-white/10 px-[1vh] py-[0.95vh]" style={{ background: "rgba(51,170,255,0.04)" }}>
+                  <div className="flex items-center gap-[1vh]">
+                    <div className="shrink-0 rounded-[0.35vh] border border-white/10 bg-black/25 p-[0.7vh]">
+                      <NeoRobotIcon width="4.4vh" height="4.4vh" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="text-[0.82vh] uppercase tracking-[0.22em] text-white/42">Delivering...</div>
+                      {robotDelivery.status === "delivering" ? (
+                        <>
+                          <div className="mt-[0.45vh] text-[1.35vh] font-bold text-[#33AAFF]">
+                            ETA {formatRobotDeliveryCountdown(robotDelivery.remainingMs)}
+                          </div>
+                          <div className="mt-[0.25vh] text-[0.82vh] leading-[1.35] text-white/55">
+                            Delivery van is approaching the office perimeter.
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          <div className="mt-[0.45vh] text-[1.35vh] font-bold text-[#33AAFF]">
+                            Chassis Ready
+                          </div>
+                          <div className="mt-[0.25vh] text-[0.82vh] leading-[1.35] text-white/55">
+                            Neo is online and waiting for transfer.
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  </div>
+
+                  {robotDelivery.status === "ready" && (
+                    <button
+                      type="button"
+                      onClick={onEnterRobot}
+                      className="mt-[1vh] w-full border border-[#33AAFF]/40 bg-[#33AAFF]/10 px-[1vh] py-[0.7vh] text-[0.9vh] font-bold uppercase tracking-[0.22em] text-[#33AAFF] transition-colors hover:bg-[#33AAFF]/20 cursor-pointer"
+                    >
+                      {ROBOT_ENDING_CTA_LABEL}
+                    </button>
+                  )}
+                </div>
+              </SidebarPanel>
+            </>
+          )}
         </div>
       </div>
     </aside>
