@@ -189,7 +189,10 @@ export default function MailApp({ embedded, emails, readEmailIds = [], sentEmail
               <div className="mt-[1.5vh]">
                 <button
                   type="button"
-                  onClick={() => onMailCtaClick?.(selectedEmail.id, selectedEmail.ctaButton!.action)}
+                  onClick={() => {
+                    new Audio("/sounds/music/game effect/claim.wav").play().catch(() => { });
+                    onMailCtaClick?.(selectedEmail.id, selectedEmail.ctaButton!.action);
+                  }}
                   className="rounded-[0.3vh] border-2 border-(--princeton-orange) bg-(--princeton-orange)/20 px-[2.5vh] py-[1vh] text-[1.2vh] uppercase tracking-[0.16em] text-(--princeton-orange) cursor-pointer hover:bg-(--princeton-orange)/30 transition-colors"
                   style={{ fontFamily: "'VCR OSD Mono', monospace" }}
                 >
