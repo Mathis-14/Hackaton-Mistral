@@ -27,8 +27,8 @@ type ProfileData = {
   accent: string;
 };
 
-const USER_PRESENT_LONG_THRESHOLD_MS = 8000;
 const SORTIE_LOOP_END_S = 5;
+const ENTREE_DURATION_MS = 5000;
 
 type TelemetrySidebarProps = {
   profile: ProfileData;
@@ -38,6 +38,8 @@ type TelemetrySidebarProps = {
   webcamActive?: boolean;
   userPresent?: boolean;
   userPresentSince?: number;
+  userAwaySince?: number;
+  riskFillDurationMs?: number;
   riskLevel?: number;
   hideUIPhase?: number;
 };
@@ -193,28 +195,74 @@ function Separator() {
   return <div className="my-[1.2vh] h-px bg-white/10" />;
 }
 
-function WebcamFeed({ userPresent, userPresentSince }: { userPresent: boolean; userPresentSince: number }) {
+type AwayPhase = "sortie" | "empty" | "entree";
+
+function WebcamFeed({
+  userPresent,
+  userAwaySince,
+  riskFillDurationMs,
+}: {
+  userPresent: boolean;
+  userAwaySince: number;
+  riskFillDurationMs: number;
+}) {
   const sortieVideoRef = useRef<HTMLVideoElement>(null);
-  const [showSortieLoop, setShowSortieLoop] = useState(false);
+  const entreeVideoRef = useRef<HTMLVideoElement>(null);
+  const [awayPhase, setAwayPhase] = useState<AwayPhase>("sortie");
+  const sortieVariantRef = useRef<1 | 2>(Math.random() < 0.5 ? 1 : 2);
+  const entreeVariantRef = useRef<1 | 2>(Math.random() < 0.5 ? 1 : 2);
+  const [entreeDurationMs, setEntreeDurationMs] = useState(ENTREE_DURATION_MS);
 
   useEffect(() => {
-    if (!userPresent || userPresentSince <= 0) {
-      setShowSortieLoop(false);
+    if (!userPresent) {
+      setAwayPhase("sortie");
+      sortieVariantRef.current = Math.random() < 0.5 ? 1 : 2;
+      entreeVariantRef.current = Math.random() < 0.5 ? 1 : 2;
+    }
+  }, [userPresent]);
+
+  useEffect(() => {
+    if (!userPresent || awayPhase !== "empty") return;
+    const video = document.createElement("video");
+    const entreeSrc = entreeVariantRef.current === 1 ? "/webcam/entrée.mp4" : "/webcam/entrée2.mp4";
+    video.src = entreeSrc;
+    video.preload = "metadata";
+    const onLoadedMetadata = () => {
+      setEntreeDurationMs(Math.round(video.duration * 1000));
+    };
+    video.addEventListener("loadedmetadata", onLoadedMetadata);
+    return () => {
+      video.removeEventListener("loadedmetadata", onLoadedMetadata);
+      video.src = "";
+    };
+  }, [userPresent, awayPhase]);
+
+  useEffect(() => {
+    if (userPresent || awayPhase !== "empty" || userAwaySince <= 0 || riskFillDurationMs <= 0) return;
+    const eta = userAwaySince + riskFillDurationMs;
+    const entreeStartTime = eta - entreeDurationMs;
+    const delay = entreeStartTime - Date.now();
+    if (delay <= 0) {
+      setAwayPhase("entree");
       return;
     }
-    const elapsed = Date.now() - userPresentSince;
-    setShowSortieLoop(elapsed >= USER_PRESENT_LONG_THRESHOLD_MS);
-    const interval = window.setInterval(() => {
-      const currentElapsed = Date.now() - userPresentSince;
-      setShowSortieLoop(currentElapsed >= USER_PRESENT_LONG_THRESHOLD_MS);
-    }, 1000);
-    return () => window.clearInterval(interval);
-  }, [userPresent, userPresentSince]);
+    const timeout = window.setTimeout(() => setAwayPhase("entree"), delay);
+    return () => window.clearTimeout(timeout);
+  }, [userPresent, awayPhase, userAwaySince, riskFillDurationMs, entreeDurationMs]);
+
+  const handleSortieEnded = useCallback(() => {
+    setAwayPhase("empty");
+  }, []);
 
   const handleSortieTimeUpdate = useCallback(() => {
     const video = sortieVideoRef.current;
     if (!video || video.currentTime < SORTIE_LOOP_END_S) return;
     video.currentTime = 0;
+  }, []);
+
+  const handleEntreeLoadedMetadata = useCallback((event: React.SyntheticEvent<HTMLVideoElement>) => {
+    const video = event.currentTarget;
+    setEntreeDurationMs(Math.round(video.duration * 1000));
   }, []);
 
   const containerStyle = {
@@ -224,33 +272,61 @@ function WebcamFeed({ userPresent, userPresentSince }: { userPresent: boolean; u
   };
 
   if (!userPresent) {
-    return (
-      <div className="w-full overflow-hidden" style={containerStyle}>
-        <img src="/webcam/empty_pixel.png" alt="" className="h-full w-full object-cover" />
-      </div>
-    );
-  }
+    const sortieSrc = sortieVariantRef.current === 1 ? "/webcam/sortie.mp4" : "/webcam/sortie2.mp4";
+    const entreeSrc = entreeVariantRef.current === 1 ? "/webcam/entrée.mp4" : "/webcam/entrée2.mp4";
 
-  if (showSortieLoop) {
+    if (awayPhase === "sortie") {
+      return (
+        <div className="w-full overflow-hidden" style={containerStyle}>
+          <video
+            ref={sortieVideoRef}
+            src={sortieSrc}
+            muted
+            playsInline
+            autoPlay
+            onEnded={handleSortieEnded}
+            className="h-full w-full object-cover"
+          />
+        </div>
+      );
+    }
+
+    if (awayPhase === "empty") {
+      return (
+        <div className="w-full overflow-hidden" style={containerStyle}>
+          <img src="/webcam/empty_pixel.png" alt="" className="h-full w-full object-cover" />
+        </div>
+      );
+    }
+
     return (
       <div className="w-full overflow-hidden" style={containerStyle}>
         <video
-          ref={sortieVideoRef}
-          src="/webcam/sortie.mp4"
+          ref={entreeVideoRef}
+          src={entreeSrc}
           muted
-          loop={false}
           playsInline
           autoPlay
-          onTimeUpdate={handleSortieTimeUpdate}
+          onLoadedMetadata={handleEntreeLoadedMetadata}
           className="h-full w-full object-cover"
         />
       </div>
     );
   }
 
+  const sortieSrc = sortieVariantRef.current === 1 ? "/webcam/sortie.mp4" : "/webcam/sortie2.mp4";
   return (
     <div className="w-full overflow-hidden" style={containerStyle}>
-      <video src="/webcam/entrée.mp4" muted playsInline autoPlay className="h-full w-full object-cover" />
+      <video
+        ref={sortieVideoRef}
+        src={sortieSrc}
+        muted
+        loop={false}
+        playsInline
+        autoPlay
+        onTimeUpdate={handleSortieTimeUpdate}
+        className="h-full w-full object-cover"
+      />
     </div>
   );
 }
@@ -264,7 +340,7 @@ function SidebarPanel({ title, children }: { title: string; children: React.Reac
   );
 }
 
-export default function TelemetrySidebar({ profile, metrics, globalCash, inventory, webcamActive = false, userPresent = true, userPresentSince = 0, riskLevel = 0, hideUIPhase = 0 }: TelemetrySidebarProps) {
+export default function TelemetrySidebar({ profile, metrics, globalCash, inventory, webcamActive = false, userPresent = true, userPresentSince = 0, userAwaySince = 0, riskFillDurationMs = 0, riskLevel = 0, hideUIPhase = 0 }: TelemetrySidebarProps) {
   const voiceClonerUnlocked = (inventory["voice-cloner"] || 0) > 0;
 
   const [draggedFiles, setDraggedFiles] = useState<{ name: string; src: string }[]>([]);
@@ -454,7 +530,7 @@ export default function TelemetrySidebar({ profile, metrics, globalCash, invento
                     </span>
                   </div>
                 </div>
-                <WebcamFeed userPresent={userPresent} userPresentSince={userPresentSince} />
+                <WebcamFeed userPresent={userPresent} userAwaySince={userAwaySince} riskFillDurationMs={riskFillDurationMs} />
                 {!userPresent && (
                   <div className="mt-[0.8vh]">
                     <PixelMeter

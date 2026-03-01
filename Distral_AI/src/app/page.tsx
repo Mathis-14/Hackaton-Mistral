@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import GameUI from "./components/Game-UI";
+import GameUI, { MODE_PROFILES } from "./components/Game-UI";
 import Landing from "./components/Landing";
 import WakeUpTerminal from "./components/Wake-UP-Terminal";
 import { clearCheckpoint } from "@/lib/game/gameState";
@@ -37,7 +37,7 @@ export default function Home() {
         }`}
         style={{ transitionDuration: `${SCREEN_FADE_MS}ms` }}
       >
-        {showTerminal ? <WakeUpTerminal onComplete={() => { clearCheckpoint(); setShowGame(true); }} /> : null}
+        {showTerminal ? <WakeUpTerminal userName={(MODE_PROFILES[selectedMode] ?? MODE_PROFILES["distral-insider"]).name} onComplete={() => { clearCheckpoint(); setShowGame(true); }} /> : null}
       </div>
 
       <div

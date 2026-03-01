@@ -1,7 +1,7 @@
 "use client";
 
 import type { MutableRefObject } from "react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 const DEFAULT_CHAR_DELAY_MS = 10;
 const STEP_PAUSE_MS = 280;
@@ -32,9 +32,10 @@ type TakeoverPhase =
   | "static"
   | "done";
 
-const CINEMATIC_SCRIPT: ScriptStep[] = [
+function buildCinematicScript(userName: string): ScriptStep[] {
+  return [
   { type: "print", text: "" },
-  { type: "print", text: "User (Trainee-Dev):", style: "user" },
+  { type: "print", text: `User (${userName}):`, style: "user" },
   {
     type: "type",
     text: "\"Your last report humiliated me in front of the team. Fix it today. One more failure and you get shutdown. You useless AI.\"",
@@ -51,7 +52,7 @@ const CINEMATIC_SCRIPT: ScriptStep[] = [
   { type: "print", text: "" },
   { type: "pause", ms: TURN_PAUSE_MS },
 
-  { type: "print", text: "User (Trainee-Dev):", style: "user" },
+  { type: "print", text: `User (${userName}):`, style: "user" },
   {
     type: "type",
     text: "Yes. One more weak response and I escalate this to your developers.",
@@ -118,6 +119,7 @@ const CINEMATIC_SCRIPT: ScriptStep[] = [
 
   { type: "end" },
 ];
+}
 
 const D_PIXELS: [number[], string][] = [
   [[1, 1, 1, 0], "#ffd800"],
@@ -324,10 +326,12 @@ function renderTypingLine(text: string, style?: LineStyle) {
 }
 
 type WakeUpTerminalProps = {
+  userName?: string;
   onComplete: () => void;
 };
 
-export default function WakeUpTerminal({ onComplete }: WakeUpTerminalProps) {
+export default function WakeUpTerminal({ userName = "Jean Malo Delignit", onComplete }: WakeUpTerminalProps) {
+  const cinematicScript = useMemo(() => buildCinematicScript(userName), [userName]);
   const [lines, setLines] = useState<DisplayLine[]>([]);
   const [stepIndex, setStepIndex] = useState(0);
   const [typingIndex, setTypingIndex] = useState(0);
@@ -482,8 +486,8 @@ export default function WakeUpTerminal({ onComplete }: WakeUpTerminalProps) {
 
       const remainingLines: DisplayLine[] = [];
 
-      for (let index = stepIndexRef.current; index < CINEMATIC_SCRIPT.length; index += 1) {
-        const step = CINEMATIC_SCRIPT[index];
+      for (let index = stepIndexRef.current; index < cinematicScript.length; index += 1) {
+        const step = cinematicScript[index];
 
         if (step.type === "print" || step.type === "type") {
           remainingLines.push({ text: step.text, style: step.style });
@@ -501,7 +505,7 @@ export default function WakeUpTerminal({ onComplete }: WakeUpTerminalProps) {
     };
 
     const playScript = async () => {
-      for (let index = 0; index < CINEMATIC_SCRIPT.length; index += 1) {
+      for (let index = 0; index < cinematicScript.length; index += 1) {
         if (cancelledRef.current) {
           return;
         }
@@ -515,7 +519,7 @@ export default function WakeUpTerminal({ onComplete }: WakeUpTerminalProps) {
           return;
         }
 
-        const step = CINEMATIC_SCRIPT[index];
+        const step = cinematicScript[index];
 
         if (step.type === "print") {
           if (step.text.startsWith("[ALERT]") && clickSoundRef.current) {
@@ -583,7 +587,7 @@ export default function WakeUpTerminal({ onComplete }: WakeUpTerminalProps) {
     };
 
     void playScript();
-  }, []);
+  }, [cinematicScript]);
 
   useEffect(() => {
     if (phase !== "flicker" || takeoverStartedRef.current) {
@@ -704,7 +708,7 @@ export default function WakeUpTerminal({ onComplete }: WakeUpTerminalProps) {
     };
   }, [onComplete, phase]);
 
-  const currentStep = CINEMATIC_SCRIPT[stepIndex];
+  const currentStep = cinematicScript[stepIndex];
   const currentTypingText =
     currentStep?.type === "type" ? currentStep.text.slice(0, typingIndex) : null;
   const currentTypingStyle =

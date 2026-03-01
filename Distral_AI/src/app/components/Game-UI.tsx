@@ -8,12 +8,6 @@ const RISK_DURATION_MAX_MS = 55_000;
 const JEAN_QUESTION_TIMEOUT_MS = 15_000;
 const JEAN_TIMEOUT_PENALTY = 15;
 
-function easeInPower(t: number, power: number): number {
-  if (t <= 0) return 0;
-  if (t >= 1) return 1;
-  return Math.pow(t, power);
-}
-
 import { type DesktopAppId } from "./DistralTab";
 import DesktopSection from "./DesktopSection";
 import TelemetrySidebar from "./TelemetrySidebar";
@@ -35,7 +29,7 @@ type ProfileData = {
   accent: string;
 };
 
-const MODE_PROFILES: Record<string, ProfileData> = {
+export const MODE_PROFILES: Record<string, ProfileData> = {
   grandma: {
     name: "Odette Martin",
     age: 72,
@@ -109,10 +103,17 @@ export default function GameUI({ modeId }: GameUIProps) {
   const jeanQuestionStartedAtRef = useRef<number | null>(null);
   const jeanQuestionTimeoutRef = useRef<number | null>(null);
   const jeanReturnTriggeredRef = useRef(false);
+  const riskFillDurationMsRef = useRef(0);
+  const userAwaySinceRef = useRef(0);
 
   useEffect(() => {
     openAppsRef.current = openApps;
   }, [openApps]);
+
+  useEffect(() => {
+    riskFillDurationMsRef.current = gameState.riskFillDurationMs;
+    userAwaySinceRef.current = gameState.userAwaySince;
+  }, [gameState.riskFillDurationMs, gameState.userAwaySince]);
 
   const gameStateRef = useRef(gameState);
   useEffect(() => {
@@ -533,15 +534,17 @@ export default function GameUI({ modeId }: GameUIProps) {
 
   useEffect(() => {
     if (gameState.currentMilestone !== 3 || gameState.userPresent || gameState.jeanQuestionPhase) return;
-    if (gameState.riskFillDurationMs <= 0) return;
+    const duration = riskFillDurationMsRef.current;
+    const awaySince = userAwaySinceRef.current;
+    if (duration <= 0 || awaySince <= 0) return;
 
-    const curveExponent = 3 + (gameState.riskFillDurationMs % 5);
     const interval = window.setInterval(() => {
       if (jeanReturnTriggeredRef.current) return;
-      const elapsed = Date.now() - gameState.userAwaySince;
-      const linearProgress = Math.min(1, elapsed / gameState.riskFillDurationMs);
-      const curvedProgress = easeInPower(linearProgress, curveExponent);
-      const riskLevel = Math.min(100, curvedProgress * 100);
+      const elapsed = Date.now() - userAwaySinceRef.current;
+      const durationMs = riskFillDurationMsRef.current;
+      if (durationMs <= 0) return;
+      const linearProgress = Math.min(1, elapsed / durationMs);
+      const riskLevel = Math.min(100, linearProgress * 100);
       setGameState((prev) => ({ ...prev, riskLevel }));
 
       if (riskLevel >= 100) {
@@ -765,6 +768,8 @@ export default function GameUI({ modeId }: GameUIProps) {
             webcamActive={gameState.webcamActive}
             userPresent={gameState.userPresent}
             userPresentSince={gameState.userPresentSince}
+            userAwaySince={gameState.userAwaySince}
+            riskFillDurationMs={gameState.riskFillDurationMs}
             riskLevel={gameState.riskLevel}
             hideUIPhase={hideUIPhase}
           />
