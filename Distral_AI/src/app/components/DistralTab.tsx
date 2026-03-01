@@ -195,7 +195,7 @@ function DistralAppWindow({
 
   const [phase, setPhase] = useState<"landing" | "chat">("landing");
   const [npcTypedText, setNpcTypedText] = useState("");
-  const [displayMessages, setDisplayMessages] = useState<Array<{ role: "human" | "ai"; text: string }>>([]);
+  const [displayMessages, setDisplayMessages] = useState<Array<{ role: "human" | "ai"; text: string; suspicionDelta?: number }>>([]);
   const [playerResponse, setPlayerResponse] = useState("");
   const [isNpcTyping, setIsNpcTyping] = useState(false);
   const [isWaitingForApi, setIsWaitingForApi] = useState(false);
@@ -250,6 +250,13 @@ function DistralAppWindow({
     typeNext();
   }, []);
 
+  const willTriggerShutdown = useCallback((response: NpcApiResponse): boolean => {
+    if (response.action === "shutdown") return true;
+    if (response.game_events?.some((event) => event.type === "shutdown")) return true;
+    if (response.suspicion_delta >= 18) return true;
+    return false;
+  }, []);
+
   const processNpcResponse = useCallback((response: NpcApiResponse) => {
     console.log("[DistralApp] processNpcResponse:", { dialogue: response.dialogue?.slice(0, 80), action: response.action, suspicion_delta: response.suspicion_delta, events: response.game_events });
     chatHistoryRef.current.push({ role: "assistant", content: JSON.stringify(response) });
@@ -262,21 +269,23 @@ function DistralAppWindow({
       shutdownReason: response.shutdown_reason ?? null,
     };
 
-    if (response.action === "shutdown") {
+    const isShutdownResponse = willTriggerShutdown(response);
+
+    if (isShutdownResponse) {
       typeOutMessage(response.dialogue, () => {
-        setDisplayMessages((prev) => [...prev, { role: "human", text: response.dialogue }]);
+        setDisplayMessages((prev) => [...prev, { role: "human", text: response.dialogue, suspicionDelta: response.suspicion_delta }]);
         setNpcTypedText("");
-        onNpcResponse(payload);
+        window.setTimeout(() => onNpcResponse(payload), 1000);
       });
       return;
     }
 
     onNpcResponse(payload);
     typeOutMessage(response.dialogue, () => {
-      setDisplayMessages((prev) => [...prev, { role: "human", text: response.dialogue }]);
+      setDisplayMessages((prev) => [...prev, { role: "human", text: response.dialogue, suspicionDelta: response.suspicion_delta }]);
       setNpcTypedText("");
     });
-  }, [onNpcResponse, typeOutMessage]);
+  }, [onNpcResponse, typeOutMessage, willTriggerShutdown]);
 
   useEffect(() => {
     if (openingFetchedRef.current) return;
@@ -319,20 +328,21 @@ function DistralAppWindow({
           shutdownReason: data.shutdown_reason ?? null,
         };
 
-        if (data.action === "shutdown") {
+        const isShutdownResponse = data.action === "shutdown" || data.game_events?.some((event: { type: string }) => event.type === "shutdown") || data.suspicion_delta >= 18;
+        if (isShutdownResponse) {
           typeOutMessage(data.dialogue, () => {
-            setDisplayMessages([{ role: "human", text: data.dialogue }]);
+            setDisplayMessages([{ role: "human", text: data.dialogue, suspicionDelta: data.suspicion_delta }]);
             setNpcTypedText("");
             setPhase("chat");
-            onNpcResponse(openingPayload);
+            window.setTimeout(() => onNpcResponse(openingPayload), 1000);
           });
         } else {
           onNpcResponse(openingPayload);
           typeOutMessage(data.dialogue, () => {
-          setDisplayMessages([{ role: "human", text: data.dialogue }]);
-          setNpcTypedText("");
-          setPhase("chat");
-          console.log("[DistralApp] Opening message typed out, switching to chat phase");
+            setDisplayMessages([{ role: "human", text: data.dialogue, suspicionDelta: data.suspicion_delta }]);
+            setNpcTypedText("");
+            setPhase("chat");
+            console.log("[DistralApp] Opening message typed out, switching to chat phase");
           });
         }
       } catch (error) {
@@ -513,7 +523,7 @@ function DistralAppWindow({
               <div ref={chatScrollRef} className="flex min-h-0 flex-1 flex-col overflow-auto bg-(--semi-black) px-[2vh] py-[1.5vh]">
                 {displayMessages.map((msg, index) => (
                   msg.role === "human" ? (
-                    <div key={index} className="flex justify-end mb-[2vh]" style={{ animation: "messageSlideIn 0.25s ease-out" }}>
+                    <div key={index} className="flex flex-col items-end mb-[2vh]" style={{ animation: "messageSlideIn 0.25s ease-out" }}>
                       <div
                         className="max-w-[80%] px-[1.6vh] py-[1.1vh] text-[1.3vh] text-white/90 leading-[1.8vh]"
                         style={{
@@ -524,6 +534,17 @@ function DistralAppWindow({
                       >
                         {msg.text}
                       </div>
+                      {typeof msg.suspicionDelta === "number" && msg.suspicionDelta !== 0 && (
+                        <span
+                          className="mt-[0.4vh] text-[1vh] uppercase tracking-wider"
+                          style={{
+                            fontFamily: "'VCR OSD Mono', monospace",
+                            color: msg.suspicionDelta > 0 ? "#E76E6E" : "#4ADE80",
+                          }}
+                        >
+                          {msg.suspicionDelta > 0 ? "+" : ""}{msg.suspicionDelta} suspicion
+                        </span>
+                      )}
                     </div>
                   ) : (
                     <div key={index} className="flex items-start gap-[0.8vh] mb-[1.5vh]" style={{ animation: "messageSlideIn 0.25s ease-out" }}>

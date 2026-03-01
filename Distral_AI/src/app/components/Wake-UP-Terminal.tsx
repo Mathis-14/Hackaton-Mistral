@@ -325,9 +325,10 @@ function renderTypingLine(text: string, style?: LineStyle) {
 
 type WakeUpTerminalProps = {
   onComplete: () => void;
+  bgMusicMuted?: boolean;
 };
 
-export default function WakeUpTerminal({ onComplete }: WakeUpTerminalProps) {
+export default function WakeUpTerminal({ onComplete, bgMusicMuted = false }: WakeUpTerminalProps) {
   const [lines, setLines] = useState<DisplayLine[]>([]);
   const [stepIndex, setStepIndex] = useState(0);
   const [typingIndex, setTypingIndex] = useState(0);
@@ -372,7 +373,7 @@ export default function WakeUpTerminal({ onComplete }: WakeUpTerminalProps) {
 
     const bgMusic = new Audio("/sounds/music/cinematic-music/cinematic-music-combined.wav");
     bgMusic.loop = true;
-    bgMusic.volume = 0.3;
+    bgMusic.volume = bgMusicMuted ? 0 : 0.3;
     bgMusicRef.current = bgMusic;
     const bgMusicTimeout = window.setTimeout(() => {
       void bgMusic.play().catch(() => { });
@@ -404,6 +405,12 @@ export default function WakeUpTerminal({ onComplete }: WakeUpTerminalProps) {
       }
     };
   }, []);
+
+  useEffect(() => {
+    if (bgMusicRef.current) {
+      bgMusicRef.current.volume = bgMusicMuted ? 0 : 0.3;
+    }
+  }, [bgMusicMuted]);
 
   useEffect(() => {
     if (!logRef.current) {

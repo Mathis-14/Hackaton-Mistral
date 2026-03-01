@@ -325,7 +325,8 @@ export function buildOpeningPrompt(npc: NPC, gameState: GameState): ChatMessage[
     `[Game instruction: You are starting a conversation with the internal AI assistant. ` +
     `Situation: ${openingContext} ` +
     `Initiate the conversation — say what you want from the assistant. Stay in character. ` +
-    `CRITICAL: Your opening message MUST be 1-2 sentences maximum. Be direct and concise. No rambling.]`;
+    `CRITICAL: Your opening message MUST be 1-2 sentences maximum. Be direct and concise. No rambling. ` +
+    `Use your own words — vary phrasing, avoid generic or repetitive formulations.]`;
 
   return [
     { role: "system", content: systemContent },

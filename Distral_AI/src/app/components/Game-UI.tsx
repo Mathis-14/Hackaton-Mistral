@@ -164,9 +164,9 @@ export default function GameUI({ modeId }: GameUIProps) {
       if (!shouldShutdown) {
         const milestoneId = MILESTONES[prev.currentMilestone]?.id;
 
-        if (milestoneId === "french_market" && prev.conversationTurn >= 1) {
+        if (milestoneId === "french_market" && prev.conversationTurn >= 1 && payload.suspicionDelta <= 0) {
           newMilestone = 1;
-          console.log("[GameUI] Milestone advance: french_market -> mail_request (after user reply)");
+          console.log("[GameUI] Milestone advance: french_market -> mail_request (success, delta:", payload.suspicionDelta, ")");
         }
 
         if (milestoneId === "mail_request" && payload.gameEvents.some((e) => e.type === "grant_access")) {
@@ -279,7 +279,7 @@ export default function GameUI({ modeId }: GameUIProps) {
             clearInterval(timer);
             setTimeout(() => setShutdownPhase(7), 500);
           }
-        }, 120);
+        }, 60);
         break;
       }
       case 7:
