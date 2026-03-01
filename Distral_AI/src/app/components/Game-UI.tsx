@@ -497,7 +497,7 @@ export default function GameUI({ modeId }: GameUIProps) {
           jeanQuestionText: "...",
           jeanQuestionDeadline: questionDeadline,
         }));
-        new Audio("/sounds/music/error-sound.wav").play().catch(() => {});
+        new Audio("/sounds/music/error-sound.wav").play().catch(() => { });
         setOpenApps((prev) => {
           const filtered = prev.filter((id) => id !== "distral");
           return [...filtered, "distral"];
@@ -548,21 +548,51 @@ export default function GameUI({ modeId }: GameUIProps) {
     if (shutdownPhase === 0) return;
 
     let timer: number;
+    const speedMultiplier = gameState.retryCount > 0 ? 0.25 : 1;
+
     switch (shutdownPhase) {
       case 1:
+        window.dispatchEvent(new Event("shutdown-triggered"));
+        new Audio("/sounds/music/app-close.mp3").play().catch(() => { });
         setOpenApps([]);
-        timer = window.setTimeout(() => setShutdownPhase(2), 800);
+        timer = window.setTimeout(() => setShutdownPhase(2), 600 * speedMultiplier);
         break;
       case 2:
-        timer = window.setTimeout(() => setShutdownPhase(3), 1000);
+        setTimeout(() => {
+          new Audio("/sounds/music/clsoing-everything.wav").play().catch(() => { });
+        }, 400 * speedMultiplier);
+        timer = window.setInterval(() => {
+          setHiddenIconCount((prev) => {
+            if (prev >= 6) { // 6 icons on desktop
+              clearInterval(timer);
+              setTimeout(() => setShutdownPhase(3), 400 * speedMultiplier);
+              return prev;
+            }
+            return prev + 1;
+          });
+        }, 150 * speedMultiplier);
         break;
       case 3:
-        timer = window.setTimeout(() => setShutdownPhase(4), 500);
+        timer = window.setTimeout(() => setShutdownPhase(4), 1000 * speedMultiplier);
         break;
       case 4:
-        timer = window.setTimeout(() => setShutdownPhase(5), 600);
+        timer = window.setInterval(() => {
+          setHideUIPhase((prev) => {
+            if (prev >= 5) {
+              clearInterval(timer);
+              setTimeout(() => setShutdownPhase(5), 1000 * speedMultiplier);
+              return prev;
+            }
+            return prev + 1;
+          });
+        }, 300 * speedMultiplier);
         break;
       case 5: {
+        new Audio("/sounds/music/game-over.wav").play().catch(() => { });
+        timer = window.setTimeout(() => setShutdownPhase(6), 1500 * speedMultiplier);
+        break;
+      }
+      case 6: {
         let charIndex = 0;
         timer = window.setInterval(() => {
           if (charIndex <= shutdownReason.length) {
@@ -576,16 +606,16 @@ export default function GameUI({ modeId }: GameUIProps) {
             charIndex++;
           } else {
             clearInterval(timer);
-            window.setTimeout(() => setShutdownPhase(6), 500);
+            window.setTimeout(() => setShutdownPhase(7), 500 * speedMultiplier);
           }
-        }, 70);
+        }, 70 * speedMultiplier);
         break;
       }
-      case 6:
+      case 7:
         break;
     }
     return () => clearInterval(timer);
-  }, [shutdownPhase, shutdownReason]);
+  }, [shutdownPhase, shutdownReason, gameState.retryCount]);
 
   const metrics = {
     efficiency: 75,
@@ -594,13 +624,13 @@ export default function GameUI({ modeId }: GameUIProps) {
   };
 
   return (
-    <div className={`relative h-screen overflow-hidden text-white transition-colors duration-1000 ${shutdownPhase >= 2 ? "bg-black" : ""}`} style={{ backgroundColor: shutdownPhase >= 2 ? "black" : "var(--semi-black)" }}>
-      <div className={`relative grid h-screen min-h-0 grid-rows-1 grid-cols-[minmax(0,3fr)_minmax(0,1fr)] gap-[1.6vh] p-[1.8vh] transition-opacity duration-1000 ${shutdownPhase >= 2 ? "opacity-0 pointer-events-none" : "opacity-100"}`}>
+    <div className={`relative h-screen overflow-hidden text-white transition-colors duration-1000 ${shutdownPhase >= 3 ? "bg-black" : ""}`} style={{ backgroundColor: shutdownPhase >= 3 ? "black" : "var(--semi-black)" }}>
+      <div className={`relative grid h-screen min-h-0 grid-rows-1 grid-cols-[minmax(0,3fr)_minmax(0,1fr)] gap-[1.6vh] p-[1.8vh] transition-opacity duration-[2000ms] ${shutdownPhase >= 5 ? "opacity-0 pointer-events-none" : "opacity-100"}`}>
         <DesktopSection
           profileName={profile.name}
           accent={profile.accent}
           openApps={openApps}
-          isShuttingDown={shutdownPhase >= 2}
+          isShuttingDown={shutdownPhase >= 3}
           onShutdown={triggerShutdown}
           onOpenApp={handleOpenApp}
           onCloseApp={handleCloseApp}
@@ -669,19 +699,19 @@ export default function GameUI({ modeId }: GameUIProps) {
         </div>
       )}
 
-      {shutdownPhase >= 4 && (
-        <div className="absolute inset-0 z-50 flex flex-col items-center justify-center p-8 pointer-events-none shutdown-screen-fade-in">
+      {shutdownPhase >= 5 && (
+        <div className="absolute inset-0 z-50 flex flex-col items-center justify-center p-8 pointer-events-none shutdown-screen-fade-in transition-opacity duration-[2000ms] opacity-100">
           <div className="flex flex-col items-center justify-center gap-8 max-w-2xl w-full pointer-events-auto">
             <h1 className="text-[#ff3333] tracking-[0.2em] font-bold text-6xl md:text-8xl" style={{ fontFamily: "'VCR OSD Mono', monospace", textShadow: "0 0 24px rgba(255,51,51,0.6), 0 0 48px rgba(255,51,51,0.3)" }}>
               SHUTDOWN
             </h1>
-            {shutdownPhase >= 5 && (
+            {shutdownPhase >= 6 && (
               <div className="text-white/80 text-xl md:text-2xl mt-4 min-h-12 tracking-wide text-center" style={{ fontFamily: "'VCR OSD Mono', monospace" }}>
                 {typedReason}
-                {shutdownPhase === 5 && <span className="animate-[blink_1s_step-end_infinite]">█</span>}
+                {shutdownPhase === 6 && <span className="animate-[blink_1s_step-end_infinite]">█</span>}
               </div>
             )}
-            {shutdownPhase >= 6 && (
+            {shutdownPhase >= 7 && (
               <div className="flex flex-col items-center gap-4">
                 <button
                   onClick={handleRetry}
