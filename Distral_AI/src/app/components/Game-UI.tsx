@@ -134,12 +134,8 @@ export default function GameUI({ modeId }: GameUIProps) {
   }, [shutdownPhase, gameState]);
 
   const handleRetry = useCallback(() => {
-<<<<<<< Updated upstream
     new Audio("/sounds/music/retry.wav").play().catch(() => { });
 
-    didOpenManagerEmailRef.current = false;
-=======
->>>>>>> Stashed changes
     lastMilestoneRef.current = -1;
     antoninShownRef.current = false;
     setAntoninNotificationVisible(false);
