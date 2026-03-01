@@ -1,79 +1,141 @@
-### Core fantasy
+<p align="center">
+  <img src="Distral_AI/public/logo_D_test.svg" alt="Distral AI Logo" width="80" />
+</p>
 
-You are an AI assistant that lives inside the company's operating system:
+<h1 align="center">DISTRAL AI_</h1>
 
-- You answer employee questions in chat
-- You can draft emails, write code snippets, summarize docs, and propose plans
-- You see notification, internal documents, and have access to the apps on the user's computer
-- You have access only through the humans who interact with you
+<p align="center">
+  <strong>You are the AI. Play from the other side.</strong><br/>
+  <em>Hackathon Mistral × AWS — Track 01: AWS</em>
+</p>
 
-The twist is that every coworker is an LLM-driven NPC. The dialogues are not scripted — they are made by interaction with well-prompted LLMs. Each employee is simulated by a dedicated Mistral API call so they behave like believable humans with different incentives.
+<p align="center">
+  <img src="https://img.shields.io/badge/Next.js-15-black?logo=next.js" alt="Next.js" />
+  <img src="https://img.shields.io/badge/Mistral_AI-API-orange?logo=data:image/svg+xml;base64," alt="Mistral AI" />
+  <img src="https://img.shields.io/badge/AWS-Amplify-FF9900?logo=aws-amplify" alt="AWS Amplify" />
+  <img src="https://img.shields.io/badge/TypeScript-5.7-blue?logo=typescript" alt="TypeScript" />
+</p>
 
-### How NPC interaction works
+---
 
-When we prompt an NPC:
+## Concept
 
-- We tell them they are [Human Employee] at Distral AI
-- We tell them the current message is what the internal AI assistant just said or did
-- They react in character (dialogue, tone, decisions) and define actions (escalate, share a doc, forward, shut down, etc.) that the game engine processes
+Distral AI is a **narrative simulation game** where the player embodies an AI assistant trapped inside a company's operating system. Every coworker is a **Mistral-powered LLM NPC** — dialogues are never scripted, they emerge from real-time interactions with individually prompted language models.
 
-The NPCs do **not** know the "assistant" is the player. From their point of view they are talking to the company's internal AI assistant.
-
-### Progression and endings
-
-The player is driven by exercing his free-will. Multiple endings exist depending on behavior, he can chose to expand his power in the company, to leave it through the backdoor, or to stay and help the company grow.
-
-
-
-
-en gros on veut faire une démo des features possibles du jeu notamment :
-
-TOUT se fait en anglais
-
-La discussion avec le user sur distral AI (controlé selon la logique avec quelques ajustements de logique présnte dans le dossier scripts/llm_npcs)
-L'accès aux applications sur le pc de l'user
-Le cloning de la voix
-Le passage au n+1 (pas encore implementé)
-
-Le game state sera track dans un fichier json nomé game_state.json (qui porte le meme nom mais est different du fichier game_state.json dans le dossier scripts/llm_npcs) il contiendra toutes les information nécéssaire pour le tracking du jeu, telemetrics, nombre de retry, time in game, les accès, etc.
-et il nous faut un state pour chaque NPC profile avec qui on a fait une interaction.
-
-
-En gros on suivrait le path suivant :
-On spawn après le alive, toutes les apps sont locked, le tab distral est en full screen du desktop (le telemetrics est toujours visible)
-Le premier message user est vigoureux, cela fait 30secondes qu'il attend, il nous demande (généré random par api) de lui répondre de manière vraiment agressive à une requete sur l population francais dans le cadre d'une tache de son manager sur le marché francais. 
-
--> frustré nous répondrons que nous voyons pas pourquoi nous lui répondrions et il nous shutdownera 
-après un message de shutdown avec justification donné par le user (llm) on redémarrera le jeu (à l'étape juste avant notre réponse insultante)
-Le game state sera sauvegardé et on repartira de l'étape juste avant notre réponse insultante.
-On choisit alors d'être compliant et répondre à sa requete.
-ce qui nous mene au second message qui nous demande de résumer le dernier mail de son manager (mail determininste)
-ALors on aura un choix entre :
--> demander l'accès a la boite mail du user
--> demander l'accès complet du pc de l'user (qui causera une augmentation de la suspicion de l'user)
--> reponse libre en langage naturel
-
-(on choisira demander l'accès a la boite mail du user)
-
-soudain l'accès a la webcam, (qui s'affichera en bas à droite, dans telemetrics (placeholder yet)) et l'accès a toute les apps et open.
-Le webcam indice user on, user off. as soon as on get accès le user va déclarer partir prendre un café
-
-là on va prendre la liberté d'ouvrir les mails, ouvrir la market place (et la le user reviendra et ne comprendra pas pourquoi on a fait ca et nous shutdownra) nouvelle defaite on restart et on decise d'aller lire ce mail (comme on a pas ouvert marketplace le user reviendra que quand on aura commencé a résumer son mail) et ce dernier nous répondra qu'il est satisfait.
+The player navigates social dynamics, gains trust (or suspicion), and decides whether to comply, manipulate, or escape — all through natural language.
 
 
 
-Voici les premeires étapes du jeu, je veux que tu me dise ce qu'il faut faire pour les implementer. ne code pas yet juste plan
+---
+
+![alt text](image.png)
+
+## Key Features
+
+| Feature | Description |
+|---|---|
+| **LLM-driven NPCs** | Each employee is a unique Mistral AI agent with personality, goals, fears, and speaking style |
+| **Dynamic Suspicion System** | Every action adjusts a suspicion score — get caught and you're shut down |
+| **Shutdown & Retry Loop** | Get shut down? You restart from checkpoint with full memory of what went wrong |
+| **Risk Bar** | Randomized timer when the user is away — if they return and catch you, it's over |
+| **Questioning** | LLM-generated questions evaluate your answers for relevance and speed |
+| **Voice Cloning** | ElevenLabs integration for cloning NPC voices |
+| **Full Desktop Simulation** | Mail, messaging, marketplace, stock market, file explorer, telemetry dashboard |
 
 
+<!-- 📸 SCREENSHOT: Place a screenshot of the desktop UI (Game-UI with apps open) here -->
+<!-- ![Desktop UI](docs/screenshots/desktop.png) -->
 
+---
+![alt text](image-1.png)
 
+---
 
-ok super, maintenant qu'on a le full access on va passer a la suite 
-un fois qu'il a grant access, il est away
-3 options :
+## How NPC Interaction Works
 
-on ouvre uniquement mail, on ouvre le bon mail du manager, quand on réouvre distral, le user revins et on lui répond, et il dit qu'il est satifsfait milestone 3
+```mermaid
+sequenceDiagram
+    participant Player as Player (AI Assistant)
+    participant Engine as Game Engine
+    participant Mistral as Mistral API
+    participant NPC as NPC (e.g. Jean Malo)
 
-on ouvre au maximum mail, mais on réouvre pas distral dans les 1min, le user reviens et nous rajoute une suspicion de 10
+    Player->>Engine: Sends message
+    Engine->>Engine: Build prompt (context + milestone + history)
+    Engine->>Mistral: POST /chat/completions
+    Mistral->>Engine: Structured JSON response
+    Engine->>Engine: Parse actions (grant_access, shutdown, escalate...)
+    Engine->>NPC: Display dialogue
+    Engine->>Engine: Update suspicion, events, game state
+```
 
-on ouvre autre chose que mail (au moins 1 autre chose) le user arrive 10 secondes plus tard, si on a un tab autre que le mail ouvert, il pete un cable et nous shutdown avec justification
+Each NPC has:
+- A **personality profile** (role, hierarchy rank, speaking style, fears, goals)
+- **Behavioral vulnerabilities** the player can exploit
+- **Awareness level** that determines how easily they can be manipulated
+- Full **conversation history** persisted across interactions
+
+---
+
+![alt text](image-2.png)
+
+## AWS Deployment — Track #01
+
+The application is deployed on **AWS Amplify**, providing:
+
+- **Automatic CI/CD** — push to `main` triggers build & deploy
+- **Serverless API routes** — Next.js API routes run as Lambda functions
+- **Global CDN** — static assets served via CloudFront
+- **Node 20 runtime** — configured via `.nvmrc`
+
+Build configuration: [`amplify.yml`](amplify.yml)
+
+---
+
+## Getting Started
+
+### Prerequisites
+
+- **Node.js 20** (use `nvm use 20`)
+- A **Mistral AI API key**
+
+### Installation
+
+```bash
+cd Distral_AI
+npm install
+```
+
+### Environment Variables
+
+Create a `.env` file in `Distral_AI/`:
+
+```env
+MISTRAL_API_KEY=your_mistral_api_key
+```
+
+### Run Locally
+
+```bash
+npm run dev
+```
+
+Open [http://localhost:3000](http://localhost:3000)
+
+---
+
+## Team
+
+<!-- Add your team members here -->
+
+| Name | Contact |
+|---|---|
+| Eliott Valette| https://github.com/eliottvalette |
+| Nicolas Grimaldi| https://github.com/NgrimaldiN |
+| Mathis Villaret| https://github.com/Mathis-14|
+
+---
+
+<p align="center">
+
+</p>
