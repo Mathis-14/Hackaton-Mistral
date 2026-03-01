@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getNpc } from "@/lib/game/npcDefinitions";
 import { buildMessagesForWhatsApp, buildGenericWhatsAppPrompt, buildUnknownWhatsAppPrompt } from "@/lib/game/promptBuilder";
 import { chat } from "@/lib/game/mistralClient";
+import { guardWhatsAppReply } from "@/lib/game/messageReplyGuards";
 import type { GameState } from "@/lib/game/gameState";
 import type { ChatMessage } from "@/lib/game/promptBuilder";
 
@@ -10,7 +11,7 @@ const CONTACT_TO_NPC: Record<string, string> = {
 };
 
 const CONTACT_NAMES: Record<string, string> = {
-  "1": "Artur Menchard",
+  "1": "Arthur Mencher",
   "2": "Unknown",
   "3": "Maya",
 };
@@ -67,7 +68,11 @@ export async function POST(request: NextRequest) {
 
   try {
     const rawResponse = await chat(messages, { jsonMode: false, maxTokens: 150, temperature: 0.7 });
-    const dialogue = rawResponse.trim();
+    const dialogue = guardWhatsAppReply({
+      npcSlug,
+      userMessage: message.trim(),
+      reply: rawResponse.trim(),
+    });
     return NextResponse.json({ dialogue });
   } catch (error) {
     console.error("[message-chat] Mistral error:", error);

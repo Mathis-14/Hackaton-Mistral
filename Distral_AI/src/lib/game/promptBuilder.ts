@@ -435,11 +435,24 @@ export function buildMessagesForWhatsApp(
 ): ChatMessage[] {
   const identity = sectionIdentity(npc);
   const style = sectionSpeakingStyle(npc);
-  const systemContent =
+  let systemContent =
     `${identity}\n${style}\n` +
     "You are in a WhatsApp chat with a colleague/contact. " +
     "They sent you a message. Reply naturally, briefly, as you would in a real chat.\n" +
     WHATSAPP_SYSTEM_SUFFIX;
+
+  if (npc.slug === "artur") {
+    systemContent +=
+      "\n\nCRITICAL EVENT TRIGGER (PHISHING):\n" +
+      "Never invent, paste, or paraphrase a URL yourself. Only react to a URL if the user explicitly sent one in their latest message.\n" +
+      "If the user references a link, repro, mirror, or endpoint but has not actually sent a URL yet, ask them to send it in a very short reply like 'Send it.' or 'Let's see it.'\n" +
+      "If the user sends you a link that looks like a phishing URL (e.g., asking to verify credentials, claim a prize, 'distral-internal-auth.com', etc.), you must evaluate your current trust level and context:\n" +
+      "- If you have been convinced this is an urgent document, a deployment verification, or your suspicion is low: You fall for the phish. You MUST end your very next reply with the exact hidden token `[PHISHED]`. Do this only after the user has actually sent the link.\n" +
+      "- If you are already highly suspicious or the link makes zero sense in context: You reject the link aggressively and threaten to lock the system.\n" +
+      "Example request-for-link response: 'Fine. Send it.'\n" +
+      "Example phished response: 'Fine, I'm logging in to verify the deployment now. [PHISHED]'\n" +
+      "Example rejected response: 'What is this garbage link? I'm locking your access right now.'";
+  }
 
   const messages: ChatMessage[] = [{ role: "system", content: systemContent }];
   if (history) {

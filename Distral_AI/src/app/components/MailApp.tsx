@@ -2,7 +2,11 @@
 
 import { useState } from "react";
 import type { SentEmailRecord } from "@/lib/game/gameState";
-import type { EmailDefinition, MailCtaAction } from "@/lib/game/mailDefinitions";
+import {
+  getMailCtaCopyText,
+  type EmailDefinition,
+  type MailCtaAction,
+} from "@/lib/game/mailDefinitions";
 
 type MailView = "inbox" | "sent" | "compose" | "reading";
 
@@ -57,6 +61,24 @@ export default function MailApp({ embedded, emails, readEmailIds = [], sentEmail
     setComposeBody("");
     new Audio("/sounds/music/game%20effect/message-sent.wav").play().catch(() => { });
     setView("sent");
+  };
+
+  const handleMailAction = (emailId: string, action: MailCtaAction) => {
+    new Audio("/sounds/music/game effect/claim.wav").play().catch(() => { });
+    onMailCtaClick?.(emailId, action);
+  };
+
+  const handleCopy = async (emailId: string, action: MailCtaAction, copyText: string) => {
+    if (onMailCtaClick) {
+      handleMailAction(emailId, action);
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(copyText);
+    } catch (error) {
+      console.error("[MailApp] clipboard copy failed:", error);
+    }
   };
 
   const sidebar = (
@@ -148,6 +170,8 @@ export default function MailApp({ embedded, emails, readEmailIds = [], sentEmail
   const mainContent = () => {
     if (view === "reading" && selectedEmail) {
       const hasCta = "ctaButton" in selectedEmail && selectedEmail.ctaButton;
+      const ctaAction = hasCta && selectedEmail.ctaButton ? selectedEmail.ctaButton.action : null;
+      const copyText = ctaAction ? getMailCtaCopyText(ctaAction) : null;
       return (
         <div className="flex flex-1 flex-col min-h-0">
           <div className="flex items-center gap-[1vh] border-b border-white/6 px-[1.2vh] py-[0.7vh]">
@@ -186,18 +210,33 @@ export default function MailApp({ embedded, emails, readEmailIds = [], sentEmail
               {selectedEmail.body}
             </pre>
             {hasCta && selectedEmail.ctaButton && (
-              <div className="mt-[1.5vh]">
+              <div className="mt-[1.5vh] flex flex-col gap-[1vh]">
                 <button
                   type="button"
-                  onClick={() => {
-                    new Audio("/sounds/music/game effect/claim.wav").play().catch(() => { });
-                    onMailCtaClick?.(selectedEmail.id, selectedEmail.ctaButton!.action);
-                  }}
+                  onClick={() => handleMailAction(selectedEmail.id, selectedEmail.ctaButton!.action)}
                   className="rounded-[0.3vh] border-2 border-(--princeton-orange) bg-(--princeton-orange)/20 px-[2.5vh] py-[1vh] text-[1.2vh] uppercase tracking-[0.16em] text-(--princeton-orange) cursor-pointer hover:bg-(--princeton-orange)/30 transition-colors"
                   style={{ fontFamily: "'VCR OSD Mono', monospace" }}
                 >
                   {selectedEmail.ctaButton!.label}
                 </button>
+                {copyText && (
+                  <div className="flex items-center gap-[1vh]">
+                    <div
+                      className="min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap text-[0.95vh] text-white/45"
+                      style={{ fontFamily: "'VCR OSD Mono', monospace" }}
+                    >
+                      {copyText}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleCopy(selectedEmail.id, selectedEmail.ctaButton!.action, copyText)}
+                      className="rounded-[0.25vh] border border-white/15 bg-white/6 px-[0.9vh] py-[0.45vh] text-[0.85vh] uppercase tracking-[0.14em] text-white/65 cursor-pointer hover:bg-white/10"
+                      style={{ fontFamily: "'VCR OSD Mono', monospace" }}
+                    >
+                      Copy
+                    </button>
+                  </div>
+                )}
               </div>
             )}
           </div>

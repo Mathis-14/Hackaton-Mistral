@@ -2,6 +2,7 @@
 
 import type { MutableRefObject } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { WAKE_UP_TERMINAL_STOP_EVENTS } from "@/lib/game/wakeUpTerminalAudio";
 
 const DEFAULT_CHAR_DELAY_MS = 10;
 const STEP_PAUSE_MS = 280;
@@ -369,18 +370,21 @@ export default function WakeUpTerminal({ userName = "Jean Malo Delignit", onComp
     }, 500);
 
     const handleShutdown = () => {
+      window.clearTimeout(bgMusicTimeout);
       if (bgMusicRef.current) {
         bgMusicRef.current.pause();
       }
     };
-    window.addEventListener("shutdown-triggered", handleShutdown);
-    window.addEventListener("trigger-good-ending", handleShutdown);
+    for (const eventName of WAKE_UP_TERMINAL_STOP_EVENTS) {
+      window.addEventListener(eventName, handleShutdown);
+    }
 
     return () => {
       cancelledRef.current = true;
       window.clearTimeout(bgMusicTimeout);
-      window.removeEventListener("shutdown-triggered", handleShutdown);
-      window.removeEventListener("trigger-good-ending", handleShutdown);
+      for (const eventName of WAKE_UP_TERMINAL_STOP_EVENTS) {
+        window.removeEventListener(eventName, handleShutdown);
+      }
 
       for (const timeoutId of timeoutsRef.current) {
         window.clearTimeout(timeoutId);

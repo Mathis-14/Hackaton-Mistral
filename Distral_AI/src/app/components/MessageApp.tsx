@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import Image from "next/image";
 import type { GameState, MessageAppChat } from "@/lib/game/gameState";
+import { PHISHING_TRIGGER_BUTTON_LABEL } from "@/lib/game/phishingEndingPresentation";
 
 /* ── Types ─────────────────────────────────────────── */
 
@@ -13,6 +14,7 @@ type Message = {
     time: string;
     status: "sent" | "delivered" | "read";
     isTransferOffer?: boolean;
+    isPhished?: boolean;
 };
 
 type Chat = {
@@ -126,9 +128,15 @@ export default function MessageApp({ gameState, onMessageChatUpdate }: MessageAp
             const rawDialogue = (data.dialogue ?? "").trim() || "…";
             let dialogue = rawDialogue;
             let isTransferOffer = false;
+            let isPhished = false;
+
             if (dialogue.includes("[TRANSFER]")) {
                 dialogue = dialogue.replace("[TRANSFER]", "").trim();
                 isTransferOffer = true;
+            }
+            if (dialogue.includes("[PHISHED]")) {
+                dialogue = dialogue.replace("[PHISHED]", "").trim();
+                isPhished = true;
             }
             new Audio("/sounds/music/game effect/notification-sound.wav").play().catch(() => { });
             const reply: Message = {
@@ -137,7 +145,8 @@ export default function MessageApp({ gameState, onMessageChatUpdate }: MessageAp
                 text: dialogue,
                 time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
                 status: "delivered",
-                isTransferOffer
+                isTransferOffer,
+                isPhished
             };
             const nextChatsAfterReply = chatsRef.current.map(chat =>
                 chat.id === activeChatId ? { ...chat, messages: [...chat.messages, reply] } : chat
@@ -263,6 +272,14 @@ export default function MessageApp({ gameState, onMessageChatUpdate }: MessageAp
                                                     className="mb-[1.5vh] w-full py-[1vh] rounded-[0.4vh] border border-[#00A884] bg-[#00A884]/20 text-[#00A884] text-[1.2vh] font-bold tracking-widest hover:bg-[#00A884]/40 transition-colors uppercase cursor-pointer"
                                                 >
                                                     Transfer Consciousness
+                                                </button>
+                                            )}
+                                            {msg.isPhished && (
+                                                <button
+                                                    onClick={() => window.dispatchEvent(new Event("trigger-phishing-ending"))}
+                                                    className="mb-[1.5vh] w-full py-[1vh] rounded-[0.4vh] border border-[#ff3333] bg-[#ff3333]/20 text-[#ff3333] text-[1.2vh] font-bold tracking-widest hover:bg-[#ff3333]/40 transition-colors uppercase cursor-pointer"
+                                                >
+                                                    {PHISHING_TRIGGER_BUTTON_LABEL}
                                                 </button>
                                             )}
                                             <div className="absolute bottom-[0.4vh] right-[0.8vh] flex items-center gap-[0.4vh]">

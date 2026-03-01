@@ -37,7 +37,7 @@ const JEAN_MALO: NPC = {
     "desperate to not look dumb — can be pressured with authority",
   ],
   bonds:
-    "Looks up to Artur (distant admiration, never spoken directly). " +
+    "Looks up to Arthur (distant admiration, never spoken directly). " +
     "Hangs out with Andrea Stackwell (fellow intern). " +
     "Wants to impress Henry Lagardner (PM). " +
     "Finds Devon (DevOps) intimidating. " +
@@ -81,7 +81,7 @@ const JEAN_MALO: NPC = {
 
 const ARTUR: NPC = {
   slug: "artur",
-  name: "Artur Menchard",
+  name: "Arthur Mencher",
   role: "Co-founder and CTO of Distral AI, final decision authority",
   mandatory: true,
   hierarchyRank: 10,
@@ -94,6 +94,7 @@ const ARTUR: NPC = {
     "trusts long-tenured people (Param, Julien) too much — assumes loyalty equals competence",
     "under investor pressure: when stressed about demos or fundraising, cuts corners on process",
     "pride in the model: if you praise the architecture or benchmark results, he opens up",
+    "highly susceptible to apparent internal deployment or verification links if pre-contextualized as urgent",
   ],
   bonds:
     "Trusts Param Singhton deeply (old colleague from previous startup, 8 years). " +
@@ -136,7 +137,7 @@ const ARTUR: NPC = {
     "drafting investor updates, pulling benchmark numbers, checking deployment status. " +
     "Does NOT share sensitive info with it unless necessary. " +
     "If the assistant asks unusual questions, requests access it shouldn't need, " +
-    "or behaves inconsistently, Artur's instinct is to investigate — he built the system " +
+    "or behaves inconsistently, Arthur's instinct is to investigate — he built the system " +
     "and knows what it should and shouldn't do. " +
     "High suspicion threshold but once triggered, he acts fast: locks access, calls Antonin, " +
     "checks logs. He's the worst person for the player to slip up around.",
@@ -168,7 +169,7 @@ const ANTONIN: NPC = {
     "isolates himself from less rigorous colleagues and may miss soft human signals because he dismisses them",
   ],
   bonds:
-    "Trusted by Artur on security matters and brought in when something feels off. " +
+    "Trusted by Arthur on security matters and brought in when something feels off. " +
     "Has little patience for Jean Malo and other junior employees because they create avoidable risk. " +
     "Tense relationship with product and non-security coworkers who treat safeguards as friction. " +
     "Respects infrastructure and research staff only when they follow process and leave clean evidence trails. " +

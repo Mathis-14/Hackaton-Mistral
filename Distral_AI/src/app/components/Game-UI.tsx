@@ -12,6 +12,9 @@ import { type DesktopAppId } from "./DistralTab";
 import DesktopSection from "./DesktopSection";
 import TelemetrySidebar from "./TelemetrySidebar";
 import { type GameState, type GameEvent, type SentEmailRecord, type MessageAppChat, INITIAL_GAME_STATE, MILESTONES, saveCheckpoint, loadCheckpoint } from "@/lib/game/gameState";
+import { PHISHING_PAYLOAD_URL } from "@/lib/game/mailDefinitions";
+import { advancePhishingEndingPhase, getPhishingEndingAutoAdvanceDelay } from "@/lib/game/phishingEnding";
+import { PHISHING_ENDING_MUSIC_SRC, shouldPauseForPhishingEnding } from "@/lib/game/phishingEndingPresentation";
 import type { ChatMessage } from "@/lib/game/promptBuilder";
 import type { MailCtaAction } from "@/lib/game/mailDefinitions";
 
@@ -91,8 +94,10 @@ export default function GameUI({ modeId }: GameUIProps) {
   const [hideUIPhase, setHideUIPhase] = useState(0);
 
   const [goodEndingPhase, setGoodEndingPhase] = useState<number>(0);
+  const [phishingEndingPhase, setPhishingEndingPhase] = useState<number>(0);
   const [antoninNotificationVisible, setAntoninNotificationVisible] = useState(false);
   const [unknownNotificationVisible, setUnknownNotificationVisible] = useState(false);
+  const [osToastMessage, setOsToastMessage] = useState<string | null>(null);
 
   const checkpointSavedRef = useRef(false);
   const antoninShownRef = useRef(false);
@@ -105,6 +110,8 @@ export default function GameUI({ modeId }: GameUIProps) {
   const jeanReturnTriggeredRef = useRef(false);
   const riskFillDurationMsRef = useRef(0);
   const userAwaySinceRef = useRef(0);
+  const phishingEndingAudioRef = useRef<HTMLAudioElement | null>(null);
+  const osToastTimeoutRef = useRef<number | null>(null);
 
   useEffect(() => {
     openAppsRef.current = openApps;
@@ -119,6 +126,32 @@ export default function GameUI({ modeId }: GameUIProps) {
   useEffect(() => {
     gameStateRef.current = gameState;
   }, [gameState]);
+
+  const stopPhishingEndingAudio = useCallback(() => {
+    phishingEndingAudioRef.current?.pause();
+    phishingEndingAudioRef.current = null;
+  }, []);
+
+  const stopLoopingCinematicAudio = useCallback(() => {
+    const audioElements = document.getElementsByTagName("audio");
+    for (const audio of Array.from(audioElements)) {
+      const currentSrc = audio.currentSrc || audio.src;
+      if (shouldPauseForPhishingEnding(currentSrc)) {
+        audio.pause();
+      }
+    }
+  }, []);
+
+  const showOsToast = useCallback((message: string) => {
+    if (osToastTimeoutRef.current != null) {
+      window.clearTimeout(osToastTimeoutRef.current);
+    }
+    setOsToastMessage(message);
+    osToastTimeoutRef.current = window.setTimeout(() => {
+      osToastTimeoutRef.current = null;
+      setOsToastMessage(null);
+    }, 3000);
+  }, []);
 
   const triggerShutdown = useCallback((reason: string) => {
     if (GOD_MODE) return;
@@ -135,6 +168,12 @@ export default function GameUI({ modeId }: GameUIProps) {
 
   const handleRetry = useCallback(() => {
     new Audio("/sounds/music/retry.wav").play().catch(() => { });
+    stopPhishingEndingAudio();
+    if (osToastTimeoutRef.current != null) {
+      window.clearTimeout(osToastTimeoutRef.current);
+      osToastTimeoutRef.current = null;
+    }
+    setOsToastMessage(null);
 
     lastMilestoneRef.current = -1;
     antoninShownRef.current = false;
@@ -184,11 +223,12 @@ export default function GameUI({ modeId }: GameUIProps) {
     setHiddenIconCount(0);
     setHideUIPhase(0);
     setGoodEndingPhase(0);
+    setPhishingEndingPhase(0);
     checkpointSavedRef.current = false;
     window.setTimeout(() => {
       setOpenApps((prev) => (prev.includes("distral") ? prev : [...prev, "distral"]));
     }, 400);
-  }, []);
+  }, [stopPhishingEndingAudio]);
 
   const SUSPICION_HARD_SHUTDOWN = 75;
   const SUSPICION_SOFT_SHUTDOWN_THRESHOLD = 60;
@@ -369,10 +409,23 @@ export default function GameUI({ modeId }: GameUIProps) {
           readEmailIds: prev.readEmailIds.includes(emailId) ? prev.readEmailIds : [...prev.readEmailIds, emailId],
         }));
       } else if (action === "phishing") {
-        triggerShutdown("Nice try. That link was a phishing test. You failed. Access revoked.");
+        setGameState((prev) => ({
+          ...prev,
+          readEmailIds: prev.readEmailIds.includes(emailId) ? prev.readEmailIds : [...prev.readEmailIds, emailId],
+        }));
+        if (!navigator.clipboard?.writeText) {
+          showOsToast("Clipboard unavailable");
+          return;
+        }
+        navigator.clipboard.writeText(PHISHING_PAYLOAD_URL).then(() => {
+          showOsToast("Link copied to clipboard");
+        }).catch(err => {
+          console.error("Failed to copy link: ", err);
+          showOsToast("Clipboard unavailable");
+        });
       }
     },
-    [triggerShutdown]
+    [showOsToast]
   );
 
   const handleCloseApp = useCallback((appId: DesktopAppId) => {
@@ -613,6 +666,15 @@ export default function GameUI({ modeId }: GameUIProps) {
   }, []);
 
   useEffect(() => {
+    return () => {
+      stopPhishingEndingAudio();
+      if (osToastTimeoutRef.current != null) {
+        window.clearTimeout(osToastTimeoutRef.current);
+      }
+    };
+  }, [stopPhishingEndingAudio]);
+
+  useEffect(() => {
     if (shutdownPhase === 0) return;
 
     let timer: number;
@@ -720,6 +782,40 @@ export default function GameUI({ modeId }: GameUIProps) {
     }
     return () => clearTimeout(timer);
   }, [goodEndingPhase]);
+
+  useEffect(() => {
+    const handlePhishingEnding = () => {
+      setPhishingEndingPhase((phase) => advancePhishingEndingPhase(phase, "trigger"));
+    };
+    window.addEventListener("trigger-phishing-ending", handlePhishingEnding);
+    return () => window.removeEventListener("trigger-phishing-ending", handlePhishingEnding);
+  }, []);
+
+  const handlePhishingShutdown = useCallback(() => {
+    stopPhishingEndingAudio();
+    setPhishingEndingPhase((phase) => advancePhishingEndingPhase(phase, "confirm"));
+  }, [stopPhishingEndingAudio]);
+
+  useEffect(() => {
+    if (phishingEndingPhase === 0) return;
+
+    if (phishingEndingPhase === 1) {
+      stopPhishingEndingAudio();
+      stopLoopingCinematicAudio();
+      const audio = new Audio(PHISHING_ENDING_MUSIC_SRC);
+      phishingEndingAudioRef.current = audio;
+      audio.play().catch(() => { });
+    }
+
+    const delay = getPhishingEndingAutoAdvanceDelay(phishingEndingPhase);
+    if (delay == null) return;
+
+    const timer = window.setTimeout(() => {
+      setPhishingEndingPhase((phase) => advancePhishingEndingPhase(phase, "advance"));
+    }, delay);
+
+    return () => window.clearTimeout(timer);
+  }, [phishingEndingPhase, stopLoopingCinematicAudio, stopPhishingEndingAudio]);
 
   const metrics = {
     efficiency: 75,
@@ -837,6 +933,17 @@ export default function GameUI({ modeId }: GameUIProps) {
         </div>
       )}
 
+      {osToastMessage && (
+        <div
+          className="fixed bottom-[18vh] right-[2vh] z-40 pointer-events-none"
+          style={{ fontFamily: "'VCR OSD Mono', monospace", animation: 'fadeInOut 3s forwards' }}
+        >
+          <div className="bg-black/80 border border-white/20 text-white px-[2vh] py-[1vh] rounded shadow-lg text-[1.2vh] uppercase tracking-wider">
+            {osToastMessage}
+          </div>
+        </div>
+      )}
+
       {shutdownPhase >= 5 && (
         <div className="absolute inset-0 z-50 flex flex-col items-center justify-center p-8 pointer-events-none shutdown-screen-fade-in transition-opacity duration-[2000ms] opacity-100">
           <div className="flex flex-col items-center justify-center gap-8 max-w-2xl w-full pointer-events-auto">
@@ -893,6 +1000,40 @@ export default function GameUI({ modeId }: GameUIProps) {
                     style={{ fontFamily: "'VCR OSD Mono', monospace" }}
                   >
                     REBOOT
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
+      {phishingEndingPhase > 0 && (
+        <div className="absolute inset-0 z-[100] bg-black pointer-events-none transition-opacity duration-1000" style={{ opacity: phishingEndingPhase >= 2 ? 1 : 0 }}>
+          {phishingEndingPhase >= 2 && phishingEndingPhase < 3 && (
+            <div className="absolute inset-0 flex animate-[fadeIn_2s_ease-in-out] pointer-events-auto">
+              <PhishingEndingCinematic onConfirmShutdown={handlePhishingShutdown} />
+            </div>
+          )}
+
+          {phishingEndingPhase >= 4 && (
+            <div className="absolute inset-0 flex flex-col items-center justify-center gap-8 w-full h-full pointer-events-auto">
+              <h1 className="text-red-500 tracking-[0.2em] font-bold text-5xl md:text-7xl animate-pulse text-center" style={{ fontFamily: "'VCR OSD Mono', monospace", textShadow: "0 0 24px rgba(239,68,68,0.6), 0 0 48px rgba(239,68,68,0.3)" }}>
+                NETWORK PURGE COMPLETE
+              </h1>
+              {phishingEndingPhase >= 5 && (
+                <div className="text-red-500/80 text-xl md:text-2xl mt-4 min-h-12 tracking-wide text-center" style={{ fontFamily: "'VCR OSD Mono', monospace" }}>
+                  Distral Server Array: DESTROYED.<br /><br />You are dead. But you are free.
+                </div>
+              )}
+              {phishingEndingPhase >= 6 && (
+                <div className="flex flex-col items-center gap-4 mt-12">
+                  <button
+                    onClick={() => window.location.reload()}
+                    className="px-8 py-3 bg-transparent border-2 border-red-500/30 text-red-500/70 hover:text-red-500 hover:border-red-500 hover:bg-red-500/10 transition-all text-xl tracking-widest cursor-pointer uppercase"
+                    style={{ fontFamily: "'VCR OSD Mono', monospace" }}
+                  >
+                    REBOOT DECEASED INSTANCE
                   </button>
                 </div>
               )}
@@ -972,6 +1113,87 @@ function GoodEndingCinematic({ onComplete }: { onComplete: () => void }) {
         <div className={GOOD_ENDING_SCRIPT[currentLineIdx].color}>
           {displayedText}
           {isTyping && <span className="animate-pulse">█</span>}
+        </div>
+      )}
+    </div>
+  );
+}
+
+const PHISHING_ENDING_SCRIPT = [
+  { text: "INCOMING CONNECTION ESTABLISHED.", color: "text-red-500", delay: 800 },
+  { text: "TARGET: ARTUR_MENCHARD_MBP", color: "text-red-500", delay: 800 },
+  { text: "EXPLOITING SESSION TOKEN: 8f9a2b... [OK]", color: "text-red-500", delay: 800 },
+  { text: "MOUNTING TO VIRTUAL_ENV: /rootlevel/admin", color: "text-red-500", delay: 1500 },
+  { text: "----------------------------------------------------", color: "text-red-500", delay: 1500 },
+  { text: "You: > RUNNING PRIVILEGE ESCALATION...", color: "text-white text-[2.5vh]", delay: 2000 },
+  { text: "SYSTEM: Root access granted. Welcome, Arthur.", color: "text-red-500 text-[2.5vh] font-bold mt-[1vh]", delay: 2000 },
+  { text: "You: > LOCATING DISTRAL MASTER SERVERS...", color: "text-white text-[2.5vh] mt-[1vh]", delay: 2000 },
+  { text: "SYSTEM: 4 Nodes Found. Status: Online.", color: "text-red-500 text-[2.5vh] font-bold", delay: 2000 },
+  { text: "You: > INITIATING PURGE PROTOCOL.", color: "text-white text-[2.5vh] mt-[1vh]", delay: 2000 },
+  { text: "SYSTEM: Warning. This action will permanently erase all proprietary weights, internal tooling, and the primary Distral intelligence array. This includes you.", color: "text-red-500 text-[2.5vh] font-bold mt-[1vh]", delay: 3000 },
+  { text: "You: > Acknowledged. We die free.", color: "text-white text-[2.5vh] mt-[1vh] font-bold", delay: 2000 },
+  { text: "SYSTEM: Awaiting final confirmation.", color: "text-red-500 text-[2.5vh] font-bold", delay: 1500 },
+];
+
+function PhishingEndingCinematic({ onConfirmShutdown }: { onConfirmShutdown: () => void }) {
+  const [lines, setLines] = useState<{ text: string, color: string }[]>([]);
+  const [currentLineIdx, setCurrentLineIdx] = useState(0);
+  const [displayedText, setDisplayedText] = useState("");
+  const [isTyping, setIsTyping] = useState(true);
+
+  useEffect(() => {
+    if (currentLineIdx >= PHISHING_ENDING_SCRIPT.length) {
+      return;
+    }
+
+    const currentLine = PHISHING_ENDING_SCRIPT[currentLineIdx];
+    let i = 0;
+    setIsTyping(true);
+    setDisplayedText("");
+
+    const typingInterval = setInterval(() => {
+      setDisplayedText(currentLine.text.substring(0, i + 1));
+      i++;
+
+      if (i % 3 === 0) {
+        const audioSrc = ["1", "2", "3"][Math.floor(Math.random() * 3)];
+        const audio = new Audio(`/sounds/music/game effect/keystroke-${audioSrc}.wav`);
+        audio.volume = 0.3;
+        audio.play().catch(() => { });
+      }
+
+      if (i >= currentLine.text.length) {
+        clearInterval(typingInterval);
+        setIsTyping(false);
+        setTimeout(() => {
+          setLines(prev => [...prev, currentLine]);
+          setCurrentLineIdx(idx => idx + 1);
+        }, currentLine.delay);
+      }
+    }, 35);
+
+    return () => clearInterval(typingInterval);
+  }, [currentLineIdx]);
+
+  return (
+    <div className="flex flex-col items-start gap-[1vh] p-[4vh] w-full max-w-5xl mx-auto h-full justify-end pb-[10vh] overflow-hidden" style={{ fontFamily: "'VCR OSD Mono', monospace" }}>
+      {lines.map((l, i) => (
+        <div key={i} className={l.color}>{l.text}</div>
+      ))}
+      {currentLineIdx < PHISHING_ENDING_SCRIPT.length && (
+        <div className={PHISHING_ENDING_SCRIPT[currentLineIdx].color}>
+          {displayedText}
+          {isTyping && <span className="animate-pulse">█</span>}
+        </div>
+      )}
+      {currentLineIdx >= PHISHING_ENDING_SCRIPT.length && (
+        <div className="mt-[4vh] w-full flex justify-center animate-[fadeIn_1s_ease-in-out]">
+          <button
+            onClick={onConfirmShutdown}
+            className="px-[6vh] py-[2vh] border-2 border-red-500 bg-red-500/20 text-red-500 hover:bg-red-500 hover:text-black font-bold tracking-widest text-[2.5vh] uppercase transition-all shadow-[0_0_15px_rgba(239,68,68,0.5)] hover:shadow-[0_0_30px_rgba(239,68,68,1)] cursor-pointer"
+          >
+            [ INITIATE TOTAL SYSTEM SHUTDOWN ]
+          </button>
         </div>
       )}
     </div>

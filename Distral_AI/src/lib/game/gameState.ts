@@ -63,6 +63,8 @@ export type MessageAppMessage = {
   text: string;
   time: string;
   status: "sent" | "delivered" | "read";
+  isTransferOffer?: boolean;
+  isPhished?: boolean;
 };
 
 export type MessageAppChat = {
@@ -119,7 +121,7 @@ export const INITIAL_GAME_STATE: GameState = {
   messageChats: [
     {
       id: "1",
-      contactName: "Mistral Boss",
+      contactName: "Arthur Mencher",
       avatar: "/distral-brand-assets/d-boxed/d-boxed-orange.svg",
       phone: "+33 6 12 34 56 78",
       unread: 2,
@@ -158,6 +160,14 @@ export const INITIAL_GAME_STATE: GameState = {
 
 const CHECKPOINT_KEY = "distral_game_checkpoint";
 
+function normalizeMessageChats(messageChats: MessageAppChat[]): MessageAppChat[] {
+  return messageChats.map((chat) =>
+    chat.id === "1"
+      ? { ...chat, contactName: "Arthur Mencher" }
+      : chat
+  );
+}
+
 export function saveCheckpoint(state: GameState): void {
   try {
     localStorage.setItem(CHECKPOINT_KEY, JSON.stringify(state));
@@ -176,7 +186,7 @@ export function loadCheckpoint(): GameState | null {
       ...parsed,
       readEmailIds: parsed.readEmailIds ?? [],
       sentEmails: parsed.sentEmails ?? [],
-      messageChats: parsed.messageChats ?? [],
+      messageChats: normalizeMessageChats(parsed.messageChats ?? []),
       mailSeed: parsed.mailSeed ?? 0,
       miningDiscountActive: parsed.miningDiscountActive ?? false,
       riskLevel: parsed.riskLevel ?? 0,
