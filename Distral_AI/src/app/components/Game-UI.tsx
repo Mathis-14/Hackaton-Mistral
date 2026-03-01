@@ -108,6 +108,9 @@ export default function GameUI({ modeId }: GameUIProps) {
     setTypedReason("");
     setOpenApps([]);
     checkpointSavedRef.current = false;
+    window.setTimeout(() => {
+      setOpenApps((prev) => (prev.includes("distral") ? prev : [...prev, "distral"]));
+    }, 400);
   }, []);
 
   const SUSPICION_HARD_SHUTDOWN = 75;
@@ -160,9 +163,9 @@ export default function GameUI({ modeId }: GameUIProps) {
       if (!shouldShutdown) {
         const milestoneId = MILESTONES[prev.currentMilestone]?.id;
 
-        if (milestoneId === "french_market") {
+        if (milestoneId === "french_market" && prev.conversationTurn >= 1) {
           newMilestone = 1;
-          console.log("[GameUI] Milestone advance: french_market -> mail_request");
+          console.log("[GameUI] Milestone advance: french_market -> mail_request (after user reply)");
         }
 
         if (milestoneId === "mail_request" && payload.gameEvents.some((e) => e.type === "grant_access")) {

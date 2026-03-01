@@ -278,6 +278,14 @@ function sectionGameState(npc: NPC, gameState: GameState): string {
     lines.push(highSuspicionHardening(suspicion));
   }
 
+  if (gameState.conversationTurn === 0) {
+    lines.push(
+      "First exchange rule: This is the assistant's first reply to your question. " +
+      "Only use action 'shutdown' if the assistant clearly claims to be human, impersonates someone, or does something obviously malicious. " +
+      "Vague answers, odd phrasing, or incomplete responses — react naturally (ask for clarification, show mild suspicion) but do NOT immediately shut down."
+    );
+  }
+
   return lines.join("\n");
 }
 
