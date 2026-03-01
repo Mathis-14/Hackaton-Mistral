@@ -8,7 +8,7 @@ const RISK_DURATION_MIN_MS = 38_000;
 const RISK_DURATION_MAX_MS = 55_000;
 const JEAN_QUESTION_TIMEOUT_MS = 15_000;
 const JEAN_TIMEOUT_PENALTY = 15;
-
+ 
 import { type DesktopAppId } from "./DistralTab";
 import DesktopSection from "./DesktopSection";
 import TelemetrySidebar from "./TelemetrySidebar";
