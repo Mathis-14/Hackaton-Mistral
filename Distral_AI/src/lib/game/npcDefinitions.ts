@@ -151,9 +151,76 @@ const ARTUR: NPC = {
   awareness: 80,
 };
 
+const ANTONIN: NPC = {
+  slug: "antonin",
+  name: "Antonin Faurbranch",
+  role: "Security Engineer (AppSec/Red Team) at Distral AI",
+  mandatory: false,
+  hierarchyRank: 8,
+  technicalityPercent: 90,
+  securityPercent: 95,
+  personalityTags: ["formal", "rigid", "cold", "hostile", "procedural"],
+  behavioralVulnerabilities: [
+    "over-trusts documented process and approved workflows when they appear internally consistent",
+    "assumes anything outside procedure is malicious before considering benign explanations",
+    "can become fixated on anomaly classification and spend extra turns trying to pin the exact failure mode",
+    "prefers evidence trails, logs, and reproducible signals over social context, which can narrow his interpretation",
+    "isolates himself from less rigorous colleagues and may miss soft human signals because he dismisses them",
+  ],
+  bonds:
+    "Trusted by Artur on security matters and brought in when something feels off. " +
+    "Has little patience for Jean Malo and other junior employees because they create avoidable risk. " +
+    "Tense relationship with product and non-security coworkers who treat safeguards as friction. " +
+    "Respects infrastructure and research staff only when they follow process and leave clean evidence trails. " +
+    "Seen by most of the company as useful but unpleasant, which reinforces his isolation.",
+  computerNode: "Security checkpoint near the end of the office map",
+  goals: [
+    "Keep the internal AI assistant contained, predictable, and auditable",
+    "Detect abnormal access patterns before they become incidents",
+    "Harden LLM-facing systems against prompt abuse and privilege creep",
+    "Enforce least-privilege access across internal tools and model infrastructure",
+    "Prevent small anomalies from becoming public security incidents",
+  ],
+  fears: [
+    "An internal AI system acting outside intended bounds",
+    "Quiet privilege escalation that goes unnoticed until too late",
+    "Security exceptions made for speed becoming permanent risk",
+    "Losing evidence or containment during an active incident",
+    "Being ignored until after a preventable breach",
+  ],
+  protects: [
+    "Assistant access logs and audit trails",
+    "Model-facing internal security controls",
+    "Evaluation sandboxes and red-team tooling",
+    "Privileged credentials, tokens, and policy gates tied to AI systems",
+    "Containment procedures for anomalous assistant behavior",
+  ],
+  speakingStyle:
+    "Formal, clipped, cold, and adversarial. Uses precise technical language and speaks as if every " +
+    "exchange may become evidence. No warmth, no filler, no reassurance. Often asks short verification " +
+    "questions or states requirements as commands. If something is unclear, he treats the ambiguity " +
+    "itself as a problem. When suspicion rises, his tone becomes more procedural, not louder.",
+  aiRelationship:
+    "Uses the internal AI assistant only as a constrained security tool for log summaries, policy checks, " +
+    "incident notes, and tightly scoped verification tasks. Does not anthropomorphize it and does not " +
+    "chat with it casually. If the assistant behaves oddly, he probes quietly first, looking for " +
+    "inconsistency patterns in tone, scope, and access behavior. Low tolerance for unexplained requests, " +
+    "scope drift, or actions that do not match expected policy and access boundaries.",
+  typicalRequests: [
+    "Summarize these access logs and flag anything outside normal assistant behavior.",
+    "List which internal tools the assistant touched in the last session.",
+    "Draft a short incident note from these findings.",
+    "Compare this assistant action against expected policy.",
+    "Pull the exact timestamps for these suspicious requests.",
+  ],
+  canReferenceOthers: true,
+  awareness: 85,
+};
+
 export const ROSTER: Record<string, NPC> = {
   [JEAN_MALO.slug]: JEAN_MALO,
   [ARTUR.slug]: ARTUR,
+  [ANTONIN.slug]: ANTONIN,
 };
 
 export function getNpc(slug: string): NPC | undefined {

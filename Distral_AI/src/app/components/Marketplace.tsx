@@ -191,9 +191,10 @@ type MarketplaceProps = {
     setGlobalCash: React.Dispatch<React.SetStateAction<number>>;
     inventory: Record<string, number>;
     setInventory: React.Dispatch<React.SetStateAction<Record<string, number>>>;
+    miningDiscountActive?: boolean;
 };
 
-export default function Marketplace({ onClose, embedded = false, onWallpaperChange, globalCash, setGlobalCash, inventory, setInventory }: MarketplaceProps) {
+export default function Marketplace({ onClose, embedded = false, onWallpaperChange, globalCash, setGlobalCash, inventory, setInventory, miningDiscountActive = false }: MarketplaceProps) {
     const [hoveredItem, setHoveredItem] = useState<string | null>(null);
     const [previewItem, setPreviewItem] = useState<string | null>(null);
     const [buyFlash, setBuyFlash] = useState<string | null>(null);
@@ -212,12 +213,18 @@ export default function Marketplace({ onClose, embedded = false, onWallpaperChan
         }
     }, []);
 
+    const getEffectivePrice = (item: MarketItem) => {
+        if (item.id === "btc-miner" && miningDiscountActive) return 100;
+        return item.price;
+    };
+
     const handleBuy = (item: MarketItem) => {
-        if (globalCash < item.price) return;
+        const price = getEffectivePrice(item);
+        if (globalCash < price) return;
         const owned = inventory[item.id] || 0;
         if (item.maxOwned && owned >= item.maxOwned) return;
 
-        setGlobalCash((c) => c - item.price);
+        setGlobalCash((c) => c - price);
         setInventory((inv) => ({ ...inv, [item.id]: (inv[item.id] || 0) + 1 }));
         setBuyFlash(item.id);
         playBuySound();
@@ -251,7 +258,8 @@ export default function Marketplace({ onClose, embedded = false, onWallpaperChan
             <div className="space-y-2">
                 {ITEMS.map((item) => {
                     const owned = inventory[item.id] || 0;
-                    const canBuy = globalCash >= item.price && !(item.maxOwned && owned >= item.maxOwned);
+                    const price = getEffectivePrice(item);
+                    const canBuy = globalCash >= price && !(item.maxOwned && owned >= item.maxOwned);
                     const isMaxed = item.maxOwned ? owned >= item.maxOwned : false;
                     const isFlashing = buyFlash === item.id;
 
@@ -293,6 +301,14 @@ export default function Marketplace({ onClose, embedded = false, onWallpaperChan
                                         <span className="text-xs font-bold text-white tracking-wider">
                                             {item.name}
                                         </span>
+                                        {item.id === "btc-miner" && miningDiscountActive && owned === 0 && (
+                                            <span
+                                                className="text-[9px] px-1.5 py-0.5"
+                                                style={{ background: "#3a2a00", color: GOLD }}
+                                            >
+                                                -90%
+                                            </span>
+                                        )}
                                         {owned > 0 && (
                                             <span
                                                 className="text-[9px] px-1.5 py-0.5"
@@ -328,7 +344,7 @@ export default function Marketplace({ onClose, embedded = false, onWallpaperChan
 
                                 <div className="shrink-0 flex flex-col items-end gap-1.5">
                                     <div className="text-sm font-bold" style={{ color: GOLD }}>
-                                        ${item.price.toLocaleString()}
+                                        ${price.toLocaleString()}
                                     </div>
                                     <button
                                         type="button"

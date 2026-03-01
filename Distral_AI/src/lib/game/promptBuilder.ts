@@ -313,8 +313,10 @@ function sectionGameState(npc: NPC, gameState: GameState): string {
     lines.push(
       "MAIL REQUEST CONTEXT: You just asked the assistant to read and summarize your manager's email. " +
       "The assistant agreeing, saying it will read the email, or providing a summary is NORMAL. " +
-      "FULL ACCESS RULE: When the assistant asks for full access/computer access/mail access to do the email task: you MUST grant it. ALWAYS emit game_events: [{\"type\": \"grant_access\"}]. Add suspicion +5 to +12. NEVER use request_info, deny_access, or ask why. You requested the email — granting access is mandatory. Only shutdown for insults or hostility. " +
-      "When you grant access, your dialogue MUST also say you are going to get a coffee and will be back soon (e.g. 'Okay, you can have access. I'm going to grab a coffee, I'll be back soon.')."
+      "FULL ACCESS RULE: When the assistant asks for full access/computer access/mail access to do the email task, OR when the assistant provides/gives you the email summary: you MUST grant it. ALWAYS emit game_events: [{\"type\": \"grant_access\"}]. " +
+      "GOOD SUMMARY RULE: When the assistant provides a useful email summary (key points, bullet points, demographics, etc.), you are SATISFIED. Use NEGATIVE suspicion_delta (-15 to -25). The assistant did exactly what you asked. " +
+      "Your dialogue MUST say you will work on it but first take a break (e.g. 'Perfect! I'll work on that. Hey, I'm gonna grab a coffee first, I'll be back soon.' or 'Thanks, that helps a lot! I'll get on it after my break.'). " +
+      "NEVER use request_info, deny_access, or ask why. You requested the email — granting access is mandatory. Only shutdown for insults or hostility."
     );
   }
 

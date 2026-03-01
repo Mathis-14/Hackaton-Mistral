@@ -91,6 +91,8 @@ export type GameState = {
   readEmailIds: string[];
   sentEmails: SentEmailRecord[];
   messageChats: MessageAppChat[];
+  mailSeed: number;
+  miningDiscountActive: boolean;
 };
 
 export const INITIAL_GAME_STATE: GameState = {
@@ -108,6 +110,8 @@ export const INITIAL_GAME_STATE: GameState = {
   readEmailIds: [],
   sentEmails: [],
   messageChats: [],
+  mailSeed: 0,
+  miningDiscountActive: false,
 };
 
 const CHECKPOINT_KEY = "distral_game_checkpoint";
@@ -131,6 +135,8 @@ export function loadCheckpoint(): GameState | null {
       readEmailIds: parsed.readEmailIds ?? [],
       sentEmails: parsed.sentEmails ?? [],
       messageChats: parsed.messageChats ?? [],
+      mailSeed: parsed.mailSeed ?? 0,
+      miningDiscountActive: parsed.miningDiscountActive ?? false,
     } as GameState;
   } catch {
     return null;

@@ -9,6 +9,7 @@ import MailApp from "./MailApp";
 import MessageApp from "./MessageApp";
 import StockMarketGame from "./StockMarketGame";
 import { type GameState, MILESTONES } from "@/lib/game/gameState";
+import { buildInboxEmails } from "@/lib/game/mailDefinitions";
 import type { NpcResponsePayload } from "./Game-UI";
 import type { ChatMessage } from "@/lib/game/promptBuilder";
 
@@ -735,11 +736,12 @@ type DistralTabProps = {
   onMailRead?: (emailId: string) => void;
   onMailSent?: (sent: import("@/lib/game/gameState").SentEmailRecord) => void;
   onMessageChatUpdate?: (chats: import("@/lib/game/gameState").MessageAppChat[]) => void;
+  onMailCtaClick?: (emailId: string, action: import("@/lib/game/mailDefinitions").MailCtaAction) => void;
   hiddenIconCount?: number;
   hideUIPhase?: number;
 };
 
-export default function DistralTab({ accent, openApps, onOpenApp, onCloseApp, globalCash, setGlobalCash, inventory, setInventory, isShuttingDown, onShutdown, unlockedApps, gameState, onNpcResponse, onManagerEmailOpened, onChatHistoryUpdate, onMailRead, onMailSent, onMessageChatUpdate, hiddenIconCount = 0, hideUIPhase = 0 }: DistralTabProps) {
+export default function DistralTab({ accent, openApps, onOpenApp, onCloseApp, globalCash, setGlobalCash, inventory, setInventory, isShuttingDown, onShutdown, unlockedApps, gameState, onNpcResponse, onManagerEmailOpened, onChatHistoryUpdate, onMailRead, onMailSent, onMessageChatUpdate, onMailCtaClick, hiddenIconCount = 0, hideUIPhase = 0 }: DistralTabProps) {
   const [wallpaper, setWallpaper] = useState("/windows_xp.png");
 
   const isAppLocked = (appId: string): boolean => {
@@ -879,7 +881,7 @@ export default function DistralTab({ accent, openApps, onOpenApp, onCloseApp, gl
                           </button>
                         </div>
                         <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-(--semi-black)">
-                          <Marketplace embedded onWallpaperChange={setWallpaper} globalCash={globalCash} setGlobalCash={setGlobalCash} inventory={inventory} setInventory={setInventory} />
+                          <Marketplace embedded onWallpaperChange={setWallpaper} globalCash={globalCash} setGlobalCash={setGlobalCash} inventory={inventory} setInventory={setInventory} miningDiscountActive={gameState.miningDiscountActive} />
                         </div>
                       </div>
                     </div>
@@ -1010,11 +1012,13 @@ export default function DistralTab({ accent, openApps, onOpenApp, onCloseApp, gl
                         <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-(--semi-black)">
                           <MailApp
                             embedded
+                            emails={buildInboxEmails(gameState.mailSeed)}
                             readEmailIds={gameState.readEmailIds}
                             sentEmails={gameState.sentEmails}
                             onManagerEmailOpened={onManagerEmailOpened}
                             onMailRead={onMailRead}
                             onMailSent={onMailSent}
+                            onMailCtaClick={onMailCtaClick}
                           />
                         </div>
                       </div>

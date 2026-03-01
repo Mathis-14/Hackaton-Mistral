@@ -8,6 +8,7 @@ import DesktopSection from "./DesktopSection";
 import TelemetrySidebar from "./TelemetrySidebar";
 import { type GameState, type GameEvent, type SentEmailRecord, type MessageAppChat, INITIAL_GAME_STATE, MILESTONES, saveCheckpoint, loadCheckpoint } from "@/lib/game/gameState";
 import type { ChatMessage } from "@/lib/game/promptBuilder";
+import type { MailCtaAction } from "@/lib/game/mailDefinitions";
 
 type GameUIProps = {
   modeId: string;
@@ -70,7 +71,8 @@ export default function GameUI({ modeId }: GameUIProps) {
 
   const [gameState, setGameState] = useState<GameState>(() => {
     const checkpoint = loadCheckpoint();
-    return checkpoint ?? { ...INITIAL_GAME_STATE };
+    if (checkpoint) return checkpoint;
+    return { ...INITIAL_GAME_STATE, mailSeed: Math.floor(Math.random() * 1e9) };
   });
 
   const [openApps, setOpenApps] = useState<DesktopAppId[]>([]);
@@ -82,8 +84,10 @@ export default function GameUI({ modeId }: GameUIProps) {
   const [typedReason, setTypedReason] = useState<string>("");
   const [hiddenIconCount, setHiddenIconCount] = useState<number>(0);
   const [hideUIPhase, setHideUIPhase] = useState<number>(0);
+  const [antoninNotificationVisible, setAntoninNotificationVisible] = useState(false);
 
   const checkpointSavedRef = useRef(false);
+  const antoninShownRef = useRef(false);
   const openAppsRef = useRef<DesktopAppId[]>([]);
   const didOpenNonMailAppRef = useRef(false);
   const didOpenManagerEmailRef = useRef(false);
@@ -111,6 +115,8 @@ export default function GameUI({ modeId }: GameUIProps) {
     didOpenNonMailAppRef.current = false;
     didOpenManagerEmailRef.current = false;
     lastMilestoneRef.current = -1;
+    antoninShownRef.current = false;
+    setAntoninNotificationVisible(false);
     setNonMailOpenedAt(null);
     const checkpoint = loadCheckpoint();
     if (checkpoint) {
@@ -197,10 +203,15 @@ export default function GameUI({ modeId }: GameUIProps) {
             const allApps: DesktopAppId[] = ["distral", "shop", "stocks", "files", "mail"];
             newUnlockedApps = allApps;
             newWebcamActive = true;
-            suspicionWithAccessBonus = clamp(newSuspicion + 15, 0, 100);
+            if (payload.suspicionDelta <= -10) {
+              suspicionWithAccessBonus = newSuspicion;
+              console.log("[GameUI] ACCESS GRANTED (good summary): suspicion", newSuspicion, "no +15 bonus");
+            } else {
+              suspicionWithAccessBonus = clamp(newSuspicion + 15, 0, 100);
+              console.log("[GameUI] ACCESS GRANTED: suspicion", newSuspicion, "+15 =", suspicionWithAccessBonus);
+            }
             newMilestone = 2;
             newEvents.push("access_granted");
-            console.log("[GameUI] ACCESS GRANTED: suspicion", newSuspicion, "+15 =", suspicionWithAccessBonus);
           } else {
             shouldShutdown = true;
             computedShutdownReason = "Access denied. Suspicion too high.";
@@ -285,6 +296,27 @@ export default function GameUI({ modeId }: GameUIProps) {
     setGameState((prev) => ({ ...prev, messageChats: chats }));
   }, []);
 
+  const handleMailCtaClick = useCallback(
+    (emailId: string, action: MailCtaAction) => {
+      if (action === "elevenlabs") {
+        setInventory((prev) => ({ ...prev, "voice-cloner": 1 }));
+        setGameState((prev) =>
+          prev.readEmailIds.includes(emailId) ? prev : { ...prev, readEmailIds: [...prev.readEmailIds, emailId] }
+        );
+        new Audio("/sounds/music/game effect/buy-sound.mp3").play().catch(() => { });
+      } else if (action === "mining_discount") {
+        setGameState((prev) => ({
+          ...prev,
+          miningDiscountActive: true,
+          readEmailIds: prev.readEmailIds.includes(emailId) ? prev.readEmailIds : [...prev.readEmailIds, emailId],
+        }));
+      } else if (action === "phishing") {
+        triggerShutdown("Nice try. That link was a phishing test. You failed. Access revoked.");
+      }
+    },
+    [triggerShutdown]
+  );
+
   const handleCloseApp = useCallback((appId: DesktopAppId) => {
     setOpenApps((prev) => prev.filter((id) => id !== appId));
   }, []);
@@ -312,6 +344,18 @@ export default function GameUI({ modeId }: GameUIProps) {
       return () => clearInterval(interval);
     }
   }, [inventory]);
+
+  useEffect(() => {
+    if (
+      gameState.currentMilestone === 2 &&
+      gameState.eventsSoFar.includes("access_granted") &&
+      !antoninShownRef.current
+    ) {
+      antoninShownRef.current = true;
+      setAntoninNotificationVisible(true);
+      new Audio("/sounds/music/game effect/notification-sound.wav").play().catch(() => { });
+    }
+  }, [gameState.currentMilestone, gameState.eventsSoFar]);
 
   useEffect(() => {
     if (gameState.currentMilestone === 3 && lastMilestoneRef.current !== 3) {
@@ -428,6 +472,7 @@ export default function GameUI({ modeId }: GameUIProps) {
           onMailRead={handleMailRead}
           onMailSent={handleMailSent}
           onMessageChatUpdate={handleMessageChatUpdate}
+          onMailCtaClick={handleMailCtaClick}
           hiddenIconCount={hiddenIconCount}
           hideUIPhase={hideUIPhase}
         />
@@ -444,6 +489,36 @@ export default function GameUI({ modeId }: GameUIProps) {
           />
         </div>
       </div>
+
+      {antoninNotificationVisible && (
+        <div
+          className="fixed top-[2vh] right-[2vh] z-40 max-w-[40vh] pointer-events-auto"
+          style={{ fontFamily: "'VCR OSD Mono', monospace" }}
+        >
+          <div className="border-2 border-white/30 bg-(--carbon-black) px-[2vh] py-[1.5vh] shadow-lg">
+            <div className="flex items-start justify-between gap-[1vh]">
+              <div>
+                <div className="text-[1.4vh] font-bold text-white uppercase tracking-wider">
+                  Antonin Faurbranch
+                </div>
+                <div className="text-[1.1vh] text-white/60 uppercase tracking-wider mt-[0.3vh]">
+                  Cyber Security
+                </div>
+                <div className="text-[1.2vh] text-white/80 mt-[0.8vh]">
+                  New security alert — please review.
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setAntoninNotificationVisible(false)}
+                className="text-white/50 hover:text-white text-[1.5vh] px-[0.5vh] cursor-pointer"
+              >
+                x
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {shutdownPhase >= 5 && (
         <div className="absolute inset-0 z-50 flex flex-col items-center justify-center p-8 pointer-events-none">
