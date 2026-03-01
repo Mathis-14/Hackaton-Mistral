@@ -84,7 +84,7 @@ const INITIAL_EMAILS: Email[] = [
 
 /* ── Component ─────────────────────────────────────── */
 
-export default function MailApp({ embedded }: { embedded?: boolean }) {
+export default function MailApp({ embedded, onManagerEmailOpened }: { embedded?: boolean; onManagerEmailOpened?: () => void }) {
     const [view, setView] = useState<MailView>("inbox");
     const [emails, setEmails] = useState<Email[]>(INITIAL_EMAILS);
     const [sentEmails, setSentEmails] = useState<Email[]>([]);
@@ -101,6 +101,7 @@ export default function MailApp({ embedded }: { embedded?: boolean }) {
         );
         setSelectedEmail({ ...email, read: true });
         setView("reading");
+        if (email.id === "0") onManagerEmailOpened?.();
     };
 
     const sendEmail = () => {

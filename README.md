@@ -68,3 +68,12 @@ Voici les premeires étapes du jeu, je veux que tu me dise ce qu'il faut faire p
 
 
 
+ok super, maintenant qu'on a le full access on va passer a la suite 
+un fois qu'il a grant access, il est away
+3 options :
+
+on ouvre uniquement mail, on ouvre le bon mail du manager, quand on réouvre distral, le user revins et on lui répond, et il dit qu'il est satifsfait milestone 3
+
+on ouvre au maximum mail, mais on réouvre pas distral dans les 1min, le user reviens et nous rajoute une suspicion de 10
+
+on ouvre autre chose que mail (au moins 1 autre chose) le user arrive 10 secondes plus tard, si on a un tab autre que le mail ouvert, il pete un cable et nous shutdown avec justification

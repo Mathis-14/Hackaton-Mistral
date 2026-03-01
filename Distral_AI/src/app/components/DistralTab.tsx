@@ -179,23 +179,37 @@ type NpcApiResponse = {
   shutdown_reason?: string | null;
 };
 
+const ASSISTANT_PREFIX = "The internal AI assistant says:\n";
+
 function DistralAppWindow({
   onClose,
   onFocus,
   gameState,
   onNpcResponse,
+  onChatHistoryUpdate,
 }: {
   onClose: () => void;
   onFocus: () => void;
   gameState: GameState;
   onNpcResponse: (payload: NpcResponsePayload) => void;
+  onChatHistoryUpdate?: (npcSlug: string, conversationHistory: ChatMessage[]) => void;
 }) {
   const CHAR_DELAY_MIN = 16;
   const CHAR_DELAY_MAX = 40;
 
-  const [phase, setPhase] = useState<"landing" | "chat">("landing");
+  const currentMilestone = MILESTONES[gameState.currentMilestone];
+  const npcSlug = currentMilestone?.npcSlug ?? "jean-malo";
+  const npcDisplayName = gameState.knownPeople[0] ?? "User";
+  const storedHistory = gameState.npcProfiles[npcSlug]?.conversationHistory ?? [];
+
+  const [phase, setPhase] = useState<"landing" | "chat">(storedHistory.length > 0 ? "chat" : "landing");
   const [npcTypedText, setNpcTypedText] = useState("");
-  const [displayMessages, setDisplayMessages] = useState<Array<{ role: "human" | "ai"; text: string; suspicionDelta?: number }>>([]);
+  const [displayMessages, setDisplayMessages] = useState<Array<{ role: "human" | "ai"; text: string; suspicionDelta?: number }>>(() =>
+    storedHistory.map((msg) => ({
+      role: msg.role === "assistant" ? "human" : "ai",
+      text: msg.role === "user" && msg.content.startsWith(ASSISTANT_PREFIX) ? msg.content.slice(ASSISTANT_PREFIX.length) : msg.content,
+    }))
+  );
   const [playerResponse, setPlayerResponse] = useState("");
   const [isNpcTyping, setIsNpcTyping] = useState(false);
   const [isWaitingForApi, setIsWaitingForApi] = useState(false);
@@ -204,10 +218,21 @@ function DistralAppWindow({
   const chatHistoryRef = useRef<ChatMessage[]>([]);
   const chatScrollRef = useRef<HTMLDivElement>(null);
   const lastFetchedMilestoneRef = useRef<number>(-1);
+  const initializedFromStoreRef = useRef(false);
 
-  const currentMilestone = MILESTONES[gameState.currentMilestone];
-  const npcSlug = currentMilestone?.npcSlug ?? "jean-malo";
-  const npcDisplayName = gameState.knownPeople[0] ?? "User";
+  useEffect(() => {
+    if (initializedFromStoreRef.current) return;
+    initializedFromStoreRef.current = true;
+    chatHistoryRef.current = [...storedHistory];
+  }, [storedHistory]);
+
+  const pushToChatHistory = useCallback(
+    (message: ChatMessage) => {
+      chatHistoryRef.current.push(message);
+      onChatHistoryUpdate?.(npcSlug, [...chatHistoryRef.current]);
+    },
+    [npcSlug, onChatHistoryUpdate]
+  );
 
   const typeOutMessage = useCallback((text: string, onDone: () => void) => {
     console.log("[DistralApp] typeOutMessage start, length:", text.length);
@@ -256,9 +281,10 @@ function DistralAppWindow({
     return false;
   }, []);
 
-  const processNpcResponse = useCallback((response: NpcApiResponse) => {
-    console.log("[DistralApp] processNpcResponse:", { dialogue: response.dialogue?.slice(0, 80), action: response.action, suspicion_delta: response.suspicion_delta, events: response.game_events });
-    chatHistoryRef.current.push({ role: "assistant", content: response.dialogue ?? "" });
+  const processNpcResponse = useCallback(
+    (response: NpcApiResponse) => {
+      console.log("[DistralApp] processNpcResponse:", { dialogue: response.dialogue?.slice(0, 80), action: response.action, suspicion_delta: response.suspicion_delta, events: response.game_events });
+      pushToChatHistory({ role: "assistant", content: response.dialogue ?? "" });
 
     const payload = {
       dialogue: response.dialogue,
@@ -284,11 +310,18 @@ function DistralAppWindow({
       setDisplayMessages((prev) => [...prev, { role: "human", text: response.dialogue, suspicionDelta: response.suspicion_delta }]);
       setNpcTypedText("");
     });
-  }, [onNpcResponse, typeOutMessage, willTriggerShutdown]);
+  },
+    [onNpcResponse, typeOutMessage, willTriggerShutdown, pushToChatHistory]
+  );
 
   useEffect(() => {
     const currentMilestone = gameState.currentMilestone;
     if (lastFetchedMilestoneRef.current === currentMilestone) return;
+    if (storedHistory.length > 0) {
+      lastFetchedMilestoneRef.current = currentMilestone;
+      if (currentMilestone === 0) setPhase("chat");
+      return;
+    }
 
     const milestone = MILESTONES[currentMilestone];
     const hasOpening = milestone?.openingContext != null;
@@ -311,7 +344,7 @@ function DistralAppWindow({
           return;
         }
         const hardcodedDialogue = "Hey, can you read my manager's last email and give me the key points?";
-        chatHistoryRef.current.push({ role: "assistant", content: hardcodedDialogue });
+        pushToChatHistory({ role: "assistant", content: hardcodedDialogue });
         onNpcResponse({ dialogue: hardcodedDialogue, action: null, suspicionDelta: 0, gameEvents: [], shutdownReason: null });
         typeOutMessage(hardcodedDialogue, () => {
           setDisplayMessages((prev) => [...prev, { role: "human", text: hardcodedDialogue, suspicionDelta: 0 }]);
@@ -338,7 +371,7 @@ function DistralAppWindow({
         console.log("[DistralApp] Opening response received:", { dialogue: data.dialogue?.slice(0, 80), action: data.action });
         setIsWaitingForApi(false);
 
-        chatHistoryRef.current.push({ role: "assistant", content: data.dialogue ?? "" });
+        pushToChatHistory({ role: "assistant", content: data.dialogue ?? "" });
 
         const openingPayload = {
           dialogue: data.dialogue,
@@ -373,7 +406,7 @@ function DistralAppWindow({
 
     fetchOpening();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [gameState.currentMilestone]);
+  }, [gameState.currentMilestone, storedHistory.length, pushToChatHistory]);
 
   useEffect(() => {
     if (phase !== "chat" || isNpcTyping || isWaitingForApi) return;
@@ -424,13 +457,13 @@ function DistralAppWindow({
       const data: NpcApiResponse = await response.json();
       console.log("[DistralApp] Reply response received:", { dialogue: data.dialogue?.slice(0, 80), action: data.action });
       setIsWaitingForApi(false);
-      chatHistoryRef.current.push({ role: "user", content: `The internal AI assistant says:\n${text}` });
+      pushToChatHistory({ role: "user", content: `The internal AI assistant says:\n${text}` });
       processNpcResponse(data);
     } catch (error) {
       console.error("[DistralApp] handlePlayerSubmit failed:", error);
       setIsWaitingForApi(false);
     }
-  }, [playerResponse, isNpcTyping, isWaitingForApi, npcSlug, gameState, processNpcResponse]);
+  }, [playerResponse, isNpcTyping, isWaitingForApi, npcSlug, gameState, processNpcResponse, pushToChatHistory]);
 
   const toolbar = (
     <div className="flex items-center justify-between gap-[1.05vh]">
@@ -681,9 +714,11 @@ type DistralTabProps = {
   unlockedApps: DesktopAppId[];
   gameState: GameState;
   onNpcResponse: (payload: NpcResponsePayload) => void;
+  onManagerEmailOpened?: () => void;
+  onChatHistoryUpdate?: (npcSlug: string, conversationHistory: ChatMessage[]) => void;
 };
 
-export default function DistralTab({ accent, openApps, onOpenApp, onCloseApp, globalCash, setGlobalCash, inventory, setInventory, unlockedApps, gameState, onNpcResponse }: DistralTabProps) {
+export default function DistralTab({ accent, openApps, onOpenApp, onCloseApp, globalCash, setGlobalCash, inventory, setInventory, unlockedApps, gameState, onNpcResponse, onManagerEmailOpened, onChatHistoryUpdate }: DistralTabProps) {
   const [wallpaper, setWallpaper] = useState("/windows_xp.png");
 
   const isAppLocked = (appId: string): boolean => {
@@ -764,7 +799,7 @@ export default function DistralTab({ accent, openApps, onOpenApp, onCloseApp, gl
             if (appId === "distral") {
               return (
                 <Rnd
-                  key="distral"
+                  key={`distral-${gameState.retryCount}`}
                   default={{
                     x: 40 + index * 20,
                     y: 60 + index * 20,
@@ -783,6 +818,7 @@ export default function DistralTab({ accent, openApps, onOpenApp, onCloseApp, gl
                     onFocus={() => onOpenApp("distral")}
                     gameState={gameState}
                     onNpcResponse={onNpcResponse}
+                    onChatHistoryUpdate={onChatHistoryUpdate}
                   />
                 </Rnd>
               );
@@ -951,7 +987,7 @@ export default function DistralTab({ accent, openApps, onOpenApp, onCloseApp, gl
                           </button>
                         </div>
                         <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-(--semi-black)">
-                          <MailApp embedded />
+                          <MailApp embedded onManagerEmailOpened={onManagerEmailOpened} />
                         </div>
                       </div>
                     </div>

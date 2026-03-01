@@ -40,7 +40,16 @@ function parseNpcResponse(raw: string): NpcResponse {
 }
 
 export async function POST(request: NextRequest) {
-  const body = await request.json();
+  let body: unknown;
+  try {
+    body = await request.json();
+  } catch {
+    console.error("[npc-chat] Invalid or empty JSON body");
+    return NextResponse.json({ error: "Invalid or empty JSON body" }, { status: 400 });
+  }
+  if (!body || typeof body !== "object") {
+    return NextResponse.json({ error: "Body must be a JSON object" }, { status: 400 });
+  }
   const { npcSlug, message, history, gameState, isContinuation } = body as {
     npcSlug: string;
     message?: string | null;

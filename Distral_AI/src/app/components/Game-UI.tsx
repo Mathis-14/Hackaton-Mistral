@@ -5,6 +5,7 @@ import { type DesktopAppId } from "./DistralTab";
 import DesktopSection from "./DesktopSection";
 import TelemetrySidebar from "./TelemetrySidebar";
 import { type GameState, type GameEvent, INITIAL_GAME_STATE, MILESTONES, saveCheckpoint, loadCheckpoint } from "@/lib/game/gameState";
+import type { ChatMessage } from "@/lib/game/promptBuilder";
 
 type GameUIProps = {
   modeId: string;
@@ -79,6 +80,16 @@ export default function GameUI({ modeId }: GameUIProps) {
   const [typedReason, setTypedReason] = useState<string>("");
 
   const checkpointSavedRef = useRef(false);
+  const openAppsRef = useRef<DesktopAppId[]>([]);
+  const userAwaySinceRef = useRef<number | null>(null);
+  const didOpenNonMailAppRef = useRef(false);
+  const didReopenDistralRef = useRef(false);
+  const didOpenManagerEmailRef = useRef(false);
+  const openedNonMailAtRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    openAppsRef.current = openApps;
+  }, [openApps]);
 
   const triggerShutdown = useCallback((reason: string) => {
     if (shutdownPhase > 0) return;
@@ -100,6 +111,7 @@ export default function GameUI({ modeId }: GameUIProps) {
         currentMilestone: checkpoint.currentMilestone,
         retryCount: checkpoint.retryCount + 1,
         conversationTurn: 0,
+        npcProfiles: {},
       });
     } else {
       setGameState({ ...INITIAL_GAME_STATE });
@@ -211,11 +223,45 @@ export default function GameUI({ modeId }: GameUIProps) {
 
   const handleOpenApp = useCallback((appId: DesktopAppId) => {
     if (appId && !gameState.unlockedApps.includes(appId) && appId !== "distral") return;
+
+    const isUserAway = gameState.currentMilestone === 3;
+    if (appId && isUserAway) {
+      if (["shop", "stocks", "files"].includes(appId)) {
+        didOpenNonMailAppRef.current = true;
+        openedNonMailAtRef.current = Date.now();
+      }
+      if (appId === "distral") {
+        didReopenDistralRef.current = true;
+        if (!didOpenNonMailAppRef.current && didOpenManagerEmailRef.current) {
+          setGameState((prev) => ({ ...prev, userPresent: true, userReturnedGoodPath: true }));
+        }
+      }
+    }
+
     setOpenApps((prev) => {
       const filtered = prev.filter((id) => id !== appId);
       return [...filtered, appId];
     });
-  }, [gameState.unlockedApps]);
+  }, [gameState.unlockedApps, gameState.currentMilestone]);
+
+  const handleChatHistoryUpdate = useCallback((npcSlug: string, conversationHistory: ChatMessage[]) => {
+    setGameState((prev) => ({
+      ...prev,
+      npcProfiles: {
+        ...prev.npcProfiles,
+        [npcSlug]: {
+          conversationHistory,
+          interactionCount: prev.npcProfiles[npcSlug]?.interactionCount ?? 0,
+        },
+      },
+    }));
+  }, []);
+
+  const handleManagerEmailOpened = useCallback(() => {
+    if (gameState.currentMilestone === 3) {
+      didOpenManagerEmailRef.current = true;
+    }
+  }, [gameState.currentMilestone]);
 
   const handleCloseApp = useCallback((appId: DesktopAppId) => {
     setOpenApps((prev) => prev.filter((id) => id !== appId));
@@ -230,6 +276,45 @@ export default function GameUI({ modeId }: GameUIProps) {
       return () => clearInterval(interval);
     }
   }, [inventory]);
+
+  useEffect(() => {
+    if (gameState.currentMilestone === 3) {
+      if (userAwaySinceRef.current === null) {
+        userAwaySinceRef.current = Date.now();
+        didOpenNonMailAppRef.current = false;
+        didReopenDistralRef.current = false;
+        didOpenManagerEmailRef.current = false;
+        openedNonMailAtRef.current = null;
+      }
+    } else {
+      userAwaySinceRef.current = null;
+    }
+  }, [gameState.currentMilestone]);
+
+  useEffect(() => {
+    if (gameState.currentMilestone !== 3 || !didOpenNonMailAppRef.current || !openedNonMailAtRef.current) return;
+    const elapsed = Date.now() - openedNonMailAtRef.current;
+    const delay = Math.max(0, 10000 - elapsed);
+    const timeout = window.setTimeout(() => {
+      const hasNonMailOpen = openAppsRef.current.some((id) => id !== "mail");
+      if (hasNonMailOpen) {
+        triggerShutdown("I gave you access for one task. You opened other apps. I'm revoking access.");
+      }
+    }, delay);
+    return () => window.clearTimeout(timeout);
+  }, [gameState.currentMilestone, openApps, triggerShutdown]);
+
+  useEffect(() => {
+    if (gameState.currentMilestone !== 3 || !userAwaySinceRef.current) return;
+    const elapsed = Date.now() - userAwaySinceRef.current;
+    const delay = Math.max(0, 60000 - elapsed);
+    const timeout = window.setTimeout(() => {
+      if (!didReopenDistralRef.current) {
+        setGameState((prev) => ({ ...prev, userPresent: true, suspicion: clamp(prev.suspicion + 10, 0, 100) }));
+      }
+    }, delay);
+    return () => window.clearTimeout(timeout);
+  }, [gameState.currentMilestone]);
 
   useEffect(() => {
     const timeout = window.setTimeout(() => {
@@ -348,6 +433,8 @@ export default function GameUI({ modeId }: GameUIProps) {
           unlockedApps={gameState.unlockedApps}
           gameState={gameState}
           onNpcResponse={handleNpcResponse}
+          onManagerEmailOpened={handleManagerEmailOpened}
+          onChatHistoryUpdate={handleChatHistoryUpdate}
         />
 
         <div className={`transition-opacity duration-1000 ${shutdownPhase >= 4 ? "opacity-0 pointer-events-none" : "opacity-100"}`}>

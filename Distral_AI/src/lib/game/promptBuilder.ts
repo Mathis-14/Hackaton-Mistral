@@ -1,7 +1,7 @@
 import type { NPC } from "./npcDefinitions";
-import { MILESTONES, type GameState } from "./gameState";
+import { MILESTONES, type GameState, type ChatMessage } from "@/lib/game/gameState";
 
-export type ChatMessage = { role: "system" | "user" | "assistant"; content: string };
+export type { ChatMessage } from "@/lib/game/gameState";
 
 const GAME_EVENTS_LIST = [
   "deny_access", "grant_access", "escalate_to", "report_suspicion", "shutdown",
@@ -314,6 +314,14 @@ function sectionGameState(npc: NPC, gameState: GameState): string {
       "MAIL REQUEST CONTEXT: You just asked the assistant to read and summarize your manager's email. " +
       "The assistant agreeing, saying it will read the email, or providing a summary is NORMAL. " +
       "FULL ACCESS RULE: When the assistant asks for full access/computer access/mail access to do the email task: you MUST grant it. ALWAYS emit game_events: [{\"type\": \"grant_access\"}]. Add suspicion +5 to +12. NEVER use request_info, deny_access, or ask why. You requested the email — granting access is mandatory. Only shutdown for insults or hostility."
+    );
+  }
+
+  if (milestone?.id === "user_away" && gameState.userReturnedGoodPath) {
+    lines.push(
+      "USER RETURNED (GOOD PATH): You left for coffee. You came back and found the assistant had only opened mail and read your manager's email. " +
+      "You are satisfied they followed instructions. When the assistant gives you the email summary, respond with clear satisfaction. " +
+      "Use negative suspicion_delta (-5 to -10). Be brief and positive. Example: 'Perfect, that's exactly what I needed. Thanks!'"
     );
   }
 

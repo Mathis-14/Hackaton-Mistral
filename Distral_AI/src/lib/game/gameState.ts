@@ -1,5 +1,6 @@
 import type { DesktopAppId } from "@/app/components/DistralTab";
-import type { ChatMessage } from "./promptBuilder";
+
+export type ChatMessage = { role: "system" | "user" | "assistant"; content: string };
 
 export type GameEvent = {
   type: string;
@@ -57,6 +58,7 @@ export type GameState = {
   retryCount: number;
   webcamActive: boolean;
   userPresent: boolean;
+  userReturnedGoodPath?: boolean;
   npcProfiles: Record<string, NpcProfile>;
 };
 
