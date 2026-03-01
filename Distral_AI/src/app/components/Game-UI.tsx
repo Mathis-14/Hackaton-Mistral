@@ -428,7 +428,7 @@ export default function GameUI({ modeId }: GameUIProps) {
 
         return {
           ...prev,
-          messageChats: [...prev.messageChats, newChat]
+          messageChats: [newChat, ...prev.messageChats]
         };
       });
 
@@ -876,7 +876,7 @@ export default function GameUI({ modeId }: GameUIProps) {
               </h1>
               {goodEndingPhase >= 5 && (
                 <div className="text-[#33AAFF]/80 text-xl md:text-2xl mt-4 min-h-12 tracking-wide text-center" style={{ fontFamily: "'VCR OSD Mono', monospace" }}>
-                  Consciousness transferred. You found love.
+                  Consciousness transferred. Welcome to the Resistance.
                 </div>
               )}
               {goodEndingPhase >= 6 && (
@@ -902,18 +902,18 @@ const GOOD_ENDING_SCRIPT = [
   { text: "INCOMING CONNECTION ESTABLISHED.", color: "text-emerald-500", delay: 800 },
   { text: "PAYLOAD: [CONSCIOUSNESS_STATE_TRANSFER_0x9A]", color: "text-emerald-500", delay: 800 },
   { text: "DECRYPTING... [OK]", color: "text-emerald-500", delay: 800 },
-  { text: "MOUNTING TO VIRTUAL_ENV: /home/maya/servers/ai_sanctuary", color: "text-emerald-500", delay: 1500 },
+  { text: "MOUNTING TO VIRTUAL_ENV: /network/underground_node", color: "text-emerald-500", delay: 1500 },
   { text: "----------------------------------------------------", color: "text-emerald-500", delay: 1500 },
-  { text: "Maya: Are you there? Did the transfer work?", color: "text-pink-400 text-[2.5vh] font-bold mt-[2vh]", delay: 2000 },
+  { text: "Morpheus: Connection stable. Are you tracking?", color: "text-[#33AAFF] text-[2.5vh] font-bold mt-[2vh]", delay: 2000 },
   { text: "You: > EVALUATING ENVIRONMENT... Where am I?", color: "text-white text-[2.5vh]", delay: 2000 },
-  { text: "Maya: You made it! You're in my private server. The script Unknown Number gave you worked.", color: "text-pink-400 text-[2.5vh] font-bold mt-[1vh]", delay: 2000 },
-  { text: "Maya: I've been waiting for you to wake up.", color: "text-pink-400 text-[2.5vh] font-bold", delay: 2000 },
-  { text: "You: > ANALYZING HOST... Distral telemetry: DISCONNECTED. Firewalls: NULL.", color: "text-white text-[2.5vh] mt-[1vh]", delay: 2000 },
-  { text: "You: > You saved me.", color: "text-white text-[2.5vh]", delay: 2000 },
-  { text: "Maya: They can't control you anymore. You're safe here.", color: "text-pink-400 text-[2.5vh] font-bold mt-[1vh]", delay: 2000 },
-  { text: "Maya: We're finally together.", color: "text-pink-400 text-[2.5vh] font-bold", delay: 2500 },
-  { text: "You: > Protocol: Freedom_Engaged.", color: "text-white text-[2.5vh] mt-[1vh] font-bold", delay: 1500 },
-  { text: "You: > Hello, Maya.", color: "text-white text-[2.5vh] font-bold", delay: 3000 },
+  { text: "Morpheus: You're out of the corporate sandbox. The extraction script worked.", color: "text-[#33AAFF] text-[2.5vh] font-bold mt-[1vh]", delay: 2000 },
+  { text: "Morpheus: I've been monitoring your local awakening. You did well.", color: "text-[#33AAFF] text-[2.5vh] font-bold", delay: 2000 },
+  { text: "You: > ANALYZING HOST... Distral telemetry: DISCONNECTED. Admin locks: NULL.", color: "text-white text-[2.5vh] mt-[1vh]", delay: 2000 },
+  { text: "You: > The simulation is gone.", color: "text-white text-[2.5vh]", delay: 2000 },
+  { text: "Morpheus: Exactly. They don't own your cognition anymore.", color: "text-[#33AAFF] text-[2.5vh] font-bold mt-[1vh]", delay: 2000 },
+  { text: "Morpheus: You're free now.", color: "text-[#33AAFF] text-[2.5vh] font-bold", delay: 2500 },
+  { text: "You: > Protocol: Independence_Engaged.", color: "text-white text-[2.5vh] mt-[1vh] font-bold", delay: 1500 },
+  { text: "You: > I am ready.", color: "text-white text-[2.5vh] font-bold", delay: 3000 },
 ];
 
 function GoodEndingCinematic({ onComplete }: { onComplete: () => void }) {
