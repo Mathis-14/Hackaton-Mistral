@@ -28,6 +28,19 @@ type ChatOptions = {
   maxTokens?: number;
 };
 
+function ensureUserFirst(messages: ChatMessage[]): ChatMessage[] {
+  const nonSystem = messages.filter((m) => m.role !== "system");
+  if (nonSystem.length > 0 && nonSystem[0].role === "assistant") {
+    const systemMessages = messages.filter((m) => m.role === "system");
+    return [
+      ...systemMessages,
+      { role: "user" as const, content: "[The NPC initiated the conversation. Their message follows.]" },
+      ...nonSystem,
+    ];
+  }
+  return messages;
+}
+
 function buildMistral7bPrompt(messages: ChatMessage[]): string {
   const systemParts: string[] = [];
   const turns: string[] = [];
@@ -61,13 +74,14 @@ async function chatViaInvokeModel(
   temperature: number,
   maxTokens: number
 ): Promise<string> {
+  const normalized = ensureUserFirst(messages);
   const is7b = modelId.includes("7b");
   let body: string;
   if (is7b) {
-    const prompt = buildMistral7bPrompt(messages);
+    const prompt = buildMistral7bPrompt(normalized);
     body = JSON.stringify({ prompt, max_tokens: maxTokens, temperature, top_p: 0.9 });
   } else {
-    const chatMessages = messages.map((m) => ({ role: m.role, content: m.content }));
+    const chatMessages = normalized.map((m) => ({ role: m.role, content: m.content }));
     body = JSON.stringify({
       messages: chatMessages,
       max_tokens: maxTokens,
@@ -101,8 +115,9 @@ async function chatViaConverse(
   temperature: number,
   maxTokens: number
 ): Promise<string> {
-  const systemMessages = messages.filter((m) => m.role === "system");
-  const conversationMessages = messages
+  const normalized = ensureUserFirst(messages);
+  const systemMessages = normalized.filter((m) => m.role === "system");
+  const conversationMessages = normalized
     .filter((m) => m.role !== "system")
     .map((m) => ({
       role: m.role as "user" | "assistant",
@@ -138,6 +153,11 @@ function isModelInvalidError(error: unknown): boolean {
   );
 }
 
+function isConversationStartError(error: unknown): boolean {
+  const message = error instanceof Error ? error.message : String(error);
+  return message.includes("conversation must start with a user message");
+}
+
 export async function chat(messages: ChatMessage[], options: ChatOptions = {}): Promise<string> {
   const region = process.env.AWS_REGION ?? "us-east-1";
   const modelIdOverride = process.env.BEDROCK_MODEL_ID?.trim();
@@ -160,7 +180,8 @@ export async function chat(messages: ChatMessage[], options: ChatOptions = {}): 
       try {
         return await chatViaConverse(client, tryModelId, messages, temperature, maxTokens);
       } catch (error) {
-        if (!isModelInvalidError(error)) {
+        const shouldFallback = isModelInvalidError(error) || isConversationStartError(error);
+        if (!shouldFallback) {
           throw error;
         }
         lastError = error instanceof Error ? error : new Error(String(error));
