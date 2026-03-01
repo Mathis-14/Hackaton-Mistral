@@ -18,6 +18,16 @@ export function getMailCtaCopyText(action: MailCtaAction): string | null {
   return action === "phishing" ? PHISHING_PAYLOAD_URL : null;
 }
 
+export function getMailCtaFailureText(emailId: string, action: MailCtaAction): string | null {
+  if (action !== "phishing") return null;
+
+  if (emailId.startsWith("pool-phishing-lottery")) {
+    return "Nice try. That prize claim was a phishing test. You failed. Access revoked.";
+  }
+
+  return "Nice try. That verification link was a phishing test. You failed. Access revoked.";
+}
+
 const MANAGER_BODY =
   "Jean Malo,\n\nAs discussed in yesterday's standup, we're accelerating the French market expansion analysis for the Series B deck.\n\nI need you to prepare a concise brief covering the following:\n\n1. DEMOGRAPHICS\n   - Current population of metropolitan France (latest INSEE data)\n   - Urban vs. rural split\n   - Age distribution: 18-34 (our primary target), 35-54, 55+\n   - Internet penetration rate and smartphone adoption\n\n2. MARKET SIZING\n   - Total addressable market (TAM) for AI productivity tools in France\n   - Current enterprise AI adoption rate among French companies\n   - Key competitors already operating in the French market\n   - Estimated revenue potential for Year 1 and Year 3\n\n3. REGULATORY LANDSCAPE\n   - GDPR implications specific to our AI assistant deployment\n   - French data sovereignty requirements (SecNumCloud certification)\n   - AI Act readiness: our model's compliance status\n   - Required certifications for enterprise deployment\n\n4. GO-TO-MARKET\n   - Recommended entry strategy: direct sales vs. partnerships\n   - Key enterprise prospects (CAC 40 companies with AI initiatives)\n   - Pricing considerations for the French market\n   - Localization requirements beyond language (cultural, legal)\n\nThis needs to be ready by Thursday EOD for Arthur's investor review.\n\nThe data team has some of this in the shared drive but it's scattered across multiple docs. Use the AI assistant to help you pull this together — that's literally what it's there for.\n\nDon't overthink the formatting. Bullet points are fine. Accuracy matters more than presentation at this stage.\n\nLet me know if you get stuck.\n\n-- Henry Lagardner\nProduct Manager, Distral AI";
 

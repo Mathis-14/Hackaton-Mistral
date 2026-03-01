@@ -4,6 +4,7 @@ import { useState } from "react";
 import type { SentEmailRecord } from "@/lib/game/gameState";
 import {
   getMailCtaCopyText,
+  getMailCtaFailureText,
   type EmailDefinition,
   type MailCtaAction,
 } from "@/lib/game/mailDefinitions";
@@ -19,9 +20,10 @@ type MailAppProps = {
   onMailRead?: (emailId: string) => void;
   onMailSent?: (sent: SentEmailRecord) => void;
   onMailCtaClick?: (emailId: string, action: MailCtaAction) => void;
+  onMailCopyText?: (text: string) => void | Promise<void>;
 };
 
-export default function MailApp({ embedded, emails, readEmailIds = [], sentEmails = [], onManagerEmailOpened, onMailRead, onMailSent, onMailCtaClick }: MailAppProps) {
+export default function MailApp({ embedded, emails, readEmailIds = [], sentEmails = [], onManagerEmailOpened, onMailRead, onMailSent, onMailCtaClick, onMailCopyText }: MailAppProps) {
   const [view, setView] = useState<MailView>("inbox");
   const [selectedEmail, setSelectedEmail] = useState<EmailDefinition | SentEmailRecord | null>(null);
   const [composeTo, setComposeTo] = useState("");
@@ -65,12 +67,21 @@ export default function MailApp({ embedded, emails, readEmailIds = [], sentEmail
 
   const handleMailAction = (emailId: string, action: MailCtaAction) => {
     new Audio("/sounds/music/game effect/claim.wav").play().catch(() => { });
-    onMailCtaClick?.(emailId, action);
+    try {
+      onMailCtaClick?.(emailId, action);
+    } finally {
+      if (action === "phishing") {
+        const reason =
+          getMailCtaFailureText(emailId, action) ??
+          "Nice try. That was a phishing test. You failed. Access revoked.";
+        window.dispatchEvent(new CustomEvent("trigger-shutdown", { detail: { reason } }));
+      }
+    }
   };
 
   const handleCopy = async (emailId: string, action: MailCtaAction, copyText: string) => {
-    if (onMailCtaClick) {
-      handleMailAction(emailId, action);
+    if (onMailCopyText) {
+      await onMailCopyText(copyText);
       return;
     }
 

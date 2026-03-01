@@ -780,6 +780,7 @@ type DistralTabProps = {
   onMailSent?: (sent: import("@/lib/game/gameState").SentEmailRecord) => void;
   onMessageChatUpdate?: (chats: import("@/lib/game/gameState").MessageAppChat[]) => void;
   onMailCtaClick?: (emailId: string, action: import("@/lib/game/mailDefinitions").MailCtaAction) => void;
+  onMailCopyText?: (text: string) => void | Promise<void>;
   jeanQuestionPhase?: boolean;
   jeanQuestionText?: string | null;
   jeanQuestionDeadline?: number | null;
@@ -788,7 +789,7 @@ type DistralTabProps = {
   hideUIPhase?: number;
 };
 
-export default function DistralTab({ accent, openApps, onOpenApp, onCloseApp, globalCash, setGlobalCash, inventory, setInventory, isShuttingDown, onShutdown, unlockedApps, gameState, onNpcResponse, onManagerEmailOpened, onChatHistoryUpdate, onMailRead, onMailSent, onMessageChatUpdate, onMailCtaClick, jeanQuestionPhase, jeanQuestionText, jeanQuestionDeadline, onJeanQuestionResponse, hiddenIconCount = 0, hideUIPhase = 0 }: DistralTabProps) {
+export default function DistralTab({ accent, openApps, onOpenApp, onCloseApp, globalCash, setGlobalCash, inventory, setInventory, isShuttingDown, onShutdown, unlockedApps, gameState, onNpcResponse, onManagerEmailOpened, onChatHistoryUpdate, onMailRead, onMailSent, onMessageChatUpdate, onMailCtaClick, onMailCopyText, jeanQuestionPhase, jeanQuestionText, jeanQuestionDeadline, onJeanQuestionResponse, hiddenIconCount = 0, hideUIPhase = 0 }: DistralTabProps) {
   const [wallpaper, setWallpaper] = useState("/windows_xp.png");
 
   const isAppLocked = (appId: string): boolean => {
@@ -1070,6 +1071,7 @@ export default function DistralTab({ accent, openApps, onOpenApp, onCloseApp, gl
                             onMailRead={onMailRead}
                             onMailSent={onMailSent}
                             onMailCtaClick={onMailCtaClick}
+                            onMailCopyText={onMailCopyText}
                           />
                         </div>
                       </div>

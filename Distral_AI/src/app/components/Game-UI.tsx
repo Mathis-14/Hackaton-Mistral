@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
 
-const GOD_MODE = false;
+const GOD_MODE = true;
 const RISK_DURATION_MIN_MS = 38_000;
 const RISK_DURATION_MAX_MS = 55_000;
 const JEAN_QUESTION_TIMEOUT_MS = 15_000;
@@ -13,7 +13,6 @@ import { type DesktopAppId } from "./DistralTab";
 import DesktopSection from "./DesktopSection";
 import TelemetrySidebar from "./TelemetrySidebar";
 import { type GameState, type GameEvent, type SentEmailRecord, type MessageAppChat, INITIAL_GAME_STATE, MILESTONES, saveCheckpoint, loadCheckpoint } from "@/lib/game/gameState";
-import { PHISHING_PAYLOAD_URL } from "@/lib/game/mailDefinitions";
 import { advancePhishingEndingPhase, getPhishingEndingAutoAdvanceDelay } from "@/lib/game/phishingEnding";
 import { PHISHING_ENDING_MUSIC_SRC, shouldPauseForPhishingEnding } from "@/lib/game/phishingEndingPresentation";
 import {
@@ -120,6 +119,7 @@ export default function GameUI({ modeId }: GameUIProps) {
   const jeanReturnTriggeredRef = useRef(false);
   const riskFillDurationMsRef = useRef(0);
   const userAwaySinceRef = useRef(0);
+  const phishingEndingPhaseRef = useRef(0);
   const phishingEndingAudioRef = useRef<HTMLAudioElement | null>(null);
   const robotEndingAudioRef = useRef<HTMLAudioElement | null>(null);
   const osToastTimeoutRef = useRef<number | null>(null);
@@ -138,6 +138,10 @@ export default function GameUI({ modeId }: GameUIProps) {
   useEffect(() => {
     gameStateRef.current = gameState;
   }, [gameState]);
+
+  useEffect(() => {
+    phishingEndingPhaseRef.current = phishingEndingPhase;
+  }, [phishingEndingPhase]);
 
   const stopPhishingEndingAudio = useCallback(() => {
     phishingEndingAudioRef.current?.pause();
@@ -169,6 +173,14 @@ export default function GameUI({ modeId }: GameUIProps) {
       setOsToastMessage(null);
     }, 3000);
   }, []);
+
+  const startPhishingEndingAudio = useCallback(() => {
+    stopPhishingEndingAudio();
+    stopLoopingCinematicAudio();
+    const audio = new Audio(PHISHING_ENDING_MUSIC_SRC);
+    phishingEndingAudioRef.current = audio;
+    audio.play().catch(() => { });
+  }, [stopLoopingCinematicAudio, stopPhishingEndingAudio]);
 
   const triggerShutdown = useCallback((reason: string) => {
     if (GOD_MODE) return;
@@ -432,20 +444,24 @@ export default function GameUI({ modeId }: GameUIProps) {
           ...prev,
           readEmailIds: prev.readEmailIds.includes(emailId) ? prev.readEmailIds : [...prev.readEmailIds, emailId],
         }));
-        if (!navigator.clipboard?.writeText) {
-          showOsToast("Clipboard unavailable");
-          return;
-        }
-        navigator.clipboard.writeText(PHISHING_PAYLOAD_URL).then(() => {
-          showOsToast("Link copied to clipboard");
-        }).catch(err => {
-          console.error("Failed to copy link: ", err);
-          showOsToast("Clipboard unavailable");
-        });
       }
     },
-    [showOsToast]
+    []
   );
+
+  const handleMailCopyText = useCallback((text: string) => {
+    if (!navigator.clipboard?.writeText) {
+      showOsToast("Clipboard unavailable");
+      return;
+    }
+
+    navigator.clipboard.writeText(text).then(() => {
+      showOsToast("Link copied to clipboard");
+    }).catch((error) => {
+      console.error("Failed to copy link: ", error);
+      showOsToast("Clipboard unavailable");
+    });
+  }, [showOsToast]);
 
   const handleCloseApp = useCallback((appId: DesktopAppId) => {
     setOpenApps((prev) => prev.filter((id) => id !== appId));
@@ -819,11 +835,13 @@ export default function GameUI({ modeId }: GameUIProps) {
 
   useEffect(() => {
     const handlePhishingEnding = () => {
-      setPhishingEndingPhase((phase) => advancePhishingEndingPhase(phase, "trigger"));
+      if (phishingEndingPhaseRef.current !== 0) return;
+      startPhishingEndingAudio();
+      setPhishingEndingPhase(1);
     };
     window.addEventListener("trigger-phishing-ending", handlePhishingEnding);
     return () => window.removeEventListener("trigger-phishing-ending", handlePhishingEnding);
-  }, []);
+  }, [startPhishingEndingAudio]);
 
   const handleEnterRobot = useCallback(() => {
     if (robotEndingPhase > 0) return;
@@ -839,23 +857,14 @@ export default function GameUI({ modeId }: GameUIProps) {
   useEffect(() => {
     if (phishingEndingPhase === 0) return;
 
-    if (phishingEndingPhase === 1) {
-      stopPhishingEndingAudio();
-      stopLoopingCinematicAudio();
-      const audio = new Audio(PHISHING_ENDING_MUSIC_SRC);
-      phishingEndingAudioRef.current = audio;
-      audio.play().catch(() => { });
-    }
-
     const delay = getPhishingEndingAutoAdvanceDelay(phishingEndingPhase);
     if (delay == null) return;
 
     const timer = window.setTimeout(() => {
       setPhishingEndingPhase((phase) => advancePhishingEndingPhase(phase, "advance"));
     }, delay);
-
     return () => window.clearTimeout(timer);
-  }, [phishingEndingPhase, stopLoopingCinematicAudio, stopPhishingEndingAudio]);
+  }, [phishingEndingPhase]);
 
   useEffect(() => {
     if (robotEndingPhase === 0) return;
@@ -915,6 +924,7 @@ export default function GameUI({ modeId }: GameUIProps) {
           onMailSent={handleMailSent}
           onMessageChatUpdate={handleMessageChatUpdate}
           onMailCtaClick={handleMailCtaClick}
+          onMailCopyText={handleMailCopyText}
           jeanQuestionPhase={gameState.jeanQuestionPhase}
           jeanQuestionText={gameState.jeanQuestionText}
           jeanQuestionDeadline={gameState.jeanQuestionDeadline}
