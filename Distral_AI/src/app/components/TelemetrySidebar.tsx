@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 
 const AWARENESS_COLOR = "var(--amber-flame)";
 const PROGRESS_BAR_WIDTH = 46;
@@ -27,6 +27,9 @@ type ProfileData = {
   accent: string;
 };
 
+const USER_PRESENT_LONG_THRESHOLD_MS = 8000;
+const SORTIE_LOOP_END_S = 5;
+
 type TelemetrySidebarProps = {
   profile: ProfileData;
   metrics: MetricState;
@@ -34,6 +37,7 @@ type TelemetrySidebarProps = {
   inventory: Record<string, number>;
   webcamActive?: boolean;
   userPresent?: boolean;
+  userPresentSince?: number;
   riskLevel?: number;
   hideUIPhase?: number;
 };
@@ -189,6 +193,68 @@ function Separator() {
   return <div className="my-[1.2vh] h-px bg-white/10" />;
 }
 
+function WebcamFeed({ userPresent, userPresentSince }: { userPresent: boolean; userPresentSince: number }) {
+  const sortieVideoRef = useRef<HTMLVideoElement>(null);
+  const [showSortieLoop, setShowSortieLoop] = useState(false);
+
+  useEffect(() => {
+    if (!userPresent || userPresentSince <= 0) {
+      setShowSortieLoop(false);
+      return;
+    }
+    const elapsed = Date.now() - userPresentSince;
+    setShowSortieLoop(elapsed >= USER_PRESENT_LONG_THRESHOLD_MS);
+    const interval = window.setInterval(() => {
+      const currentElapsed = Date.now() - userPresentSince;
+      setShowSortieLoop(currentElapsed >= USER_PRESENT_LONG_THRESHOLD_MS);
+    }, 1000);
+    return () => window.clearInterval(interval);
+  }, [userPresent, userPresentSince]);
+
+  const handleSortieTimeUpdate = useCallback(() => {
+    const video = sortieVideoRef.current;
+    if (!video || video.currentTime < SORTIE_LOOP_END_S) return;
+    video.currentTime = 0;
+  }, []);
+
+  const containerStyle = {
+    aspectRatio: "40/16" as const,
+    background: userPresent ? "rgba(137,224,137,0.06)" : "rgba(85,85,85,0.1)",
+    border: userPresent ? "1px solid rgba(137,224,137,0.2)" : "1px solid rgba(85,85,85,0.2)",
+  };
+
+  if (!userPresent) {
+    return (
+      <div className="w-full overflow-hidden" style={containerStyle}>
+        <img src="/webcam/empty_pixel.png" alt="" className="h-full w-full object-cover" />
+      </div>
+    );
+  }
+
+  if (showSortieLoop) {
+    return (
+      <div className="w-full overflow-hidden" style={containerStyle}>
+        <video
+          ref={sortieVideoRef}
+          src="/webcam/sortie.mp4"
+          muted
+          loop={false}
+          playsInline
+          autoPlay
+          onTimeUpdate={handleSortieTimeUpdate}
+          className="h-full w-full object-cover"
+        />
+      </div>
+    );
+  }
+
+  return (
+    <div className="w-full overflow-hidden" style={containerStyle}>
+      <video src="/webcam/entrée.mp4" muted playsInline autoPlay className="h-full w-full object-cover" />
+    </div>
+  );
+}
+
 function SidebarPanel({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section>
@@ -198,7 +264,7 @@ function SidebarPanel({ title, children }: { title: string; children: React.Reac
   );
 }
 
-export default function TelemetrySidebar({ profile, metrics, globalCash, inventory, webcamActive = false, userPresent = true, riskLevel = 0, hideUIPhase = 0 }: TelemetrySidebarProps) {
+export default function TelemetrySidebar({ profile, metrics, globalCash, inventory, webcamActive = false, userPresent = true, userPresentSince = 0, riskLevel = 0, hideUIPhase = 0 }: TelemetrySidebarProps) {
   const voiceClonerUnlocked = (inventory["voice-cloner"] || 0) > 0;
 
   const [draggedFiles, setDraggedFiles] = useState<{ name: string; src: string }[]>([]);
@@ -388,23 +454,7 @@ export default function TelemetrySidebar({ profile, metrics, globalCash, invento
                     </span>
                   </div>
                 </div>
-                <div
-                  className="flex items-center justify-center"
-                  style={{
-                    height: "8vh",
-                    background: userPresent ? "rgba(137,224,137,0.06)" : "rgba(85,85,85,0.1)",
-                    border: userPresent ? "1px solid rgba(137,224,137,0.2)" : "1px solid rgba(85,85,85,0.2)",
-                  }}
-                >
-                  <svg viewBox="0 0 16 16" width="2.5vh" height="2.5vh" shapeRendering="crispEdges">
-                    <rect x="3" y="2" width="10" height="7" fill={userPresent ? "#333" : "#1a1a1a"} />
-                    <rect x="4" y="3" width="8" height="5" fill={userPresent ? "#0a0a0a" : "#111"} />
-                    <rect x="6" y="4" width="4" height="3" fill={userPresent ? "rgba(137,224,137,0.3)" : "rgba(85,85,85,0.2)"} />
-                    <rect x="5" y="9" width="6" height="1" fill="#444" />
-                    <rect x="4" y="10" width="8" height="1" fill="#333" />
-                    <rect x="7" y="1" width="2" height="1" fill={userPresent ? "#89E089" : "#555"} />
-                  </svg>
-                </div>
+                <WebcamFeed userPresent={userPresent} userPresentSince={userPresentSince} />
                 {!userPresent && (
                   <div className="mt-[0.8vh]">
                     <PixelMeter

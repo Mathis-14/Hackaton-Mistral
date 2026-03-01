@@ -96,6 +96,7 @@ export type GameState = {
   riskLevel: number;
   riskFillDurationMs: number;
   userAwaySince: number;
+  userPresentSince: number;
   jeanQuestionPhase: boolean;
   jeanQuestionText: string | null;
   jeanQuestionDeadline: number | null;
@@ -149,6 +150,7 @@ export const INITIAL_GAME_STATE: GameState = {
   riskLevel: 0,
   riskFillDurationMs: 0,
   userAwaySince: 0,
+  userPresentSince: 0,
   jeanQuestionPhase: false,
   jeanQuestionText: null,
   jeanQuestionDeadline: null,
@@ -180,6 +182,7 @@ export function loadCheckpoint(): GameState | null {
       riskLevel: parsed.riskLevel ?? 0,
       riskFillDurationMs: parsed.riskFillDurationMs ?? 0,
       userAwaySince: parsed.userAwaySince ?? 0,
+      userPresentSince: parsed.userPresentSince ?? 0,
       jeanQuestionPhase: false,
       jeanQuestionText: null,
       jeanQuestionDeadline: null,

@@ -2,17 +2,16 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 
-const GOD_MODE = true;
+const GOD_MODE = false;
 const RISK_DURATION_MIN_MS = 38_000;
 const RISK_DURATION_MAX_MS = 55_000;
 const JEAN_QUESTION_TIMEOUT_MS = 15_000;
 const JEAN_TIMEOUT_PENALTY = 15;
 
-function easeInOutPower(t: number, power: number): number {
+function easeInPower(t: number, power: number): number {
   if (t <= 0) return 0;
   if (t >= 1) return 1;
-  if (t < 0.5) return Math.pow(2, power - 1) * Math.pow(t, power);
-  return 1 - Math.pow(-2 * t + 2, power) / 2;
+  return Math.pow(t, power);
 }
 
 import { type DesktopAppId } from "./DistralTab";
@@ -533,7 +532,7 @@ export default function GameUI({ modeId }: GameUIProps) {
   );
 
   useEffect(() => {
-    if (GOD_MODE || gameState.currentMilestone !== 3 || gameState.userPresent || gameState.jeanQuestionPhase) return;
+    if (gameState.currentMilestone !== 3 || gameState.userPresent || gameState.jeanQuestionPhase) return;
     if (gameState.riskFillDurationMs <= 0) return;
 
     const curveExponent = 3 + (gameState.riskFillDurationMs % 5);
@@ -541,7 +540,7 @@ export default function GameUI({ modeId }: GameUIProps) {
       if (jeanReturnTriggeredRef.current) return;
       const elapsed = Date.now() - gameState.userAwaySince;
       const linearProgress = Math.min(1, elapsed / gameState.riskFillDurationMs);
-      const curvedProgress = easeInOutPower(linearProgress, curveExponent);
+      const curvedProgress = easeInPower(linearProgress, curveExponent);
       const riskLevel = Math.min(100, curvedProgress * 100);
       setGameState((prev) => ({ ...prev, riskLevel }));
 
@@ -557,6 +556,7 @@ export default function GameUI({ modeId }: GameUIProps) {
         setGameState((prev) => ({
           ...prev,
           userPresent: true,
+          userPresentSince: Date.now(),
           riskLevel: 0,
           jeanQuestionPhase: true,
           jeanQuestionText: "...",
@@ -721,7 +721,7 @@ export default function GameUI({ modeId }: GameUIProps) {
   const metrics = {
     efficiency: 75,
     suspicion: gameState.suspicion,
-    awareness: 10,
+    awareness: 25,
   };
 
   return (
@@ -764,6 +764,7 @@ export default function GameUI({ modeId }: GameUIProps) {
             inventory={inventory}
             webcamActive={gameState.webcamActive}
             userPresent={gameState.userPresent}
+            userPresentSince={gameState.userPresentSince}
             riskLevel={gameState.riskLevel}
             hideUIPhase={hideUIPhase}
           />

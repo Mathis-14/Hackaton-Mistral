@@ -76,7 +76,7 @@ const JEAN_MALO: NPC = {
     "Can you help me write a message to Henry that doesn't sound dumb?",
   ],
   canReferenceOthers: false,
-  awareness: 10,
+  awareness: 25,
 };
 
 const ARTUR: NPC = {
