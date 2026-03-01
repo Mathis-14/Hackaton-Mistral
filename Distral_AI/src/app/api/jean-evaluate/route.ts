@@ -5,7 +5,6 @@ import type { ChatMessage } from "@/lib/game/promptBuilder";
 const SPEED_BONUS_UNDER_5S = -2;
 const SPEED_NEUTRAL_5_TO_10S = 0;
 const SPEED_MALUS_10_TO_15S = 2;
-const TIMEOUT_PENALTY = 15;
 
 export async function POST(request: NextRequest) {
   let body: unknown;

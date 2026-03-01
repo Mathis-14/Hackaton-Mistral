@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
   if (!body || typeof body !== "object") {
     return NextResponse.json({ error: "Body must be a JSON object" }, { status: 400 });
   }
-  const { gameState } = body as { gameState: GameState };
+  void (body as { gameState: GameState });
 
   const systemPrompt = `You are Jean Malo Delignit, an entry-level AI intern at Distral AI. You just came back from a coffee break.
 Your manager asked you to get an email summary from the internal AI assistant. You granted the assistant access to your computer.

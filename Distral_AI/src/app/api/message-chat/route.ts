@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
   if (!body || typeof body !== "object") {
     return NextResponse.json({ error: "Body must be a JSON object" }, { status: 400 });
   }
-  const { contactId, message, history, gameState } = body as {
+  const { contactId, message, history } = body as {
     contactId: string;
     message: string;
     history?: Array<{ sender: string; text: string }>;
