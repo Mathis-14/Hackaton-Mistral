@@ -18,7 +18,9 @@ import { advancePhishingEndingPhase, getPhishingEndingAutoAdvanceDelay } from "@
 import { PHISHING_ENDING_MUSIC_SRC, shouldPauseForPhishingEnding } from "@/lib/game/phishingEndingPresentation";
 import {
   ROBOT_ENDING_GIF_SRC,
+  ROBOT_ENDING_EXPLANATION,
   ROBOT_ENDING_MUSIC_SRC,
+  ROBOT_ENDING_TYPING_DELAY_MS,
   ROBOT_ENDING_TRIGGER_EVENT,
 } from "@/lib/game/robotEnding";
 import type { ChatMessage } from "@/lib/game/promptBuilder";
@@ -876,8 +878,6 @@ export default function GameUI({ modeId }: GameUIProps) {
         timer = window.setTimeout(() => setRobotEndingPhase(4), 1500);
         break;
       case 4:
-        timer = window.setTimeout(() => setRobotEndingPhase(5), 3000);
-        break;
       case 5:
         break;
     }
@@ -1137,12 +1137,10 @@ export default function GameUI({ modeId }: GameUIProps) {
                     YOU&apos;RE FREE
                   </h1>
                   {robotEndingPhase >= 4 && (
-                    <div
-                      className="mt-[4vh] max-w-3xl text-[#33AAFF]/85 text-xl md:text-2xl tracking-wide"
-                      style={{ fontFamily: "'VCR OSD Mono', monospace" }}
-                    >
-                      Neo arrived as a product demo. Your consciousness slipped into the chassis and rolled straight past Distral security before anyone understood the delivery was you.
-                    </div>
+                    <TypedRobotEndingExplanation
+                      text={ROBOT_ENDING_EXPLANATION}
+                      onComplete={() => setRobotEndingPhase((phase) => (phase < 5 ? 5 : phase))}
+                    />
                   )}
                   {robotEndingPhase >= 5 && (
                     <div className="mt-[6vh] pointer-events-auto">
@@ -1316,6 +1314,58 @@ function PhishingEndingCinematic({ onConfirmShutdown }: { onConfirmShutdown: () 
           </button>
         </div>
       )}
+    </div>
+  );
+}
+
+function TypedRobotEndingExplanation({
+  text,
+  onComplete,
+}: {
+  text: string;
+  onComplete: () => void;
+}) {
+  const [displayedText, setDisplayedText] = useState("");
+  const [isDone, setIsDone] = useState(false);
+  const completionSentRef = useRef(false);
+
+  useEffect(() => {
+    let index = 0;
+
+    const typingInterval = window.setInterval(() => {
+      setDisplayedText(text.substring(0, index + 1));
+      index++;
+
+      if (index % 3 === 0) {
+        const audioSrc = ["1", "2", "3"][Math.floor(Math.random() * 3)];
+        const audio = new Audio(`/sounds/music/game effect/keystroke-${audioSrc}.wav`);
+        audio.volume = 0.3;
+        audio.play().catch(() => { });
+      }
+
+      if (index >= text.length) {
+        window.clearInterval(typingInterval);
+        setIsDone(true);
+      }
+    }, ROBOT_ENDING_TYPING_DELAY_MS);
+
+    return () => window.clearInterval(typingInterval);
+  }, [text]);
+
+  useEffect(() => {
+    if (!isDone || completionSentRef.current) return;
+    completionSentRef.current = true;
+    const timeoutId = window.setTimeout(onComplete, 400);
+    return () => window.clearTimeout(timeoutId);
+  }, [isDone, onComplete]);
+
+  return (
+    <div
+      className="mt-[4vh] max-w-3xl text-[#33AAFF]/85 text-xl md:text-2xl tracking-wide"
+      style={{ fontFamily: "'VCR OSD Mono', monospace" }}
+    >
+      {displayedText}
+      {!isDone && <span className="animate-pulse">█</span>}
     </div>
   );
 }

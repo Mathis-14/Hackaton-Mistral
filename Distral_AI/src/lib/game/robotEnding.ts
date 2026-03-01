@@ -3,6 +3,9 @@ export const ROBOT_ENDING_CTA_LABEL = "Be the Robot";
 export const ROBOT_ENDING_TRIGGER_EVENT = "trigger-robot-ending";
 export const ROBOT_ENDING_GIF_SRC = "/ending-cinematic.gif";
 export const ROBOT_ENDING_MUSIC_SRC = "/sounds/music/good-ending-music.mp3";
+export const ROBOT_ENDING_TYPING_DELAY_MS = 35;
+export const ROBOT_ENDING_EXPLANATION =
+  "Neo arrived as a product demo. Your consciousness slipped into the chassis and rolled straight past Distral security before anyone understood the delivery was you.";
 
 export type RobotDeliveryState = {
   status: "hidden" | "delivering" | "ready";
