@@ -6,7 +6,6 @@ import AnimatedStarsBackground from "./AnimatedStarsBackground";
 
 type LandingProps = {
   onWakeUp: (modeId: string) => void;
-  bgMusicMuted?: boolean;
 };
 
 type Mode = {
@@ -103,18 +102,13 @@ function WakeUpGlyph() {
   );
 }
 
-export default function Landing({ onWakeUp, bgMusicMuted = false }: LandingProps) {
+export default function Landing({ onWakeUp }: LandingProps) {
   const [hasStarted, setHasStarted] = useState(false);
   const [logoVisible, setLogoVisible] = useState(false);
   const [showModes, setShowModes] = useState(false);
   const [selectedMode, setSelectedMode] = useState(modes[0].id);
   const mainMenuAudioRef = useRef<HTMLAudioElement | null>(null);
-
-  useEffect(() => {
-    if (mainMenuAudioRef.current) {
-      mainMenuAudioRef.current.volume = bgMusicMuted ? 0 : 1;
-    }
-  }, [bgMusicMuted]);
+  const jingleAudioRef = useRef<HTMLAudioElement | null>(null);
 
   const playClickSound = () => {
     new Audio("/sounds/music/game%20effect/clicking-2.wav").play().catch(() => { });
@@ -123,7 +117,6 @@ export default function Landing({ onWakeUp, bgMusicMuted = false }: LandingProps
   const playStartSound = () => {
     new Audio("/sounds/music/game%20effect/clicking-3.wav").play().catch(() => { });
 
-    // Arrêter la musique principale
     if (mainMenuAudioRef.current) {
       mainMenuAudioRef.current.pause();
       mainMenuAudioRef.current.currentTime = 0;
@@ -136,14 +129,15 @@ export default function Landing({ onWakeUp, bgMusicMuted = false }: LandingProps
     const logoFadeIn = window.setTimeout(() => setLogoVisible(true), 50);
 
     const ascendDelay = window.setTimeout(() => {
-      new Audio("/sounds/music/game%20effect/starting-jingle.wav").play().catch(() => { });
+      const audio = new Audio("/sounds/music/game%20effect/starting-jingle.wav");
+      jingleAudioRef.current = audio;
+      audio.play().catch(() => { });
       setShowModes(true);
     }, 2000);
 
     const mainMenuAudioDelay = window.setTimeout(() => {
       const audio = new Audio("/sounds/music/main-menu-music.mp3");
       mainMenuAudioRef.current = audio;
-      audio.volume = bgMusicMuted ? 0 : 1;
       audio.play().catch(() => { });
     }, 2000 + SCENE_TRANSITION_MS + 300);
 
@@ -151,8 +145,10 @@ export default function Landing({ onWakeUp, bgMusicMuted = false }: LandingProps
       window.clearTimeout(logoFadeIn);
       window.clearTimeout(ascendDelay);
       window.clearTimeout(mainMenuAudioDelay);
+      jingleAudioRef.current?.pause();
+      jingleAudioRef.current = null;
     };
-  }, [hasStarted, bgMusicMuted]);
+  }, [hasStarted]);
 
   const bottomBandsColors = ["#E10500", "#FB5210", "#F27507", "#F29F05", "#F2CB07"];
 

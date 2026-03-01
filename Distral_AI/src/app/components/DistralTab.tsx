@@ -203,11 +203,10 @@ function DistralAppWindow({
   const cancelledRef = useRef(false);
   const chatHistoryRef = useRef<ChatMessage[]>([]);
   const chatScrollRef = useRef<HTMLDivElement>(null);
-  const openingFetchedRef = useRef(false);
+  const lastFetchedMilestoneRef = useRef<number>(-1);
 
   const currentMilestone = MILESTONES[gameState.currentMilestone];
   const npcSlug = currentMilestone?.npcSlug ?? "jean-malo";
-  const hasOpeningContext = currentMilestone?.openingContext !== null;
   const npcDisplayName = gameState.knownPeople[0] ?? "User";
 
   const typeOutMessage = useCallback((text: string, onDone: () => void) => {
@@ -259,7 +258,7 @@ function DistralAppWindow({
 
   const processNpcResponse = useCallback((response: NpcApiResponse) => {
     console.log("[DistralApp] processNpcResponse:", { dialogue: response.dialogue?.slice(0, 80), action: response.action, suspicion_delta: response.suspicion_delta, events: response.game_events });
-    chatHistoryRef.current.push({ role: "assistant", content: JSON.stringify(response) });
+    chatHistoryRef.current.push({ role: "assistant", content: response.dialogue ?? "" });
 
     const payload = {
       dialogue: response.dialogue,
@@ -288,16 +287,19 @@ function DistralAppWindow({
   }, [onNpcResponse, typeOutMessage, willTriggerShutdown]);
 
   useEffect(() => {
-    if (openingFetchedRef.current) return;
-    openingFetchedRef.current = true;
+    const currentMilestone = gameState.currentMilestone;
+    if (lastFetchedMilestoneRef.current === currentMilestone) return;
 
-    console.log("[DistralApp] fetchOpening effect triggered, npcSlug:", npcSlug, "milestone:", gameState.currentMilestone, "hasOpening:", hasOpeningContext);
-
-    if (!hasOpeningContext) {
-      console.log("[DistralApp] No opening context for milestone, skipping to chat phase");
-      setPhase("chat");
+    const milestone = MILESTONES[currentMilestone];
+    const hasOpening = milestone?.openingContext != null;
+    if (!hasOpening) {
+      lastFetchedMilestoneRef.current = currentMilestone;
+      if (currentMilestone === 0) setPhase("chat");
       return;
     }
+
+    lastFetchedMilestoneRef.current = currentMilestone;
+    console.log("[DistralApp] fetchOpening for milestone", currentMilestone, "mail_request:", milestone?.id === "mail_request");
 
     const fetchOpening = async () => {
       try {
@@ -318,7 +320,7 @@ function DistralAppWindow({
         console.log("[DistralApp] Opening response received:", { dialogue: data.dialogue?.slice(0, 80), action: data.action });
         setIsWaitingForApi(false);
 
-        chatHistoryRef.current.push({ role: "assistant", content: JSON.stringify(data) });
+        chatHistoryRef.current.push({ role: "assistant", content: data.dialogue ?? "" });
 
         const openingPayload = {
           dialogue: data.dialogue,
@@ -353,7 +355,7 @@ function DistralAppWindow({
 
     fetchOpening();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [gameState.currentMilestone]);
 
   useEffect(() => {
     if (phase !== "chat" || isNpcTyping || isWaitingForApi) return;
@@ -382,8 +384,6 @@ function DistralAppWindow({
     setDisplayMessages((prev) => [...prev, { role: "ai", text }]);
     setPlayerResponse("");
 
-    chatHistoryRef.current.push({ role: "user", content: `The internal AI assistant says:\n${text}` });
-
     try {
       setIsWaitingForApi(true);
       console.log("[DistralApp] POST /api/npc-chat (reply) ...");
@@ -406,6 +406,7 @@ function DistralAppWindow({
       const data: NpcApiResponse = await response.json();
       console.log("[DistralApp] Reply response received:", { dialogue: data.dialogue?.slice(0, 80), action: data.action });
       setIsWaitingForApi(false);
+      chatHistoryRef.current.push({ role: "user", content: `The internal AI assistant says:\n${text}` });
       processNpcResponse(data);
     } catch (error) {
       console.error("[DistralApp] handlePlayerSubmit failed:", error);
