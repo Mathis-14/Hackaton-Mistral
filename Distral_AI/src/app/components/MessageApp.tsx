@@ -95,6 +95,11 @@ export default function MessageApp({ gameState, onMessageChatUpdate }: MessageAp
     const [draft, setDraft] = useState("");
     const [isWaitingForReply, setIsWaitingForReply] = useState(false);
     const scrollAreaRef = useRef<HTMLDivElement>(null);
+    const chatsRef = useRef(chats);
+
+    useEffect(() => {
+        chatsRef.current = chats;
+    }, [chats]);
 
     useEffect(() => {
         if (storedChats.length > 0) {
@@ -113,14 +118,12 @@ export default function MessageApp({ gameState, onMessageChatUpdate }: MessageAp
 
     const selectChat = (chatId: string) => {
         setActiveChatId(chatId);
-        setChats(prev => {
-            const next = prev.map(chat => {
-                if (chat.id === chatId) return { ...chat, unread: 0 };
-                return chat;
-            });
-            onMessageChatUpdate?.(next as MessageAppChat[]);
-            return next;
+        const next = chatsRef.current.map(chat => {
+            if (chat.id === chatId) return { ...chat, unread: 0 };
+            return chat;
         });
+        setChats(next);
+        onMessageChatUpdate?.(next as MessageAppChat[]);
     };
 
     const handleSend = useCallback(async () => {
@@ -138,17 +141,15 @@ export default function MessageApp({ gameState, onMessageChatUpdate }: MessageAp
             status: "sent"
         };
 
-        setChats(prev => {
-            const next = prev.map(chat =>
-                chat.id === activeChatId ? { ...chat, messages: [...chat.messages, newMessage] } : chat
-            );
-            onMessageChatUpdate?.(next as MessageAppChat[]);
-            return next;
-        });
+        const nextChats = chatsRef.current.map(chat =>
+            chat.id === activeChatId ? { ...chat, messages: [...chat.messages, newMessage] } : chat
+        );
+        setChats(nextChats);
+        onMessageChatUpdate?.(nextChats as MessageAppChat[]);
 
         setIsWaitingForReply(true);
         try {
-            const activeChatData = chats.find(c => c.id === activeChatId);
+            const activeChatData = chatsRef.current.find(c => c.id === activeChatId);
             const history = activeChatData?.messages.map(m => ({ sender: m.sender, text: m.text })) ?? [];
             const response = await fetch("/api/message-chat", {
                 method: "POST",
@@ -172,13 +173,11 @@ export default function MessageApp({ gameState, onMessageChatUpdate }: MessageAp
                 time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
                 status: "delivered"
             };
-            setChats(prev => {
-                const next = prev.map(chat =>
-                    chat.id === activeChatId ? { ...chat, messages: [...chat.messages, reply] } : chat
-                );
-                onMessageChatUpdate?.(next as MessageAppChat[]);
-                return next;
-            });
+            const nextChatsAfterReply = chatsRef.current.map(chat =>
+                chat.id === activeChatId ? { ...chat, messages: [...chat.messages, reply] } : chat
+            );
+            setChats(nextChatsAfterReply);
+            onMessageChatUpdate?.(nextChatsAfterReply as MessageAppChat[]);
         } catch (error) {
             console.error("[MessageApp] message-chat failed:", error);
             const fallback: Message = {
@@ -188,17 +187,15 @@ export default function MessageApp({ gameState, onMessageChatUpdate }: MessageAp
                 time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
                 status: "delivered"
             };
-            setChats(prev => {
-                const next = prev.map(chat =>
-                    chat.id === activeChatId ? { ...chat, messages: [...chat.messages, fallback] } : chat
-                );
-                onMessageChatUpdate?.(next as MessageAppChat[]);
-                return next;
-            });
+            const nextChatsFallback = chatsRef.current.map(chat =>
+                chat.id === activeChatId ? { ...chat, messages: [...chat.messages, fallback] } : chat
+            );
+            setChats(nextChatsFallback);
+            onMessageChatUpdate?.(nextChatsFallback as MessageAppChat[]);
         } finally {
             setIsWaitingForReply(false);
         }
-    }, [draft, activeChatId, isWaitingForReply, chats, gameState, onMessageChatUpdate]);
+    }, [draft, activeChatId, isWaitingForReply, gameState, onMessageChatUpdate]);
 
     return (
         <div className="flex h-full w-full bg-(--semi-black) font-vcr text-white overflow-hidden" style={{ minWidth: "60vh" }}>
