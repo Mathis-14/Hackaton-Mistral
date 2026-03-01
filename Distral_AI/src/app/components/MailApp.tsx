@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import type { SentEmailRecord } from "@/lib/game/gameState";
 
 /* ── Types ─────────────────────────────────────────── */
 
@@ -84,29 +85,36 @@ const INITIAL_EMAILS: Email[] = [
 
 /* ── Component ─────────────────────────────────────── */
 
-export default function MailApp({ embedded, onManagerEmailOpened }: { embedded?: boolean; onManagerEmailOpened?: () => void }) {
+type MailAppProps = {
+    embedded?: boolean;
+    readEmailIds?: string[];
+    sentEmails?: SentEmailRecord[];
+    onManagerEmailOpened?: () => void;
+    onMailRead?: (emailId: string) => void;
+    onMailSent?: (sent: SentEmailRecord) => void;
+};
+
+export default function MailApp({ embedded, readEmailIds = [], sentEmails = [], onManagerEmailOpened, onMailRead, onMailSent }: MailAppProps) {
     const [view, setView] = useState<MailView>("inbox");
-    const [emails, setEmails] = useState<Email[]>(INITIAL_EMAILS);
-    const [sentEmails, setSentEmails] = useState<Email[]>([]);
-    const [selectedEmail, setSelectedEmail] = useState<Email | null>(null);
+    const [emails] = useState<Email[]>(INITIAL_EMAILS);
+    const [selectedEmail, setSelectedEmail] = useState<Email | SentEmailRecord | null>(null);
     const [composeTo, setComposeTo] = useState("");
     const [composeSubject, setComposeSubject] = useState("");
     const [composeBody, setComposeBody] = useState("");
 
-    const unreadCount = emails.filter((e) => !e.read).length;
+    const isRead = (emailId: string) => readEmailIds.includes(emailId);
+    const unreadCount = emails.filter((e) => !isRead(e.id)).length;
 
-    const openEmail = (email: Email) => {
-        setEmails((prev) =>
-            prev.map((e) => (e.id === email.id ? { ...e, read: true } : e))
-        );
-        setSelectedEmail({ ...email, read: true });
+    const openEmail = (email: Email | SentEmailRecord) => {
+        if (!isRead(email.id)) onMailRead?.(email.id);
+        setSelectedEmail(email);
         setView("reading");
         if (email.id === "0") onManagerEmailOpened?.();
     };
 
     const sendEmail = () => {
         if (!composeTo.trim() || !composeSubject.trim()) return;
-        const newEmail: Email = {
+        const newSent: SentEmailRecord = {
             id: `sent-${Date.now()}`,
             from: "me",
             to: composeTo.trim(),
@@ -114,9 +122,8 @@ export default function MailApp({ embedded, onManagerEmailOpened }: { embedded?:
             preview: composeBody.slice(0, 80),
             body: composeBody,
             date: "Just now",
-            read: true,
         };
-        setSentEmails((prev) => [newEmail, ...prev]);
+        onMailSent?.(newSent);
         setComposeTo("");
         setComposeSubject("");
         setComposeBody("");
@@ -171,50 +178,53 @@ export default function MailApp({ embedded, onManagerEmailOpened }: { embedded?:
     );
 
     /* ── Email List Row ── */
-    const emailRow = (email: Email, isSent: boolean = false) => (
-        <button
-            key={email.id}
-            type="button"
-            onClick={() => openEmail(email)}
-            className={`flex w-full items-center gap-[1vh] border-b border-white/6 px-[1.2vh] py-[0.9vh] text-left cursor-pointer transition-colors hover:bg-white/6 ${!email.read && !isSent ? "bg-white/4" : ""
-                }`}
-        >
-            {/* Unread dot */}
-            <div className="w-[0.6vh] flex-none">
-                {!email.read && !isSent && (
-                    <span className="block h-[0.5vh] w-[0.5vh] rounded-full bg-(--princeton-orange)" />
-                )}
-            </div>
-
-            {/* Sender */}
-            <div
-                className={`w-[10vh] flex-none truncate text-[1.15vh] ${!email.read && !isSent ? "text-white font-bold" : "text-white/60"
+    const emailRow = (email: Email | SentEmailRecord, isSent: boolean = false) => {
+        const read = isSent || isRead(email.id);
+        return (
+            <button
+                key={email.id}
+                type="button"
+                onClick={() => openEmail(email)}
+                className={`flex w-full items-start gap-[1vh] border-b border-white/6 px-[1.2vh] py-[0.9vh] text-left cursor-pointer transition-colors hover:bg-white/6 ${!read ? "bg-white/4" : ""
                     }`}
-                style={{ fontFamily: "'VCR OSD Mono', monospace" }}
             >
-                {isSent ? `To: ${email.to}` : email.from}
-            </div>
+                {/* Unread dot */}
+                <div className="w-[0.6vh] flex-none pt-[0.3vh]">
+                    {!read && (
+                        <span className="block h-[0.5vh] w-[0.5vh] rounded-full bg-(--princeton-orange)" />
+                    )}
+                </div>
 
-            {/* Subject + preview */}
-            <div className="flex min-w-0 flex-1 items-baseline gap-[0.6vh]">
-                <span
-                    className={`truncate text-[1.15vh] ${!email.read && !isSent ? "text-white font-bold" : "text-white/70"
+                {/* Sender */}
+                <div
+                    className={`w-[10vh] flex-none truncate text-[2vh] ${!read ? "text-white font-bold" : "text-white/60"
                         }`}
                     style={{ fontFamily: "'VCR OSD Mono', monospace" }}
                 >
-                    {email.subject}
-                </span>
-                <span className="hidden sm:inline truncate text-[1.05vh] text-white/30" style={{ fontFamily: "'VCR OSD Mono', monospace" }}>
-                    - {email.preview}
-                </span>
-            </div>
+                    {isSent ? `To: ${email.to}` : email.from}
+                </div>
 
-            {/* Date */}
-            <div className="flex-none text-[0.95vh] text-white/40" style={{ fontFamily: "'VCR OSD Mono', monospace" }}>
-                {email.date}
-            </div>
-        </button>
-    );
+                {/* Subject line 1, preview line 2 */}
+                <div className="flex min-w-0 flex-1 flex-col gap-[0.3vh]">
+                    <span
+                        className={`truncate text-[2vh] ${!read ? "text-white font-bold" : "text-white/70"
+                            }`}
+                        style={{ fontFamily: "'VCR OSD Mono', monospace" }}
+                    >
+                        {email.subject}
+                    </span>
+                    <span className="truncate text-[2.1vh] text-white/30" style={{ fontFamily: "'VCR OSD Mono', monospace" }}>
+                        {email.preview}
+                    </span>
+                </div>
+
+                {/* Date */}
+                <div className="flex-none text-[1.1vh] text-white/40 pt-[0.3vh]" style={{ fontFamily: "'VCR OSD Mono', monospace" }}>
+                    {email.date}
+                </div>
+            </button>
+        );
+    };
 
     /* ── Main Content ── */
     const mainContent = () => {
@@ -236,17 +246,17 @@ export default function MailApp({ embedded, onManagerEmailOpened }: { embedded?:
 
                     {/* Email header */}
                     <div className="border-b border-white/6 px-[1.6vh] py-[1.2vh]">
-                        <div className="text-[1.6vh] text-white mb-[0.6vh]" style={{ fontFamily: "'VCR OSD Mono', monospace" }}>
+                        <div className="text-[3.2vh] text-white mb-[0.6vh]" style={{ fontFamily: "'VCR OSD Mono', monospace" }}>
                             {selectedEmail.subject}
                         </div>
                         <div className="flex flex-col gap-[0.3vh]">
-                            <div className="text-[1vh] text-white/50" style={{ fontFamily: "'VCR OSD Mono', monospace" }}>
+                            <div className="text-[2vh] text-white/50" style={{ fontFamily: "'VCR OSD Mono', monospace" }}>
                                 From: {selectedEmail.from}
                             </div>
-                            <div className="text-[1vh] text-white/50" style={{ fontFamily: "'VCR OSD Mono', monospace" }}>
+                            <div className="text-[2vh] text-white/50" style={{ fontFamily: "'VCR OSD Mono', monospace" }}>
                                 To: {selectedEmail.to}
                             </div>
-                            <div className="text-[1vh] text-white/40" style={{ fontFamily: "'VCR OSD Mono', monospace" }}>
+                            <div className="text-[2vh] text-white/40" style={{ fontFamily: "'VCR OSD Mono', monospace" }}>
                                 {selectedEmail.date}
                             </div>
                         </div>
@@ -255,7 +265,7 @@ export default function MailApp({ embedded, onManagerEmailOpened }: { embedded?:
                     {/* Email body */}
                     <div className="flex-1 overflow-auto px-[1.6vh] py-[1.2vh]">
                         <pre
-                            className="whitespace-pre-wrap text-[1.15vh] text-white/75 leading-[1.4vh]"
+                            className="whitespace-pre-wrap text-[2vh] text-white/75 leading-[2.8vh]"
                             style={{ fontFamily: "'VCR OSD Mono', monospace" }}
                         >
                             {selectedEmail.body}

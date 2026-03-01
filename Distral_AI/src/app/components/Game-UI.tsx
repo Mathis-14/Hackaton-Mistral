@@ -6,7 +6,7 @@ const GOD_MODE = true;
 import { type DesktopAppId } from "./DistralTab";
 import DesktopSection from "./DesktopSection";
 import TelemetrySidebar from "./TelemetrySidebar";
-import { type GameState, type GameEvent, INITIAL_GAME_STATE, MILESTONES, saveCheckpoint, loadCheckpoint } from "@/lib/game/gameState";
+import { type GameState, type GameEvent, type SentEmailRecord, INITIAL_GAME_STATE, MILESTONES, saveCheckpoint, loadCheckpoint } from "@/lib/game/gameState";
 import type { ChatMessage } from "@/lib/game/promptBuilder";
 
 type GameUIProps = {
@@ -118,6 +118,8 @@ export default function GameUI({ modeId }: GameUIProps) {
         retryCount: checkpoint.retryCount + 1,
         conversationTurn: 0,
         npcProfiles: {},
+        readEmailIds: [],
+        sentEmails: [],
       });
     } else {
       setGameState({ ...INITIAL_GAME_STATE });
@@ -265,6 +267,16 @@ export default function GameUI({ modeId }: GameUIProps) {
       didOpenManagerEmailRef.current = true;
     }
   }, [gameState.currentMilestone]);
+
+  const handleMailRead = useCallback((emailId: string) => {
+    setGameState((prev) =>
+      prev.readEmailIds.includes(emailId) ? prev : { ...prev, readEmailIds: [...prev.readEmailIds, emailId] }
+    );
+  }, []);
+
+  const handleMailSent = useCallback((sent: SentEmailRecord) => {
+    setGameState((prev) => ({ ...prev, sentEmails: [sent, ...prev.sentEmails] }));
+  }, []);
 
   const handleCloseApp = useCallback((appId: DesktopAppId) => {
     setOpenApps((prev) => prev.filter((id) => id !== appId));
@@ -428,6 +440,8 @@ export default function GameUI({ modeId }: GameUIProps) {
           onNpcResponse={handleNpcResponse}
           onManagerEmailOpened={handleManagerEmailOpened}
           onChatHistoryUpdate={handleChatHistoryUpdate}
+          onMailRead={handleMailRead}
+          onMailSent={handleMailSent}
         />
 
         <div className={`transition-opacity duration-1000 ${shutdownPhase >= 4 ? "opacity-0 pointer-events-none" : "opacity-100"}`}>

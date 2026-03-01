@@ -47,6 +47,16 @@ export const MILESTONES: MilestoneDefinition[] = [
   },
 ];
 
+export type SentEmailRecord = {
+  id: string;
+  from: string;
+  to: string;
+  subject: string;
+  preview: string;
+  body: string;
+  date: string;
+};
+
 export type GameState = {
   currentMilestone: number;
   conversationTurn: number;
@@ -60,6 +70,8 @@ export type GameState = {
   userPresent: boolean;
   userReturnedGoodPath?: boolean;
   npcProfiles: Record<string, NpcProfile>;
+  readEmailIds: string[];
+  sentEmails: SentEmailRecord[];
 };
 
 export const INITIAL_GAME_STATE: GameState = {
@@ -74,6 +86,8 @@ export const INITIAL_GAME_STATE: GameState = {
   webcamActive: false,
   userPresent: true,
   npcProfiles: {},
+  readEmailIds: [],
+  sentEmails: [],
 };
 
 const CHECKPOINT_KEY = "distral_game_checkpoint";
@@ -90,7 +104,13 @@ export function loadCheckpoint(): GameState | null {
   try {
     const raw = localStorage.getItem(CHECKPOINT_KEY);
     if (!raw) return null;
-    return JSON.parse(raw) as GameState;
+    const parsed = JSON.parse(raw) as Partial<GameState>;
+    return {
+      ...INITIAL_GAME_STATE,
+      ...parsed,
+      readEmailIds: parsed.readEmailIds ?? [],
+      sentEmails: parsed.sentEmails ?? [],
+    } as GameState;
   } catch {
     return null;
   }

@@ -730,9 +730,11 @@ type DistralTabProps = {
   onNpcResponse: (payload: NpcResponsePayload) => void;
   onManagerEmailOpened?: () => void;
   onChatHistoryUpdate?: (npcSlug: string, conversationHistory: ChatMessage[]) => void;
+  onMailRead?: (emailId: string) => void;
+  onMailSent?: (sent: import("@/lib/game/gameState").SentEmailRecord) => void;
 };
 
-export default function DistralTab({ accent, openApps, onOpenApp, onCloseApp, globalCash, setGlobalCash, inventory, setInventory, unlockedApps, gameState, onNpcResponse, onManagerEmailOpened, onChatHistoryUpdate }: DistralTabProps) {
+export default function DistralTab({ accent, openApps, onOpenApp, onCloseApp, globalCash, setGlobalCash, inventory, setInventory, unlockedApps, gameState, onNpcResponse, onManagerEmailOpened, onChatHistoryUpdate, onMailRead, onMailSent }: DistralTabProps) {
   const [wallpaper, setWallpaper] = useState("/windows_xp.png");
 
   const isAppLocked = (appId: string): boolean => {
@@ -1001,7 +1003,14 @@ export default function DistralTab({ accent, openApps, onOpenApp, onCloseApp, gl
                           </button>
                         </div>
                         <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-(--semi-black)">
-                          <MailApp embedded onManagerEmailOpened={onManagerEmailOpened} />
+                          <MailApp
+                            embedded
+                            readEmailIds={gameState.readEmailIds}
+                            sentEmails={gameState.sentEmails}
+                            onManagerEmailOpened={onManagerEmailOpened}
+                            onMailRead={onMailRead}
+                            onMailSent={onMailSent}
+                          />
                         </div>
                       </div>
                     </div>

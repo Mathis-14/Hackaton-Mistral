@@ -21,9 +21,11 @@ type DesktopSectionProps = {
   onNpcResponse: (payload: NpcResponsePayload) => void;
   onManagerEmailOpened?: () => void;
   onChatHistoryUpdate?: (npcSlug: string, conversationHistory: import("@/lib/game/promptBuilder").ChatMessage[]) => void;
+  onMailRead?: (emailId: string) => void;
+  onMailSent?: (sent: import("@/lib/game/gameState").SentEmailRecord) => void;
 };
 
-export default function DesktopSection({ profileName, accent, openApps, onOpenApp, onCloseApp, globalCash, setGlobalCash, inventory, setInventory, isShuttingDown, onShutdown, unlockedApps, gameState, onNpcResponse, onManagerEmailOpened, onChatHistoryUpdate }: DesktopSectionProps) {
+export default function DesktopSection({ profileName, accent, openApps, onOpenApp, onCloseApp, globalCash, setGlobalCash, inventory, setInventory, isShuttingDown, onShutdown, unlockedApps, gameState, onNpcResponse, onManagerEmailOpened, onChatHistoryUpdate, onMailRead, onMailSent }: DesktopSectionProps) {
   return (
     <section className="pixel-card h-full min-h-0 p-[0.35vh]">
       <div className="pixel-card__shell flex h-full min-h-0 flex-col overflow-hidden border border-white/10 bg-(--carbon-black)">
@@ -54,6 +56,8 @@ export default function DesktopSection({ profileName, accent, openApps, onOpenAp
               onNpcResponse={onNpcResponse}
               onManagerEmailOpened={onManagerEmailOpened}
               onChatHistoryUpdate={onChatHistoryUpdate}
+              onMailRead={onMailRead}
+              onMailSent={onMailSent}
             />
           </div>
         </div>
