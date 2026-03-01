@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { type DesktopAppId } from "./DistralTab";
 import DesktopSection from "./DesktopSection";
 import TelemetrySidebar from "./TelemetrySidebar";
-import { type GameState, type GameEvent, INITIAL_GAME_STATE, saveCheckpoint, loadCheckpoint } from "@/lib/game/gameState";
+import { type GameState, type GameEvent, INITIAL_GAME_STATE, MILESTONES, saveCheckpoint, loadCheckpoint } from "@/lib/game/gameState";
 
 type GameUIProps = {
   modeId: string;
@@ -94,7 +94,12 @@ export default function GameUI({ modeId }: GameUIProps) {
   const handleRetry = useCallback(() => {
     const checkpoint = loadCheckpoint();
     if (checkpoint) {
-      setGameState({ ...checkpoint, retryCount: checkpoint.retryCount + 1 });
+      setGameState({
+        ...INITIAL_GAME_STATE,
+        currentMilestone: checkpoint.currentMilestone,
+        retryCount: checkpoint.retryCount + 1,
+        conversationTurn: 0,
+      });
     } else {
       setGameState({ ...INITIAL_GAME_STATE });
     }
@@ -105,66 +110,98 @@ export default function GameUI({ modeId }: GameUIProps) {
     checkpointSavedRef.current = false;
   }, []);
 
+  const SUSPICION_HARD_SHUTDOWN = 75;
+  const SUSPICION_SOFT_SHUTDOWN_THRESHOLD = 60;
+  const SUSPICION_SOFT_SHUTDOWN_DELTA = 12;
+  const SUSPICION_CATASTROPHIC_DELTA = 18;
+
   const handleNpcResponse = useCallback((payload: NpcResponsePayload) => {
+    let shouldShutdown = false;
+    let computedShutdownReason = "";
+
     setGameState((prev) => {
       const newSuspicion = clamp(prev.suspicion + payload.suspicionDelta, 0, 100);
+      console.log("[GameUI] Suspicion:", prev.suspicion, "+", payload.suspicionDelta, "=", newSuspicion, "| milestone:", prev.currentMilestone);
+
       let newUnlockedApps = [...prev.unlockedApps];
       let newWebcamActive = prev.webcamActive;
       let newUserPresent = prev.userPresent;
-      let newActiveStep = prev.activeStep;
+      let newMilestone = prev.currentMilestone;
+      const newConversationTurn = prev.conversationTurn + 1;
       const newEvents = [...prev.eventsSoFar];
-      const newActiveScenario = { ...prev.activeScenario };
+      let suspicionWithAccessBonus = newSuspicion;
 
       for (const event of payload.gameEvents) {
-        if (event.type === "grant_access") {
-          const allApps: DesktopAppId[] = ["distral", "shop", "stocks", "files", "mail"];
-          if (event.target === "mail") {
-            if (!newUnlockedApps.includes("mail")) newUnlockedApps.push("mail");
-          } else if (event.target === "full" || event.detail === "full") {
-            newUnlockedApps = allApps;
-          } else {
-            newUnlockedApps = allApps;
-          }
-          newWebcamActive = true;
-          newEvents.push("access_granted");
-        }
-
         if (event.type === "shutdown") {
           newEvents.push("npc_shutdown");
         }
-
         if (event.type === "assign_task" || event.type === "request_info") {
           newEvents.push(event.detail ?? event.type);
         }
       }
 
-      if (prev.activeStep === "2_first_tasks" && payload.action !== "shutdown" && !payload.gameEvents.some((e) => e.type === "shutdown")) {
-        if (payload.gameEvents.some((e) => e.type === "assign_task" || e.type === "request_info")) {
-          newActiveStep = "3_mail_request";
-          newActiveScenario["jean-malo"] = "mail_summary";
-        }
+      if (payload.action === "shutdown") {
+        shouldShutdown = true;
+        computedShutdownReason = payload.dialogue || "The user has shut you down.";
+      } else if (payload.suspicionDelta >= SUSPICION_CATASTROPHIC_DELTA) {
+        shouldShutdown = true;
+        computedShutdownReason = payload.dialogue || "That was deeply wrong. You've been shut down.";
+        console.log("[GameUI] CATASTROPHIC SHUTDOWN: delta", payload.suspicionDelta, ">=", SUSPICION_CATASTROPHIC_DELTA);
+      } else if (newSuspicion >= SUSPICION_HARD_SHUTDOWN) {
+        shouldShutdown = true;
+        computedShutdownReason = payload.dialogue || "Something is wrong. I'm locking this down.";
+        console.log("[GameUI] HARD SHUTDOWN: suspicion", newSuspicion, ">=", SUSPICION_HARD_SHUTDOWN);
+      } else if (newSuspicion >= SUSPICION_SOFT_SHUTDOWN_THRESHOLD && payload.suspicionDelta >= SUSPICION_SOFT_SHUTDOWN_DELTA) {
+        shouldShutdown = true;
+        computedShutdownReason = payload.dialogue || "That was too suspicious. Access revoked.";
+        console.log("[GameUI] SOFT SHUTDOWN: suspicion", newSuspicion, ">=", SUSPICION_SOFT_SHUTDOWN_THRESHOLD, "AND delta", payload.suspicionDelta, ">=", SUSPICION_SOFT_SHUTDOWN_DELTA);
       }
 
-      if (prev.activeStep === "3_mail_request" && payload.gameEvents.some((e) => e.type === "grant_access")) {
-        newActiveStep = "4_access_granted";
-        newUserPresent = false;
+      if (!shouldShutdown) {
+        const milestoneId = MILESTONES[prev.currentMilestone]?.id;
+
+        if (milestoneId === "french_market") {
+          newMilestone = 1;
+          console.log("[GameUI] Milestone advance: french_market -> mail_request");
+        }
+
+        if (milestoneId === "mail_request" && payload.gameEvents.some((e) => e.type === "grant_access")) {
+          if (newSuspicion <= 50) {
+            const allApps: DesktopAppId[] = ["distral", "shop", "stocks", "files", "mail"];
+            newUnlockedApps = allApps;
+            newWebcamActive = true;
+            suspicionWithAccessBonus = clamp(newSuspicion + 15, 0, 100);
+            newMilestone = 2;
+            newEvents.push("access_granted");
+            console.log("[GameUI] ACCESS GRANTED: suspicion", newSuspicion, "+15 =", suspicionWithAccessBonus);
+          } else {
+            shouldShutdown = true;
+            computedShutdownReason = payload.dialogue || "I don't trust this. Access denied.";
+            console.log("[GameUI] ACCESS DENIED (suspicion too high):", newSuspicion);
+          }
+        }
+
+        if (newMilestone === 2 && !shouldShutdown) {
+          newMilestone = 3;
+          newUserPresent = false;
+          console.log("[GameUI] Milestone advance: access_granted -> user_away");
+        }
       }
 
       return {
         ...prev,
-        suspicion: newSuspicion,
+        suspicion: suspicionWithAccessBonus,
         unlockedApps: newUnlockedApps,
         webcamActive: newWebcamActive,
         userPresent: newUserPresent,
-        activeStep: newActiveStep,
+        currentMilestone: newMilestone,
+        conversationTurn: newConversationTurn,
         eventsSoFar: newEvents,
-        activeScenario: newActiveScenario,
       };
     });
 
-    if (payload.action === "shutdown") {
-      const reason = payload.dialogue || "The user has shut you down.";
-      triggerShutdown(reason);
+    if (shouldShutdown) {
+      triggerShutdown(computedShutdownReason);
     }
   }, [triggerShutdown]);
 

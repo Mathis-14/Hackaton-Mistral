@@ -4,6 +4,7 @@ import { useState } from "react";
 import GameUI from "./components/Game-UI";
 import Landing from "./components/Landing";
 import WakeUpTerminal from "./components/Wake-UP-Terminal";
+import { clearCheckpoint } from "@/lib/game/gameState";
 
 const SCREEN_FADE_MS = 480;
 
@@ -34,7 +35,7 @@ export default function Home() {
         }`}
         style={{ transitionDuration: `${SCREEN_FADE_MS}ms` }}
       >
-        {showTerminal ? <WakeUpTerminal onComplete={() => setShowGame(true)} /> : null}
+        {showTerminal ? <WakeUpTerminal onComplete={() => { clearCheckpoint(); setShowGame(true); }} /> : null}
       </div>
 
       <div

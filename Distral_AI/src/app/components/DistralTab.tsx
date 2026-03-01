@@ -7,7 +7,7 @@ import FilesTab from "./FilesTab";
 import Marketplace from "./Marketplace";
 import StockMarketGame from "./StockMarketGame";
 import MailApp from "./MailApp";
-import type { GameState } from "@/lib/game/gameState";
+import { type GameState, MILESTONES } from "@/lib/game/gameState";
 import type { NpcResponsePayload } from "./Game-UI";
 import type { ChatMessage } from "@/lib/game/promptBuilder";
 
@@ -204,7 +204,9 @@ function DistralAppWindow({
   const chatScrollRef = useRef<HTMLDivElement>(null);
   const openingFetchedRef = useRef(false);
 
-  const npcSlug = gameState.steps[gameState.activeStep]?.npcsPresent[0] ?? "jean-malo";
+  const currentMilestone = MILESTONES[gameState.currentMilestone];
+  const npcSlug = currentMilestone?.npcSlug ?? "jean-malo";
+  const hasOpeningContext = currentMilestone?.openingContext !== null;
   const npcDisplayName = gameState.knownPeople[0] ?? "User";
 
   const typeOutMessage = useCallback((text: string, onDone: () => void) => {
@@ -273,7 +275,13 @@ function DistralAppWindow({
     if (openingFetchedRef.current) return;
     openingFetchedRef.current = true;
 
-    console.log("[DistralApp] fetchOpening effect triggered, npcSlug:", npcSlug, "activeStep:", gameState.activeStep);
+    console.log("[DistralApp] fetchOpening effect triggered, npcSlug:", npcSlug, "milestone:", gameState.currentMilestone, "hasOpening:", hasOpeningContext);
+
+    if (!hasOpeningContext) {
+      console.log("[DistralApp] No opening context for milestone, skipping to chat phase");
+      setPhase("chat");
+      return;
+    }
 
     const fetchOpening = async () => {
       try {

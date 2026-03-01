@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
     gameState: GameState;
   };
 
-  console.log("[npc-chat] POST received, npcSlug:", npcSlug, "hasMessage:", !!message, "historyLen:", history?.length ?? 0, "activeStep:", gameState?.activeStep);
+  console.log("[npc-chat] POST received, npcSlug:", npcSlug, "hasMessage:", !!message, "historyLen:", history?.length ?? 0, "milestone:", gameState?.currentMilestone);
 
   const npc = getNpc(npcSlug);
   if (!npc) {

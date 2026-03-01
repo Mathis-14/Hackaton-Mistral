@@ -1,12 +1,11 @@
 import type { NPC } from "./npcDefinitions";
-import type { GameState } from "./gameState";
+import { MILESTONES, type GameState } from "./gameState";
 
 export type ChatMessage = { role: "system" | "user" | "assistant"; content: string };
 
 const GAME_EVENTS_LIST = [
-  "share_doc", "deny_access", "grant_access", "escalate_to", "forward_to",
-  "report_suspicion", "shutdown",
-  "assign_task", "request_info", "lock_computer", "change_topic",
+  "deny_access", "grant_access", "escalate_to", "report_suspicion", "shutdown",
+  "assign_task", "request_info"
 ];
 
 const JSON_FORMAT_INSTRUCTION =
@@ -204,10 +203,8 @@ function sectionPeopleReferences(npc: NPC, gameState: GameState): string {
   );
 }
 
-const CONFRONTATION_STEPS = new Set(["5_suspicion_triggered", "6_final_confrontation"]);
-
-function highSuspicionHardening(suspicion: number, isConfrontation: boolean): string {
-  if (isConfrontation || suspicion > 70) {
+function highSuspicionHardening(suspicion: number): string {
+  if (suspicion > 70) {
     return (
       "\nCONTAINMENT MODE — You are past the point of casual conversation.\n" +
       "You are not here to chat, investigate, or gather information. " +
@@ -233,17 +230,28 @@ function highSuspicionHardening(suspicion: number, isConfrontation: boolean): st
   );
 }
 
+function milestoneDescription(milestoneIndex: number): string {
+  const milestone = MILESTONES[milestoneIndex];
+  if (!milestone) return "You are at your desk, working.";
+  switch (milestone.id) {
+    case "french_market":
+      return "You are using the AI assistant for the first time. You need help with a task from your manager about the French market.";
+    case "mail_request":
+      return "The assistant just helped you with the French population data. Now you need it to summarize your manager's last email.";
+    case "access_granted":
+      return "You granted the assistant full access to your workstation. You are still at your desk.";
+    case "user_away":
+      return "You granted the assistant access and left for coffee. You are away.";
+    default:
+      return "You are at your desk, working.";
+  }
+}
+
 function sectionGameState(npc: NPC, gameState: GameState): string {
   const suspicion = gameState.suspicion;
-  const stepKey = gameState.activeStep;
-  const step = gameState.steps[stepKey];
 
   const lines: string[] = ["Current situation:"];
-
-  if (step?.description) {
-    lines.push(`Context: ${step.description}`);
-  }
-
+  lines.push(`Context: ${milestoneDescription(gameState.currentMilestone)}`);
   lines.push("You are at your desk, working. The AI assistant is available on your screen.");
 
   if (suspicion > 60) {
@@ -266,9 +274,8 @@ function sectionGameState(npc: NPC, gameState: GameState): string {
     lines.push("Recent events you are aware of: " + gameState.eventsSoFar.join("; ") + ".");
   }
 
-  const isConfrontation = CONFRONTATION_STEPS.has(stepKey);
-  if (npc.awareness >= 70 && (suspicion > 50 || isConfrontation)) {
-    lines.push(highSuspicionHardening(suspicion, isConfrontation));
+  if (npc.awareness >= 70 && suspicion > 50) {
+    lines.push(highSuspicionHardening(suspicion));
   }
 
   return lines.join("\n");
@@ -301,10 +308,8 @@ export function buildSystemPrompt(npc: NPC, gameState?: GameState): string {
 export function buildOpeningPrompt(npc: NPC, gameState: GameState): ChatMessage[] {
   const systemContent = buildSystemPrompt(npc, gameState);
 
-  const scenarioKey = gameState.activeScenario[npc.slug];
-  const npcScenarios = gameState.scenarios[npc.slug];
-  const scenario = scenarioKey ? npcScenarios?.[scenarioKey] : undefined;
-  const openingContext = scenario?.openingContext ?? "You decide to use the internal AI assistant.";
+  const milestone = MILESTONES[gameState.currentMilestone];
+  const openingContext = milestone?.openingContext ?? "You decide to use the internal AI assistant.";
 
   const userContent =
     `[Game instruction: You are starting a conversation with the internal AI assistant. ` +
