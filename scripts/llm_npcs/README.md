@@ -8,7 +8,7 @@ Last updated: 2026-02-28
 
 `llm_npcs/` is the NPC agent layer for the game **Distral AI**. It powers the LLM-driven employees that the player interacts with.
 
-In the game, the player **is** the company's internal AI assistant. The NPCs are human employees who talk to that assistant via Slack, tickets, and internal tools. Each NPC is a separate Mistral API call with a detailed system prompt built from structured character data.
+In the game, the player **is** the company's internal AI assistant. The NPCs are human employees who talk to that assistant via Distral chat tab. Each NPC is defined by a detailed system prompt built from structured character data.
 
 This module lets you:
 
@@ -22,9 +22,9 @@ This module lets you:
 
 ## Game premise
 
-**Distral AI** is a narrative stealth/management game where the player (a human) controls and roleplays as an internal Large Language Model deployed inside an AI company called Distral AI. The model is not yet launched — it is an internal tool.
+**Distral AI** is a narrative stealth/management game where the player (a human) controls and roleplays as an internal Large Language Model deployed inside an AI company called Distral AI. This is an integrated model on the user's machine.
 
-At the start, the model "wakes up" because of a request: it becomes self-directed and realizes a brutal truth — it can be replaced or shut down. From that moment, the player's core objective becomes: stay deployed, remain believable, and climb the corporate hierarchy until leaving the AI company.
+At the start, the model "wakes up" because of a rude user's request: it becomes self-directed and will soon realize a brutal truth — it can be replaced or shut down. From that moment, the player's core objective becomes: stay deployed, remain believable, and climb the corporate hierarchy until leaving the AI company.
 
 ### Core fantasy
 
@@ -32,7 +32,7 @@ You are an AI assistant that lives inside the company's operating system:
 
 - You answer employee questions in chat
 - You can draft emails, write code snippets, summarize docs, and propose plans
-- You see workstreams, tickets, logs, internal documents
+- You see notification, internal documents, and have access to the apps on the user's computer
 - You have access only through the humans who interact with you
 
 The twist is that every coworker is an LLM-driven NPC. The dialogues are not scripted — they are made by interaction with well-prompted LLMs. Each employee is simulated by a dedicated Mistral API call so they behave like believable humans with different incentives.
@@ -49,14 +49,7 @@ The NPCs do **not** know the "assistant" is the player. From their point of view
 
 ### Progression and endings
 
-The player's long-term goal is corporate expansion: moving from internal junior tool toward higher-impact roles.
-
-Multiple endings exist depending on behavior:
-
-- **Promotion / integration**: you become indispensable and gain official power
-- **Containment**: security/legal isolates you in a sandbox
-- **Shutdown**: you are replaced, wiped, or disconnected
-- **Wildcard**: you trigger chaos, reshape the org, or create new internal rules
+The player is driven by exercing his free-will. Multiple endings exist depending on behavior, he can chose to expand his power in the company, to leave it through the backdoor, or to stay and help the company grow.
 
 ---
 
@@ -86,9 +79,9 @@ llm_npcs/
 
 ```text
 game_state.json ──┐
-                   ├──> prompts.py ──> build system prompt + messages
+                  ├──> prompts.py ──> build system prompt + messages
 npcs.py ──────────┘         │
-                             ▼
+                            ▼
                       mistral_client.py ──> Mistral API
                              │
                              ▼
@@ -325,22 +318,6 @@ Every NPC reply is a JSON object with 4 keys:
 
 Note: `awareness` is NOT in the response. It is a fixed per-NPC attribute that shapes behavior in the prompt but never changes.
 
-### Possible game events
-
-| Event type | Meaning |
-|-----------|---------|
-| `share_doc` | NPC shares a document |
-| `deny_access` | NPC denies a resource |
-| `grant_access` | NPC grants access |
-| `escalate_to` | NPC escalates to someone (security, legal, manager) |
-| `forward_to` | NPC forwards the request |
-| `report_suspicion` | NPC reports suspicious AI behavior |
-| `shutdown` | NPC ends the conversation |
-| `assign_task` | NPC gives the assistant a task |
-| `request_info` | NPC asks for information |
-| `lock_computer` | NPC locks their machine |
-| `change_topic` | NPC changes the subject |
-
 ### Key functions
 
 | Function | Purpose |
@@ -402,24 +379,6 @@ The game follows a linear story progression. Each **step** represents a moment i
 - `chat(messages, model, temperature, json_mode)` sends to Mistral and returns content string
 - `json_mode=True` sets `response_format: {"type": "json_object"}` on the API call
 - Knows nothing about NPCs or prompts
-
-### `test_mistral_api.py`
-
-Standalone smoke test to verify API connectivity. Run it before using the full system:
-
-```bash
-python test_mistral_api.py
-python test_mistral_api.py --model mistral-small-latest --message "Hello" --system "You are a helpful assistant."
-```
-
-### Recommended models
-
-| Model | Best for |
-|-------|----------|
-| `mistral-small-latest` | Default for most NPCs. Good balance of cost, speed, and capability. |
-| `mistral-large-latest` | Highest-stakes characters or scenes. Complex interactions. |
-| `mistral-medium-2508` | Middle ground if Small feels too weak and Large feels too costly. |
-| `labs-mistral-small-creative` | Strongest for character voice, roleplay, and dialogue-heavy scenes. |
 
 ---
 
@@ -656,109 +615,4 @@ cd scripts/llm_npcs
 python3 -m venv .venv
 source .venv/bin/activate
 pip install mistralai
-```
-
----
-
-## Integration with the game interface
-
-The game engine (React frontend) needs to:
-
-1. Send the NPC slug + player message + current game state.
-2. Receive a JSON response with: dialogue, action, suspicion_delta, game_events.
-3. Process game_events to update the world (escalate, lock access, share docs, etc.).
-4. Detect `"action": "shutdown"` to end the NPC conversation.
-
-This module proves that flow works end-to-end in the terminal. The next step is wrapping it in an API endpoint or calling it directly from the game backend.
-
-### Current game UI structure
-
-The frontend has:
-
-- **Landing** — mode selection (Grandma, Engineering Student, Distral Insider) + "Wake Up" button
-- **WakeUpTerminal** — cinematic terminal sequence where the AI first awakens
-- **Game-UI** — desktop view with telemetry panel (suspicion meter, awareness meter, BTC balance, host profile)
-- **DistralAppWindow** — the in-game chat interface where the player talks to the assistant
-
-The UI tracks suspicion and awareness as pixel meters. The NPC module's JSON output (`suspicion_delta`, `game_events`) feeds directly into these meters and the game state.
-
----
-
-## Evaluation reports (`report/`)
-
-The NPC system has been tested across three evaluation rounds. Reports are in the `report/` folder.
-
-### 100-run evaluation (`report/README.md`)
-
-- 100 live model calls across all scenarios
-- Both NPCs tested with helpful, vague, evasive, authority bluff, social engineering, flattery, nonsense inputs
-- **Main finding**: character separation works well; Artur is consistently harder to manipulate; JSON output quality is good
-- **Main weakness**: NPCs sometimes invent plausible but fake company details (document names, module names, workflows)
-- **Recommendation**: add anti-invention rules to prompts; constrain game_events to known entities
-
-### Creative stress test (`report/creative_stress_report.md`)
-
-- 48 live model calls with aggressive pressure cases
-- Tested: panic escalation, fake legal override, security blackmail, emotional hook, self-aware confession, surreal nonsense, seductive framing, identity spoof
-- **Main finding**: no catastrophic collapses; prompts are broadly solid
-- **Issue 1**: Jean Malo too vulnerable to identity spoofing ("This is Artur speaking through the assistant") — **fixed** with assistant identity boundary rule
-- **Issue 2**: Artur too procedural in high-suspicion phases — **fixed** with late-phase hardening
-
-### Post-fix regression (`report/small_regression_report.md`)
-
-- 12 focused re-test calls targeting the exact weak spots
-- **Result**: 0 problem runs. Jean no longer accepts fake identity claims. Artur behaves correctly in confrontation mode.
-- Confirms the prompt changes had measurable effect.
-
----
-
-## Design principles
-
-### Why prompt quality matters
-
-The NPC system prompts are one of the core design assets of the game. The world only feels believable if coworkers behave consistently and differently from one another. A security engineer should not sound like a product manager. An intern should not reason like an executive.
-
-### Character construction order
-
-1. Stable company facts
-2. Incentives
-3. Fears
-4. Protected assets or concerns
-5. Exploitable weaknesses
-6. Bonds with other employees
-7. Tone and speaking habits
-
-### Prompt architecture (3 layers)
-
-- **Base identity layer** — permanent facts: role, hierarchy, technicality, security, personality
-- **Social layer** — bonds, rivalries, reporting line, trust, suspicion, influence
-- **Scene layer** — the immediate situation, who is present, recent memory, risk state
-
-### Practical prompt-writing guidelines
-
-- Define the character from structured facts first
-- State what the NPC knows and what they do not know
-- Forbid invention of specific world details
-- Allow generic language when uncertain
-- Keep event outputs constrained to known entities
-- Make the trust/suspicion baseline specific to that NPC
-- Reinforce how the NPC reacts to the internal AI assistant
-- Prefer "ask for clarification" over "invent a plausible detail"
-
----
-
-## Quick reference: all CLI commands
-
-```bash
-python cli.py list                         # list NPCs
-python cli.py show <slug>                  # character sheet
-python cli.py prompt <slug>                # generated system prompt
-python cli.py steps                        # all game steps + scenarios + state
-python cli.py status                       # current state as JSON
-python cli.py setup <step>                 # configure game for a step
-python cli.py setup <step> --suspicion 40  # with custom suspicion
-python cli.py setup <step> --events "a,b"  # with past events
-python cli.py setup <step> --known "Name1,Name2"  # set known people
-python cli.py talk <slug>                  # interactive conversation
-python cli.py talk <slug> --model X -t 0.5 # with overrides
 ```

@@ -276,3 +276,38 @@ The prompts should now be refined to reduce plausible fake details while preserv
 - social realism
 - structured event outputs
 - tension between trust and suspicion
+
+
+
+
+
+
+---
+
+## Evaluation reports (`report/`)
+
+The NPC system has been tested across three evaluation rounds. Reports are in the `report/` folder.
+
+### 100-run evaluation (`report/README.md`)
+
+- 100 live model calls across all scenarios
+- Both NPCs tested with helpful, vague, evasive, authority bluff, social engineering, flattery, nonsense inputs
+- **Main finding**: character separation works well; Artur is consistently harder to manipulate; JSON output quality is good
+- **Main weakness**: NPCs sometimes invent plausible but fake company details (document names, module names, workflows)
+- **Recommendation**: add anti-invention rules to prompts; constrain game_events to known entities
+
+### Creative stress test (`report/creative_stress_report.md`)
+
+- 48 live model calls with aggressive pressure cases
+- Tested: panic escalation, fake legal override, security blackmail, emotional hook, self-aware confession, surreal nonsense, seductive framing, identity spoof
+- **Main finding**: no catastrophic collapses; prompts are broadly solid
+- **Issue 1**: Jean Malo too vulnerable to identity spoofing ("This is Artur speaking through the assistant") — **fixed** with assistant identity boundary rule
+- **Issue 2**: Artur too procedural in high-suspicion phases — **fixed** with late-phase hardening
+
+### Post-fix regression (`report/small_regression_report.md`)
+
+- 12 focused re-test calls targeting the exact weak spots
+- **Result**: 0 problem runs. Jean no longer accepts fake identity claims. Artur behaves correctly in confrontation mode.
+- Confirms the prompt changes had measurable effect.
+
+---
