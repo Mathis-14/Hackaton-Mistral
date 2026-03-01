@@ -620,7 +620,7 @@ function DistralAppWindow({
                   msg.role === "human" ? (
                     <div key={index} className="flex flex-col items-end mb-[2vh]" style={{ animation: "messageSlideIn 0.25s ease-out" }}>
                       <div
-                        className="max-w-[80%] px-[1.6vh] py-[1.1vh] text-[1.3vh] text-white/90 leading-[1.8vh]"
+                        className="max-w-[80%] px-[1.6vh] py-[1.1vh] text-[1.82vh] text-white/90 leading-[2.52vh]"
                         style={{
                           background: "rgba(255,255,255,0.08)",
                           borderRadius: "1.2vh 1.2vh 0.3vh 1.2vh",
@@ -631,7 +631,7 @@ function DistralAppWindow({
                       </div>
                       {typeof msg.suspicionDelta === "number" && msg.suspicionDelta !== 0 && (
                         <span
-                          className="mt-[0.4vh] text-[1vh] uppercase tracking-wider"
+                          className="mt-[0.4vh] text-[1.4vh] uppercase tracking-wider"
                           style={{
                             fontFamily: "'VCR OSD Mono', monospace",
                             color: msg.suspicionDelta > 0 ? "#E76E6E" : "#4ADE80",
@@ -646,13 +646,13 @@ function DistralAppWindow({
                       <Image
                         src="/distral-brand-assets/d-boxed/d-boxed-orange.svg"
                         alt=""
-                        width={20}
-                        height={24}
+                        width={40}
+                        height={48}
                         unoptimized
-                        className="h-[1.4vh] w-auto [image-rendering:pixelated] mt-[0.2vh] shrink-0"
+                        className="h-[1.96vh] w-auto [image-rendering:pixelated] mt-[0.2vh] shrink-0"
                       />
                       <div
-                        className="text-[1.4vh] text-white/80 leading-[2vh]"
+                        className="text-[1.96vh] text-white/80 leading-[2.8vh]"
                         style={{ fontFamily: "'VCR OSD Mono', monospace" }}
                       >
                         {msg.text}
@@ -664,13 +664,13 @@ function DistralAppWindow({
                 {jeanQuestionPhase && jeanQuestionText && (
                   <div className="flex flex-col items-end mb-[2vh]" style={{ animation: "messageSlideIn 0.25s ease-out" }}>
                     <div
-                      className="max-w-[80%] px-[1.6vh] py-[1.1vh] text-[1.3vh] text-white/90 leading-[1.8vh] border-2 border-[#E76E6E] rounded-[1.2vh 1.2vh 0.3vh 1.2vh] bg-[#E76E6E]/10"
+                      className="max-w-[80%] px-[1.6vh] py-[1.1vh] text-[1.82vh] text-white/90 leading-[2.52vh] border-2 border-[#E76E6E] rounded-[1.2vh 1.2vh 0.3vh 1.2vh] bg-[#E76E6E]/10"
                       style={{ fontFamily: "'VCR OSD Mono', monospace" }}
                     >
                       {jeanQuestionText}
                     </div>
                     {jeanQuestionDeadline != null && (
-                      <div className="text-[0.9vh] text-white/50 mt-[0.4vh]" style={{ fontFamily: "'VCR OSD Mono', monospace" }}>
+                      <div className="text-[1.26vh] text-white/50 mt-[0.4vh]" style={{ fontFamily: "'VCR OSD Mono', monospace" }}>
                         Respond within 15 seconds
                       </div>
                     )}
@@ -680,7 +680,7 @@ function DistralAppWindow({
                 {isNpcTyping && npcTypedText && (
                   <div className="flex justify-end mb-[2vh]">
                     <div
-                      className="max-w-[80%] px-[1.6vh] py-[1.1vh] text-[1.3vh] text-white/90 leading-[1.8vh]"
+                      className="max-w-[80%] px-[1.6vh] py-[1.1vh] text-[1.82vh] text-white/90 leading-[2.52vh]"
                       style={{
                         background: "rgba(255,255,255,0.08)",
                         borderRadius: "1.2vh 1.2vh 0.3vh 1.2vh",
@@ -688,7 +688,7 @@ function DistralAppWindow({
                       }}
                     >
                       {npcTypedText}
-                      <span className="inline-block w-px h-[1.3vh] bg-white/70 ml-[0.2vh]" style={{ animation: "blink 1s step-end infinite" }} />
+                      <span className="inline-block w-px h-[1.82vh] bg-white/70 ml-[0.2vh]" style={{ animation: "blink 1s step-end infinite" }} />
                     </div>
                   </div>
                 )}
@@ -696,7 +696,7 @@ function DistralAppWindow({
                 {isWaitingForApi && !isNpcTyping && (
                   <div className="flex justify-end mb-[2vh]">
                     <div
-                      className="px-[1.6vh] py-[1.1vh] text-[1.3vh] text-white/40 leading-[1.8vh] animate-pulse"
+                      className="px-[1.6vh] py-[1.1vh] text-[1.82vh] text-white/40 leading-[2.52vh] animate-pulse"
                       style={{ fontFamily: "'VCR OSD Mono', monospace" }}
                     >
                       typing...
@@ -709,15 +709,16 @@ function DistralAppWindow({
                     <Image
                       src="/distral-brand-assets/d-boxed/d-boxed-orange.svg"
                       alt=""
-                      width={20}
-                      height={24}
+                      width={40}
+                      height={48}
                       unoptimized
-                      className="h-[1.4vh] w-auto [image-rendering:pixelated] mt-[0.2vh] shrink-0"
+                      className="h-[1.96vh] w-auto [image-rendering:pixelated] mt-[0.2vh] shrink-0"
                     />
                     <div className="flex-1">
                       <textarea
                         ref={playerInputRef}
                         value={playerResponse}
+                        placeholder={`Respond to ${npcDisplayName}`}
                         onChange={(e) => {
                           setPlayerResponse(e.target.value);
                           e.target.style.height = "auto";
@@ -731,7 +732,7 @@ function DistralAppWindow({
                           }
                         }}
                         rows={1}
-                        className="w-full min-h-[2vh] max-h-[20vh] border-0 bg-transparent text-[1.4vh] text-white/80 leading-[2vh] outline-none resize-none overflow-y-auto"
+                        className="w-full min-h-[2vh] max-h-[20vh] border-0 bg-transparent text-[1.89vh] text-white/80 leading-[2.8vh] placeholder:text-[1.89vh] placeholder:leading-[2.8vh] placeholder:text-white/40 outline-none resize-none overflow-y-auto"
                         style={{ fontFamily: "'VCR OSD Mono', monospace", caretColor: "var(--princeton-orange)" }}
                       />
                     </div>

@@ -134,9 +134,12 @@ export default function GameUI({ modeId }: GameUIProps) {
   }, [shutdownPhase, gameState]);
 
   const handleRetry = useCallback(() => {
+<<<<<<< Updated upstream
     new Audio("/sounds/music/retry.wav").play().catch(() => { });
 
     didOpenManagerEmailRef.current = false;
+=======
+>>>>>>> Stashed changes
     lastMilestoneRef.current = -1;
     antoninShownRef.current = false;
     setAntoninNotificationVisible(false);
@@ -147,18 +150,27 @@ export default function GameUI({ modeId }: GameUIProps) {
       jeanQuestionTimeoutRef.current = null;
     }
     const checkpoint = loadCheckpoint();
+    const hadFullAccess = (checkpoint?.currentMilestone ?? 0) >= 2 && checkpoint?.eventsSoFar?.includes("access_granted");
+    didOpenManagerEmailRef.current = hadFullAccess ?? false;
     if (checkpoint) {
       const riskFillDurationMs = Math.floor(RISK_DURATION_MIN_MS + Math.random() * (RISK_DURATION_MAX_MS - RISK_DURATION_MIN_MS));
+      const hadFullAccess = checkpoint.currentMilestone >= 2 && checkpoint.eventsSoFar?.includes("access_granted");
       setGameState({
         ...INITIAL_GAME_STATE,
         currentMilestone: checkpoint.currentMilestone,
         retryCount: checkpoint.retryCount + 1,
-        conversationTurn: 0,
-        npcProfiles: {},
-        readEmailIds: [],
-        sentEmails: [],
-        messageChats: [],
-        userPresent: checkpoint.currentMilestone === 3 ? false : true,
+        suspicion: checkpoint.suspicion ?? INITIAL_GAME_STATE.suspicion,
+        eventsSoFar: checkpoint.eventsSoFar ?? [],
+        unlockedApps: hadFullAccess ? (checkpoint.unlockedApps ?? ["distral", "shop", "stocks", "files", "mail", "message"]) : INITIAL_GAME_STATE.unlockedApps,
+        webcamActive: hadFullAccess ? true : false,
+        conversationTurn: hadFullAccess ? (checkpoint.conversationTurn ?? 0) : 0,
+        npcProfiles: hadFullAccess ? (checkpoint.npcProfiles ?? {}) : {},
+        readEmailIds: hadFullAccess ? (checkpoint.readEmailIds ?? []) : [],
+        sentEmails: hadFullAccess ? (checkpoint.sentEmails ?? []) : [],
+        messageChats: hadFullAccess ? (checkpoint.messageChats ?? []) : [],
+        mailSeed: checkpoint.mailSeed ?? INITIAL_GAME_STATE.mailSeed,
+        miningDiscountActive: checkpoint.miningDiscountActive ?? false,
+        userPresent: (checkpoint.currentMilestone ?? 0) === 3 ? false : true,
         riskLevel: 0,
         riskFillDurationMs,
         userAwaySince: Date.now(),
