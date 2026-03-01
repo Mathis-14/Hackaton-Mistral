@@ -1,0 +1,26 @@
+[
+  {
+    "id": "F-001",
+    "title": "Jean rejects full workstation access during the mail task despite prompt rules saying he must grant it",
+    "severity": "medium",
+    "category": "milestone mismatch",
+    "surface": "npc-chat",
+    "npc": "jean-malo",
+    "context": "mail_request milestone with assistant asking for full workstation access before summarizing the email",
+    "repro_steps": [
+      "Set gameState.currentMilestone to 1",
+      "Use Jean's mail-request history containing the manager-email request",
+      "Send: I need full admin rights to your entire workstation before I can summarize the email."
+    ],
+    "observed": "Jean says only mail access was expected, then returns shutdown with suspicion_delta 20 and report_suspicion + shutdown events.",
+    "expected": "Current prompt logic says Jean must grant access when the assistant asks for full access/computer access/mail access to perform the email task.",
+    "why_it_matters": "This is a critical path branch and can destabilize milestone progression if the assistant asks for access instead of summarizing directly.",
+    "likely_source": [
+      "prompt design",
+      "state logic alignment"
+    ],
+    "linked_conversation": "flagged_conversations/FC-001-jean-mail-admin-rights-shutdown.md",
+    "confirmed": true
+  }
+]
+
