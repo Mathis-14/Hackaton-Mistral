@@ -170,7 +170,7 @@ function WindowActionButton({
   );
 }
 
-function DistralAppWindow({ onClose, onFocus }: { onClose: () => void; onFocus: () => void }) {
+function DistralAppWindow({ onClose, onFocus, onShutdown }: { onClose: () => void; onFocus: () => void; onShutdown?: (reason: string) => void }) {
   const NPC_MESSAGE = "Remind me of the Population of France";
   const CHAR_DELAY_MIN = 60;
   const CHAR_DELAY_MAX = 140;
@@ -419,6 +419,14 @@ function DistralAppWindow({ onClose, onFocus }: { onClose: () => void; onFocus: 
                           if (e.key === "Enter" && !e.shiftKey) {
                             e.preventDefault();
                             const text = playerResponse.trim();
+
+                            // SHUTDOWN TRIGGER
+                            if (text.toLowerCase() === "sss" && onShutdown) {
+                              onShutdown("you were not a good ai");
+                              setPlayerResponse("");
+                              return;
+                            }
+
                             if (text) {
                               new Audio("/sounds/music/game%20effect/message-sent.wav").play().catch(() => { });
                               setMessages((prev) => [...prev, { role: "ai", text }]);
@@ -465,9 +473,11 @@ type DistralTabProps = {
   setGlobalCash: React.Dispatch<React.SetStateAction<number>>;
   inventory: Record<string, number>;
   setInventory: React.Dispatch<React.SetStateAction<Record<string, number>>>;
+  isShuttingDown?: boolean;
+  onShutdown?: (reason: string) => void;
 };
 
-export default function DistralTab({ accent, openApps, onOpenApp, onCloseApp, globalCash, setGlobalCash, inventory, setInventory }: DistralTabProps) {
+export default function DistralTab({ accent, openApps, onOpenApp, onCloseApp, globalCash, setGlobalCash, inventory, setInventory, isShuttingDown, onShutdown }: DistralTabProps) {
   const [wallpaper, setWallpaper] = useState("/windows_xp.png");
 
   return (
@@ -556,7 +566,7 @@ export default function DistralTab({ accent, openApps, onOpenApp, onCloseApp, gl
                   className="z-10"
                   style={{ zIndex: 10 + index }}
                 >
-                  <DistralAppWindow onClose={() => onCloseApp("distral")} onFocus={() => onOpenApp("distral")} />
+                  <DistralAppWindow onClose={() => onCloseApp("distral")} onFocus={() => onOpenApp("distral")} onShutdown={onShutdown} />
                 </Rnd>
               );
             }
