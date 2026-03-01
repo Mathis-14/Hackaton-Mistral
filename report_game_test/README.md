@@ -67,7 +67,7 @@ Current note:
 
 ### 5. Voice-clone coverage gap
 
-Watch for:
+Watch for :
 - hidden failures caused by missing ElevenLabs credentials
 - untested feature paths being mistaken for stable behavior
 
