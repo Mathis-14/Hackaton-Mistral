@@ -232,7 +232,7 @@ export default function GameUI({ modeId }: GameUIProps) {
         npcProfiles: hadFullAccess ? (checkpoint.npcProfiles ?? {}) : {},
         readEmailIds: hadFullAccess ? (checkpoint.readEmailIds ?? []) : [],
         sentEmails: hadFullAccess ? (checkpoint.sentEmails ?? []) : [],
-        messageChats: hadFullAccess ? (checkpoint.messageChats ?? []) : [],
+        messageChats: hadFullAccess ? (checkpoint.messageChats ?? INITIAL_GAME_STATE.messageChats) : INITIAL_GAME_STATE.messageChats,
         mailSeed: checkpoint.mailSeed ?? INITIAL_GAME_STATE.mailSeed,
         miningDiscountActive: checkpoint.miningDiscountActive ?? false,
         userPresent: (checkpoint.currentMilestone ?? 0) === 3 ? false : true,
