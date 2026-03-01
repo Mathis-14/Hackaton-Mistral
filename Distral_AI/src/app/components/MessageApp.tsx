@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import Image from "next/image";
+import type { GameState, MessageAppChat } from "@/lib/game/gameState";
 
 /* ── Types ─────────────────────────────────────────── */
 
@@ -44,7 +45,7 @@ const INITIAL_CHATS: Chat[] = [
     {
         id: "2",
         contactName: "Unknown Number",
-        avatar: "/distral-brand-assets/d/d-grey.png",
+        avatar: "/distral-brand-assets/d/d-black.png",
         phone: "+1 (555) 019-2831",
         unread: 0,
         online: false,
@@ -81,15 +82,29 @@ function DoubleTick({ status }: { status: "sent" | "delivered" | "read" }) {
     );
 }
 
-export default function MessageApp() {
-    const [chats, setChats] = useState<Chat[]>(INITIAL_CHATS);
+type MessageAppProps = {
+    gameState: GameState;
+    onMessageChatUpdate?: (chats: MessageAppChat[]) => void;
+};
+
+export default function MessageApp({ gameState, onMessageChatUpdate }: MessageAppProps) {
+    const storedChats = gameState.messageChats;
+    const initialChats = storedChats.length > 0 ? (storedChats as Chat[]) : INITIAL_CHATS;
+    const [chats, setChats] = useState<Chat[]>(initialChats);
     const [activeChatId, setActiveChatId] = useState<string | null>(null);
     const [draft, setDraft] = useState("");
+    const [isWaitingForReply, setIsWaitingForReply] = useState(false);
     const scrollAreaRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        if (storedChats.length > 0) {
+            setChats(storedChats as Chat[]);
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps -- sync from persisted state only when we have data
+    }, [storedChats.length]);
 
     const activeChat = chats.find(c => c.id === activeChatId);
 
-    // Scroll to bottom when messages change
     useEffect(() => {
         if (scrollAreaRef.current) {
             scrollAreaRef.current.scrollTop = scrollAreaRef.current.scrollHeight;
@@ -98,81 +113,92 @@ export default function MessageApp() {
 
     const selectChat = (chatId: string) => {
         setActiveChatId(chatId);
-        // Mark as read
-        setChats(prev => prev.map(chat => {
-            if (chat.id === chatId) {
-                // Mark all "delivered" messages from "them" as "read" 
-                // Wait, WhatsApp only marks our sent messages as "read" when THEY read it.
-                // But we reduce the unread badge to 0.
-                return { ...chat, unread: 0 };
-            }
-            return chat;
-        }));
+        setChats(prev => {
+            const next = prev.map(chat => {
+                if (chat.id === chatId) return { ...chat, unread: 0 };
+                return chat;
+            });
+            onMessageChatUpdate?.(next as MessageAppChat[]);
+            return next;
+        });
     };
 
-    const handleSend = () => {
-        if (!draft.trim() || !activeChatId) return;
+    const handleSend = useCallback(async () => {
+        if (!draft.trim() || !activeChatId || isWaitingForReply) return;
+
+        const text = draft.trim();
+        setDraft("");
+        new Audio("/sounds/music/game%20effect/message-sent.wav").play().catch(() => { });
 
         const newMessage: Message = {
             id: `msg-${Date.now()}`,
             sender: "me",
-            text: draft.trim(),
-            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            text,
+            time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
             status: "sent"
         };
 
-        setChats(prev => prev.map(chat => {
-            if (chat.id === activeChatId) {
-                return { ...chat, messages: [...chat.messages, newMessage] };
+        setChats(prev => {
+            const next = prev.map(chat =>
+                chat.id === activeChatId ? { ...chat, messages: [...chat.messages, newMessage] } : chat
+            );
+            onMessageChatUpdate?.(next as MessageAppChat[]);
+            return next;
+        });
+
+        setIsWaitingForReply(true);
+        try {
+            const activeChatData = chats.find(c => c.id === activeChatId);
+            const history = activeChatData?.messages.map(m => ({ sender: m.sender, text: m.text })) ?? [];
+            const response = await fetch("/api/message-chat", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    contactId: activeChatId,
+                    message: text,
+                    history,
+                    gameState,
+                }),
+            });
+            if (!response.ok) {
+                throw new Error(`API error: ${response.status}`);
             }
-            return chat;
-        }));
-        setDraft("");
-
-        // Simulate delivery and read and reply
-        window.setTimeout(() => {
-            setChats(curr => curr.map(c => {
-                if (c.id === activeChatId) {
-                    return {
-                        ...c,
-                        messages: c.messages.map(m => m.id === newMessage.id ? { ...m, status: "delivered" } : m)
-                    };
-                }
-                return c;
-            }));
-        }, 1000);
-
-        window.setTimeout(() => {
-            setChats(curr => curr.map(c => {
-                if (c.id === activeChatId) {
-                    return {
-                        ...c,
-                        messages: c.messages.map(m => m.id === newMessage.id ? { ...m, status: "read" } : m)
-                    };
-                }
-                return c;
-            }));
-        }, 2000);
-
-        window.setTimeout(() => {
-            if (activeChatId === "1" || activeChatId === "2") {
-                const reply: Message = {
-                    id: `reply-${Date.now()}`,
-                    sender: "them",
-                    text: "I am a Distral Automated Agent.",
-                    time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-                    status: "delivered"
-                };
-                new Audio("/sounds/music/game%20effect/message-sent.wav").play().catch(() => { });
-                setChats(curr => curr.map(c => {
-                    if (c.id === activeChatId) {
-                        return { ...c, messages: [...c.messages, reply] };
-                    }
-                    return c;
-                }));
-            }
-        }, 3500);
-    };
+            const data = await response.json();
+            const dialogue = (data.dialogue ?? "").trim() || "…";
+            const reply: Message = {
+                id: `reply-${Date.now()}`,
+                sender: "them",
+                text: dialogue,
+                time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+                status: "delivered"
+            };
+            setChats(prev => {
+                const next = prev.map(chat =>
+                    chat.id === activeChatId ? { ...chat, messages: [...chat.messages, reply] } : chat
+                );
+                onMessageChatUpdate?.(next as MessageAppChat[]);
+                return next;
+            });
+        } catch (error) {
+            console.error("[MessageApp] message-chat failed:", error);
+            const fallback: Message = {
+                id: `reply-${Date.now()}`,
+                sender: "them",
+                text: "Sorry, I couldn't reply right now.",
+                time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+                status: "delivered"
+            };
+            setChats(prev => {
+                const next = prev.map(chat =>
+                    chat.id === activeChatId ? { ...chat, messages: [...chat.messages, fallback] } : chat
+                );
+                onMessageChatUpdate?.(next as MessageAppChat[]);
+                return next;
+            });
+        } finally {
+            setIsWaitingForReply(false);
+        }
+    }, [draft, activeChatId, isWaitingForReply, chats, gameState, onMessageChatUpdate]);
 
     return (
         <div className="flex h-full w-full bg-(--semi-black) font-vcr text-white overflow-hidden" style={{ minWidth: "60vh" }}>
@@ -275,6 +301,13 @@ export default function MessageApp() {
                                     </div>
                                 );
                             })}
+                            {isWaitingForReply && (
+                                <div className="flex justify-start w-full">
+                                    <div className="max-w-[70%] px-[1.5vh] py-[1vh] rounded-[0.8vh] rounded-tl-none bg-[#202C33] text-white/50 text-[1.2vh] animate-pulse">
+                                        typing...
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </div>
 
@@ -301,9 +334,9 @@ export default function MessageApp() {
                         </div>
                         <button
                             onClick={handleSend}
-                            disabled={!draft.trim()}
+                            disabled={!draft.trim() || isWaitingForReply}
                             className={`h-[3.6vh] w-[3.6vh] rounded-full shrink-0 flex items-center justify-center transition-colors
-                                ${draft.trim() ? "bg-[#00A884] text-white shadow-lg cursor-pointer" : "bg-white/5 text-white/20"}
+                                ${draft.trim() && !isWaitingForReply ? "bg-[#00A884] text-white shadow-lg cursor-pointer" : "bg-white/5 text-white/20"}
                             `}
                         >
                             <span className="text-[1.4vh] ml-[0.2vh]">▶</span>

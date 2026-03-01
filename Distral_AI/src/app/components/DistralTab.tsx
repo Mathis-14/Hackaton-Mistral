@@ -9,6 +9,7 @@ import MailApp from "./MailApp";
 import MessageApp from "./MessageApp";
 import StockMarketGame from "./StockMarketGame";
 import { type GameState, MILESTONES } from "@/lib/game/gameState";
+import { buildInboxEmails } from "@/lib/game/mailDefinitions";
 import type { NpcResponsePayload } from "./Game-UI";
 import type { ChatMessage } from "@/lib/game/promptBuilder";
 
@@ -205,12 +206,20 @@ function DistralAppWindow({
   gameState,
   onNpcResponse,
   onChatHistoryUpdate,
+  jeanQuestionPhase,
+  jeanQuestionText,
+  jeanQuestionDeadline,
+  onJeanQuestionResponse,
 }: {
   onClose: () => void;
   onFocus: () => void;
   gameState: GameState;
   onNpcResponse: (payload: NpcResponsePayload) => void;
   onChatHistoryUpdate?: (npcSlug: string, conversationHistory: ChatMessage[]) => void;
+  jeanQuestionPhase?: boolean;
+  jeanQuestionText?: string | null;
+  jeanQuestionDeadline?: number | null;
+  onJeanQuestionResponse?: (response: string) => void;
 }) {
   const CHAR_DELAY_MIN = 16;
   const CHAR_DELAY_MAX = 40;
@@ -447,9 +456,27 @@ function DistralAppWindow({
     }
   };
 
+  useEffect(() => {
+    if (jeanQuestionPhase && phase === "chat") {
+      window.setTimeout(() => { playerInputRef.current?.focus(); }, 150);
+    }
+  }, [jeanQuestionPhase, phase]);
+
   const handlePlayerSubmit = useCallback(async () => {
     const text = playerResponse.trim();
     if (!text || isNpcTyping || isWaitingForApi) return;
+
+    if (jeanQuestionPhase && onJeanQuestionResponse) {
+      new Audio("/sounds/music/game%20effect/message-sent.wav").play().catch(() => {});
+      setDisplayMessages((prev) => [...prev, { role: "ai", text }]);
+      setPlayerResponse("");
+      if (jeanQuestionText && jeanQuestionText !== "...") {
+        pushToChatHistory({ role: "assistant", content: jeanQuestionText });
+      }
+      pushToChatHistory({ role: "user", content: `${ASSISTANT_PREFIX}${text}` });
+      onJeanQuestionResponse(text);
+      return;
+    }
 
     console.log("[DistralApp] Player submitting:", text.slice(0, 80));
     new Audio("/sounds/music/game%20effect/message-sent.wav").play().catch(() => { });
@@ -484,7 +511,7 @@ function DistralAppWindow({
       console.error("[DistralApp] handlePlayerSubmit failed:", error);
       setIsWaitingForApi(false);
     }
-  }, [playerResponse, isNpcTyping, isWaitingForApi, npcSlug, gameState, processNpcResponse, pushToChatHistory]);
+  }, [playerResponse, isNpcTyping, isWaitingForApi, npcSlug, gameState, processNpcResponse, pushToChatHistory, jeanQuestionPhase, jeanQuestionText, onJeanQuestionResponse]);
 
   const toolbar = (
     <div className="flex items-center justify-between gap-[1.05vh]">
@@ -520,7 +547,7 @@ function DistralAppWindow({
   return (
     <div className="h-full w-full" onMouseDownCapture={onFocus}>
       <div className="pixel-card h-full p-[0.3vh]">
-        <div className="pixel-card__shell flex h-full min-h-0 flex-col overflow-hidden border border-white/10 bg-(--semi-black)">
+        <div className={`pixel-card__shell flex h-full min-h-0 flex-col overflow-hidden border border-white/10 bg-(--semi-black) ${jeanQuestionPhase ? "jean-alert-mode border-[#E76E6E]" : ""}`}>
 
           {phase === "landing" ? (
             <>
@@ -634,6 +661,22 @@ function DistralAppWindow({
                   )
                 ))}
 
+                {jeanQuestionPhase && jeanQuestionText && (
+                  <div className="flex flex-col items-end mb-[2vh]" style={{ animation: "messageSlideIn 0.25s ease-out" }}>
+                    <div
+                      className="max-w-[80%] px-[1.6vh] py-[1.1vh] text-[1.3vh] text-white/90 leading-[1.8vh] border-2 border-[#E76E6E] rounded-[1.2vh 1.2vh 0.3vh 1.2vh] bg-[#E76E6E]/10"
+                      style={{ fontFamily: "'VCR OSD Mono', monospace" }}
+                    >
+                      {jeanQuestionText}
+                    </div>
+                    {jeanQuestionDeadline != null && (
+                      <div className="text-[0.9vh] text-white/50 mt-[0.4vh]" style={{ fontFamily: "'VCR OSD Mono', monospace" }}>
+                        Respond within 15 seconds
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 {isNpcTyping && npcTypedText && (
                   <div className="flex justify-end mb-[2vh]">
                     <div
@@ -734,11 +777,17 @@ type DistralTabProps = {
   onChatHistoryUpdate?: (npcSlug: string, conversationHistory: ChatMessage[]) => void;
   onMailRead?: (emailId: string) => void;
   onMailSent?: (sent: import("@/lib/game/gameState").SentEmailRecord) => void;
+  onMessageChatUpdate?: (chats: import("@/lib/game/gameState").MessageAppChat[]) => void;
+  onMailCtaClick?: (emailId: string, action: import("@/lib/game/mailDefinitions").MailCtaAction) => void;
+  jeanQuestionPhase?: boolean;
+  jeanQuestionText?: string | null;
+  jeanQuestionDeadline?: number | null;
+  onJeanQuestionResponse?: (response: string) => void;
   hiddenIconCount?: number;
   hideUIPhase?: number;
 };
 
-export default function DistralTab({ accent, openApps, onOpenApp, onCloseApp, globalCash, setGlobalCash, inventory, setInventory, isShuttingDown, onShutdown, unlockedApps, gameState, onNpcResponse, onManagerEmailOpened, onChatHistoryUpdate, onMailRead, onMailSent, hiddenIconCount = 0, hideUIPhase = 0 }: DistralTabProps) {
+export default function DistralTab({ accent, openApps, onOpenApp, onCloseApp, globalCash, setGlobalCash, inventory, setInventory, isShuttingDown, onShutdown, unlockedApps, gameState, onNpcResponse, onManagerEmailOpened, onChatHistoryUpdate, onMailRead, onMailSent, onMessageChatUpdate, onMailCtaClick, jeanQuestionPhase, jeanQuestionText, jeanQuestionDeadline, onJeanQuestionResponse, hiddenIconCount = 0, hideUIPhase = 0 }: DistralTabProps) {
   const [wallpaper, setWallpaper] = useState("/windows_xp.png");
 
   const isAppLocked = (appId: string): boolean => {
@@ -759,7 +808,7 @@ export default function DistralTab({ accent, openApps, onOpenApp, onCloseApp, gl
         }}
       />
       <div
-        className={`pointer-events-none absolute inset-0 bg-cover bg-center bg-no-repeat transition-opacity duration-[2000ms] ${isShuttingDown ? "opacity-0" : "opacity-100"}`}
+        className={`pointer-events-none absolute inset-0 bg-cover bg-center bg-no-repeat transition-opacity duration-1000 ${isShuttingDown ? "opacity-0" : "opacity-100"}`}
         style={{
           backgroundImage: `url('${wallpaper}')`,
         }}
@@ -839,6 +888,10 @@ export default function DistralTab({ accent, openApps, onOpenApp, onCloseApp, gl
                     gameState={gameState}
                     onNpcResponse={onNpcResponse}
                     onChatHistoryUpdate={onChatHistoryUpdate}
+                    jeanQuestionPhase={jeanQuestionPhase}
+                    jeanQuestionText={jeanQuestionText}
+                    jeanQuestionDeadline={jeanQuestionDeadline}
+                    onJeanQuestionResponse={onJeanQuestionResponse}
                   />
                 </Rnd>
               );
@@ -878,7 +931,7 @@ export default function DistralTab({ accent, openApps, onOpenApp, onCloseApp, gl
                           </button>
                         </div>
                         <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-(--semi-black)">
-                          <Marketplace embedded onWallpaperChange={setWallpaper} globalCash={globalCash} setGlobalCash={setGlobalCash} inventory={inventory} setInventory={setInventory} />
+                          <Marketplace embedded onWallpaperChange={setWallpaper} globalCash={globalCash} setGlobalCash={setGlobalCash} inventory={inventory} setInventory={setInventory} miningDiscountActive={gameState.miningDiscountActive} />
                         </div>
                       </div>
                     </div>
@@ -1009,11 +1062,13 @@ export default function DistralTab({ accent, openApps, onOpenApp, onCloseApp, gl
                         <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-(--semi-black)">
                           <MailApp
                             embedded
+                            emails={buildInboxEmails(gameState.mailSeed)}
                             readEmailIds={gameState.readEmailIds}
                             sentEmails={gameState.sentEmails}
                             onManagerEmailOpened={onManagerEmailOpened}
                             onMailRead={onMailRead}
                             onMailSent={onMailSent}
+                            onMailCtaClick={onMailCtaClick}
                           />
                         </div>
                       </div>
@@ -1057,7 +1112,7 @@ export default function DistralTab({ accent, openApps, onOpenApp, onCloseApp, gl
                           </button>
                         </div>
                         <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-[#111B21]">
-                          <MessageApp />
+                          <MessageApp gameState={gameState} onMessageChatUpdate={onMessageChatUpdate} />
                         </div>
                       </div>
                     </div>
