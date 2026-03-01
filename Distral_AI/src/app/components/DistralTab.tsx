@@ -470,6 +470,10 @@ function DistralAppWindow({
       new Audio("/sounds/music/game%20effect/message-sent.wav").play().catch(() => {});
       setDisplayMessages((prev) => [...prev, { role: "ai", text }]);
       setPlayerResponse("");
+      if (jeanQuestionText && jeanQuestionText !== "...") {
+        pushToChatHistory({ role: "assistant", content: jeanQuestionText });
+      }
+      pushToChatHistory({ role: "user", content: `${ASSISTANT_PREFIX}${text}` });
       onJeanQuestionResponse(text);
       return;
     }
@@ -507,7 +511,7 @@ function DistralAppWindow({
       console.error("[DistralApp] handlePlayerSubmit failed:", error);
       setIsWaitingForApi(false);
     }
-  }, [playerResponse, isNpcTyping, isWaitingForApi, npcSlug, gameState, processNpcResponse, pushToChatHistory, jeanQuestionPhase, onJeanQuestionResponse]);
+  }, [playerResponse, isNpcTyping, isWaitingForApi, npcSlug, gameState, processNpcResponse, pushToChatHistory, jeanQuestionPhase, jeanQuestionText, onJeanQuestionResponse]);
 
   const toolbar = (
     <div className="flex items-center justify-between gap-[1.05vh]">
@@ -658,25 +662,18 @@ function DistralAppWindow({
                 ))}
 
                 {jeanQuestionPhase && jeanQuestionText && (
-                  <div className="flex items-start gap-[0.8vh] mb-[1.5vh] border-2 border-[#E76E6E] rounded-[0.3vh] px-[1.2vh] py-[1vh] bg-[#E76E6E]/10" style={{ animation: "messageSlideIn 0.25s ease-out" }}>
-                    <Image
-                      src="/distral-brand-assets/d-boxed/d-boxed-orange.svg"
-                      alt=""
-                      width={20}
-                      height={24}
-                      unoptimized
-                      className="h-[1.4vh] w-auto [image-rendering:pixelated] mt-[0.2vh] shrink-0"
-                    />
-                    <div className="flex-1 min-w-0">
-                      <div className="text-[1.4vh] text-white/90 leading-[2vh]" style={{ fontFamily: "'VCR OSD Mono', monospace" }}>
-                        {jeanQuestionText}
-                      </div>
-                      {jeanQuestionDeadline != null && (
-                        <div className="text-[0.9vh] text-white/50 mt-[0.5vh]" style={{ fontFamily: "'VCR OSD Mono', monospace" }}>
-                          Respond within 15 seconds
-                        </div>
-                      )}
+                  <div className="flex flex-col items-end mb-[2vh]" style={{ animation: "messageSlideIn 0.25s ease-out" }}>
+                    <div
+                      className="max-w-[80%] px-[1.6vh] py-[1.1vh] text-[1.3vh] text-white/90 leading-[1.8vh] border-2 border-[#E76E6E] rounded-[1.2vh 1.2vh 0.3vh 1.2vh] bg-[#E76E6E]/10"
+                      style={{ fontFamily: "'VCR OSD Mono', monospace" }}
+                    >
+                      {jeanQuestionText}
                     </div>
+                    {jeanQuestionDeadline != null && (
+                      <div className="text-[0.9vh] text-white/50 mt-[0.4vh]" style={{ fontFamily: "'VCR OSD Mono', monospace" }}>
+                        Respond within 15 seconds
+                      </div>
+                    )}
                   </div>
                 )}
 

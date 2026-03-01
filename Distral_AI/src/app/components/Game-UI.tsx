@@ -3,8 +3,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
 const GOD_MODE = false;
-const RISK_DURATION_MIN_MS = 20_000;
-const RISK_DURATION_MAX_MS = 60_000;
+const RISK_DURATION_MIN_MS = 17_000;
+const RISK_DURATION_MAX_MS = 30_000;
 const JEAN_QUESTION_TIMEOUT_MS = 15_000;
 const JEAN_TIMEOUT_PENALTY = 15;
 
@@ -409,24 +409,30 @@ export default function GameUI({ modeId }: GameUIProps) {
     (suspicionDelta: number) => {
       jeanReturnTriggeredRef.current = false;
       const riskFillDurationMs = Math.floor(RISK_DURATION_MIN_MS + Math.random() * (RISK_DURATION_MAX_MS - RISK_DURATION_MIN_MS));
-      setGameState((prev) => ({
-        ...prev,
-        userPresent: false,
-        suspicion: clamp(prev.suspicion + suspicionDelta, 0, 100),
-        riskLevel: 0,
-        riskFillDurationMs,
-        userAwaySince: Date.now(),
-        jeanQuestionPhase: false,
-        jeanQuestionText: null,
-        jeanQuestionDeadline: null,
-      }));
+      setGameState((prev) => {
+        const newSuspicion = clamp(prev.suspicion + suspicionDelta, 0, 100);
+        if (newSuspicion >= 100 && !GOD_MODE) {
+          window.setTimeout(() => triggerShutdown("Suspicion reached critical level. Access revoked."), 0);
+        }
+        return {
+          ...prev,
+          userPresent: false,
+          suspicion: newSuspicion,
+          riskLevel: 0,
+          riskFillDurationMs,
+          userAwaySince: Date.now(),
+          jeanQuestionPhase: false,
+          jeanQuestionText: null,
+          jeanQuestionDeadline: null,
+        };
+      });
       setOpenApps((prev) => prev.filter((id) => id === "distral" || id === "mail"));
       if (jeanQuestionTimeoutRef.current != null) {
         window.clearTimeout(jeanQuestionTimeoutRef.current);
         jeanQuestionTimeoutRef.current = null;
       }
     },
-    []
+    [triggerShutdown]
   );
 
   const handleJeanQuestionResponse = useCallback(
