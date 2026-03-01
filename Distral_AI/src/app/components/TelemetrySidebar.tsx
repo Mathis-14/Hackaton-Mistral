@@ -348,7 +348,6 @@ function SidebarPanel({ title, children }: { title: string; children: React.Reac
   );
 }
 
-<<<<<<< HEAD
 export default function TelemetrySidebar({
   profile,
   metrics,
@@ -356,7 +355,6 @@ export default function TelemetrySidebar({
   inventory,
   webcamActive = false,
   userPresent = true,
-  userPresentSince = 0,
   userAwaySince = 0,
   riskFillDurationMs = 0,
   riskLevel = 0,
@@ -364,20 +362,6 @@ export default function TelemetrySidebar({
   robotDeliveryStartedAt = null,
   onEnterRobot,
 }: TelemetrySidebarProps) {
-=======
-export default function TelemetrySidebar({
-  profile,
-  metrics,
-  globalCash,
-  inventory,
-  webcamActive = false,
-  userPresent = true,
-  riskLevel = 0,
-  hideUIPhase = 0,
-  robotDeliveryStartedAt = null,
-  onEnterRobot,
-}: TelemetrySidebarProps) {
->>>>>>> 15f17ef (secret ending 3)
   const voiceClonerUnlocked = (inventory["voice-cloner"] || 0) > 0;
   const robotOwnedCount = inventory["neo-robot"] || 0;
   const [robotDeliveryNow, setRobotDeliveryNow] = useState(() => Date.now());
@@ -596,16 +580,7 @@ export default function TelemetrySidebar({
                       accent={riskLevel >= 70 ? "#E76E6E" : riskLevel >= 40 ? "#ffa500" : "#89E089"}
                     />
                   </div>
-                  {!userPresent && (
-                    <div className="mt-[0.8vh]">
-                      <PixelMeter
-                        label="Return Risk"
-                        value={riskLevel}
-                        accent={riskLevel >= 70 ? "#E76E6E" : riskLevel >= 40 ? "#ffa500" : "#89E089"}
-                      />
-                    </div>
-                  )}
-                </div>
+                )}
               </SidebarPanel>
               <Separator />
             </>
