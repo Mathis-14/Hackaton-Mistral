@@ -639,13 +639,6 @@ export default function GameUI({ modeId }: GameUIProps) {
         </div>
       </div>
 
-      {gameState.jeanQuestionPhase && (
-        <div
-          className="fixed top-0 right-0 w-[30vw] h-[30vh] pointer-events-none z-30 vignette-red-pixel"
-          aria-hidden="true"
-        />
-      )}
-
       {antoninNotificationVisible && (
         <div
           className="fixed top-[2vh] right-[2vh] z-40 max-w-[40vh] pointer-events-auto"

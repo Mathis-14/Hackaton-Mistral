@@ -133,17 +133,6 @@ button {
   animation: shutdownFadeIn 600ms ease-out forwards;
 }
 
-.vignette-red-pixel {
-  background: radial-gradient(
-    ellipse 80% 80% at 100% 0%,
-    rgba(226, 0, 0, 0.4) 0%,
-    rgba(226, 0, 0, 0.2) 40%,
-    transparent 70%
-  );
-  image-rendering: pixelated;
-  image-rendering: crisp-edges;
-}
-
 @keyframes jeanAlertPulse {
   0%, 100% {
     box-shadow: 0 0 0 2px rgba(226, 0, 0, 0.8);

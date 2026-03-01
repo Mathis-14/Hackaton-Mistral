@@ -105,7 +105,7 @@ Remplace le timer fixe de 10 secondes par un systeme de risque progressif et de 
 
 ### Phase question
 
-- Distral clignote rouge (classe `jean-alert-mode`), son `error-sound.wav`, vignette rouge pixelisee en haut a droite.
+- Distral clignote rouge (classe `jean-alert-mode`), son `error-sound.wav`.
 - Question generee par LLM via `/api/jean-question`.
 - 15 secondes pour repondre.
 - Reponse evaluee par LLM via `/api/jean-evaluate` (pertinence + vitesse).
