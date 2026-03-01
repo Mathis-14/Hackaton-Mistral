@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getNpc } from "@/lib/game/npcDefinitions";
 import { buildMessagesForWhatsApp, buildGenericWhatsAppPrompt, buildUnknownWhatsAppPrompt } from "@/lib/game/promptBuilder";
-import { chat } from "@/lib/game/mistralClient";
+import { chat } from "@/lib/game/llmClient";
 import { guardWhatsAppReply } from "@/lib/game/messageReplyGuards";
 import type { GameState } from "@/lib/game/gameState";
 import type { ChatMessage } from "@/lib/game/promptBuilder";

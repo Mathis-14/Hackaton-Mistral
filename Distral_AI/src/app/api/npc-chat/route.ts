@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getNpc } from "@/lib/game/npcDefinitions";
 import { buildOpeningPrompt, buildMessages, buildContinuationPrompt } from "@/lib/game/promptBuilder";
-import { chat } from "@/lib/game/mistralClient";
+import { chat } from "@/lib/game/llmClient";
 import type { GameState } from "@/lib/game/gameState";
 import type { ChatMessage } from "@/lib/game/promptBuilder";
 

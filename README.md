@@ -34,7 +34,7 @@ The player navigates social dynamics, gains trust (or suspicion), and decides wh
 
 | Feature | Description |
 |---|---|
-| **LLM-driven NPCs** | Each employee is a unique Mistral AI agent with personality, goals, fears, and speaking style |
+| **LLM-driven NPCs** | Each employee is a unique Mistral AI agent (via API or AWS Bedrock) with personality, goals, fears, and speaking style |
 | **Dynamic Suspicion System** | Every action adjusts a suspicion score — get caught and you're shut down |
 | **Shutdown & Retry Loop** | Get shut down? You restart from checkpoint with full memory of what went wrong |
 | **Risk Bar** | Randomized timer when the user is away — if they return and catch you, it's over |
@@ -62,7 +62,7 @@ sequenceDiagram
 
     Player->>Engine: Sends message
     Engine->>Engine: Build prompt (context + milestone + history)
-    Engine->>Mistral: POST /chat/completions
+    Engine->>Mistral: Chat completion (API or Bedrock)
     Mistral->>Engine: Structured JSON response
     Engine->>Engine: Parse actions (grant_access, shutdown, escalate...)
     Engine->>NPC: Display dialogue
@@ -97,7 +97,7 @@ Build configuration: [`amplify.yml`](amplify.yml)
 ### Prerequisites
 
 - **Node.js 20** (use `nvm use 20`)
-- A **Mistral AI API key**
+- **Mistral AI API key** (default) or **AWS credentials** (for Bedrock)
 
 ### Installation
 
@@ -110,8 +110,26 @@ npm install
 
 Create a `.env` file in `Distral_AI/`:
 
+**Option A — Mistral API (default)**
 ```env
 MISTRAL_API_KEY=your_mistral_api_key
+MISTRAL_MODEL=mistral-large-latest
+```
+
+**Option B — AWS Bedrock (track AWS)**
+```env
+USE_AWS_BEDROCK=true
+AWS_REGION=us-east-1
+AWS_ACCESS_KEY_ID=your_access_key
+AWS_SECRET_ACCESS_KEY=your_secret_key
+MISTRAL_MODEL=mistral-large-latest
+```
+
+For Bedrock: enable Mistral model access in the [Bedrock console](https://console.aws.amazon.com/bedrock) (Model access > Manage model access). See [`Distral_AI/docs/AWS_BEDROCK_MIGRATION.md`](Distral_AI/docs/AWS_BEDROCK_MIGRATION.md) for details.
+
+**Voice cloning (optional)**
+```env
+ELEVEN_LABS_API_KEY=your_elevenlabs_key
 ```
 
 ### Run Locally

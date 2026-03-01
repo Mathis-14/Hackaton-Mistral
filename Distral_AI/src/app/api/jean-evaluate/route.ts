@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { chat } from "@/lib/game/mistralClient";
+import { chat } from "@/lib/game/llmClient";
 import type { ChatMessage } from "@/lib/game/promptBuilder";
 
 const SPEED_BONUS_UNDER_5S = -2;

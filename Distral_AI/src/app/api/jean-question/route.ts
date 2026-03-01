@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { chat } from "@/lib/game/mistralClient";
+import { chat } from "@/lib/game/llmClient";
 import type { GameState } from "@/lib/game/gameState";
 import type { ChatMessage } from "@/lib/game/promptBuilder";
 
