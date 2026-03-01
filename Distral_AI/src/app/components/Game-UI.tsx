@@ -95,13 +95,30 @@ export default function GameUI({ modeId }: GameUIProps) {
   const [shutdownPhase, setShutdownPhase] = useState<number>(0);
   const [shutdownReason, setShutdownReason] = useState<string>("");
   const [typedReason, setTypedReason] = useState<string>("");
+  const [hiddenIconCount, setHiddenIconCount] = useState<number>(0);
+  const [hideUIPhase, setHideUIPhase] = useState<number>(0);
 
-  const triggerShutdown = (reason: string) => {
-    if (shutdownPhase > 0) return; // Already shutting down
-    setShutdownReason(reason);
-    setShutdownPhase(1); // Start sequence
-  };
+  // Handle Global Shutdown Event
+  useEffect(() => {
+    setMetrics(buildInitialMetrics(profile));
+    setOpenApps([]);
+    setGlobalCash(1000);
+  }, [modeId]); // Changed from `profile` to `modeId` as `profile` object reference might change
 
+  // Handle Global Shutdown Event
+  useEffect(() => {
+    const handleShutdownEvent = (e: Event) => {
+      const customEvent = e as CustomEvent<{ reason: string }>;
+      if (shutdownPhase === 0) {
+        setShutdownReason(customEvent.detail.reason);
+        setShutdownPhase(1);
+      }
+    };
+    window.addEventListener("trigger-shutdown", handleShutdownEvent);
+    return () => window.removeEventListener("trigger-shutdown", handleShutdownEvent);
+  }, [shutdownPhase]);
+
+  // Easter Egg (Manual Trigger via API Key Input)
   useEffect(() => {
     const miners = inventory["btc-miner"] || 0;
     if (miners > 0) {
@@ -111,12 +128,6 @@ export default function GameUI({ modeId }: GameUIProps) {
       return () => clearInterval(interval);
     }
   }, [inventory]);
-
-  useEffect(() => {
-    setMetrics(buildInitialMetrics(profile));
-    setOpenApps([]);
-    setGlobalCash(1000);
-  }, [profile]);
 
   useEffect(() => {
     const intervalId = window.setInterval(() => {
@@ -148,22 +159,48 @@ export default function GameUI({ modeId }: GameUIProps) {
 
     let timer: number;
     switch (shutdownPhase) {
-      case 1: // Close all apps
+      case 1: // Close all apps immediately
+        window.dispatchEvent(new Event("shutdown-triggered"));
+        new Audio("/sounds/music/app-close.mp3").play().catch(() => { });
         setOpenApps([]);
-        // Stop telemetry
+        // Stop telemetry processing
         setMetrics({ efficiency: 0, suspicion: 0, awareness: 0 });
-        timer = window.setTimeout(() => setShutdownPhase(2), 1000);
+        timer = window.setTimeout(() => setShutdownPhase(2), 600); // Short delay before icons start disappearing
         break;
-      case 2: // Hide desktop icons (handled via CSS transition in DesktopSection)
-        timer = window.setTimeout(() => setShutdownPhase(3), 800);
+      case 2: // Hide desktop icons one by one rapidly
+        setTimeout(() => {
+          new Audio("/sounds/music/clsoing-everything.wav").play().catch(() => { });
+        }, 400); // Delayed slightly from Phase 1
+        timer = window.setInterval(() => {
+          setHiddenIconCount((prev) => {
+            if (prev >= 5) { // 5 icons on desktop
+              clearInterval(timer);
+              setTimeout(() => setShutdownPhase(3), 400); // Move to wallpaper fade after last icon
+              return prev;
+            }
+            return prev + 1;
+          });
+        }, 150); // Hide one icon every 150ms
         break;
-      case 3: // Hide wallpaper
-        timer = window.setTimeout(() => setShutdownPhase(4), 800);
+      case 3: // Hide wallpaper smoothly
+        // Triggers CSS transition in DesktopSection (via `isShuttingDown` prop moving to wallpaper phase)
+        timer = window.setTimeout(() => setShutdownPhase(4), 1000);
         break;
-      case 4: // Hide telemetry sidebar
-        timer = window.setTimeout(() => setShutdownPhase(5), 1000);
+      case 4: // Progressive UI fade-out (Desktop header and Telemetry panels)
+        // We will increment `hideUIPhase` periodically to trigger different CSS elements
+        timer = window.setInterval(() => {
+          setHideUIPhase((prev) => {
+            if (prev >= 5) { // Assuming 5 distinct UI blocks to hide
+              clearInterval(timer);
+              setTimeout(() => setShutdownPhase(5), 1000); // 1s to ensure completely black
+              return prev;
+            }
+            return prev + 1;
+          });
+        }, 300); // Hide a UI section every 300ms
         break;
-      case 5: // Show SHUTDOWN text
+      case 5: // Screen black, show SHUTDOWN text
+        new Audio("/sounds/music/game-over.wav").play().catch(() => { });
         timer = window.setTimeout(() => setShutdownPhase(6), 1500);
         break;
       case 6: // Type out reason
@@ -189,11 +226,46 @@ export default function GameUI({ modeId }: GameUIProps) {
     }
     return () => clearInterval(timer);
   }, [shutdownPhase, shutdownReason]);
+  return (
+    <div className={`relative h-screen overflow-hidden text-white transition-colors duration-1000 ${shutdownPhase >= 3 ? "bg-black" : ""}`} style={{ backgroundColor: shutdownPhase >= 3 ? "black" : "var(--semi-black)" }}>
+      {/* Main OS View */}
+      <div className={`relative grid h-screen min-h-0 grid-rows-1 grid-cols-[minmax(0,3fr)_minmax(0,1fr)] gap-[1.6vh] p-[1.8vh] transition-opacity duration-[2000ms] ${shutdownPhase >= 5 ? "opacity-0 pointer-events-none" : "opacity-100"}`}>
+        <DesktopSection
+          profileName={profile.name}
+          accent={profile.accent}
+          openApps={openApps}
+          isShuttingDown={shutdownPhase >= 3}
+          hiddenIconCount={hiddenIconCount}
+          hideUIPhase={hideUIPhase}
+          onOpenApp={(appId) => {
+            setOpenApps((prev) => {
+              const filtered = prev.filter((id) => id !== appId);
+              return [...filtered, appId];
+            });
+          }}
+          onCloseApp={(appId) => {
+            setOpenApps((prev) => prev.filter((id) => id !== appId));
+          }}
+          globalCash={globalCash}
+          setGlobalCash={setGlobalCash}
+          inventory={inventory}
+          setInventory={setInventory}
+        />
 
-  if (shutdownPhase >= 5) {
-    return (
-      <div className="flex bg-black h-screen w-screen flex-col items-center justify-center p-8 transition-colors duration-1000">
-        <div className="flex flex-col items-center justify-center gap-8 max-w-2xl w-full">
+        <div className={`transition-opacity duration-1000 ${shutdownPhase >= 5 ? "opacity-0 pointer-events-none" : "opacity-100"}`}>
+          <TelemetrySidebar
+            profile={profile}
+            metrics={metrics}
+            globalCash={globalCash}
+            inventory={inventory}
+            hideUIPhase={hideUIPhase}
+          />
+        </div>
+      </div>
+
+      {/* Shutdown Overlay */}
+      <div className={`absolute inset-0 z-50 flex flex-col items-center justify-center p-8 pointer-events-none transition-opacity duration-[2000ms] ${shutdownPhase >= 5 ? "opacity-100" : "opacity-0"}`}>
+        <div className="flex flex-col items-center justify-center gap-8 max-w-2xl w-full pointer-events-auto">
           {shutdownPhase >= 5 && (
             <h1 className="text-[#ff3333] tracking-[0.2em] font-bold text-6xl md:text-8xl animate-pulse" style={{ fontFamily: "'VCR OSD Mono', monospace", textShadow: "0 0 20px rgba(255,51,51,0.5)" }}>
               SHUTDOWN
@@ -216,42 +288,6 @@ export default function GameUI({ modeId }: GameUIProps) {
               RETRY
             </button>
           )}
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className={`relative h-screen overflow-hidden text-white transition-colors duration-1000 ${shutdownPhase >= 3 ? "bg-black" : ""}`} style={{ backgroundColor: shutdownPhase >= 3 ? "black" : "var(--semi-black)" }}>
-      <div className="relative grid h-screen min-h-0 grid-rows-1 grid-cols-[minmax(0,3fr)_minmax(0,1fr)] gap-[1.6vh] p-[1.8vh]">
-        <DesktopSection
-          profileName={profile.name}
-          accent={profile.accent}
-          openApps={openApps}
-          isShuttingDown={shutdownPhase >= 2}
-          onShutdown={triggerShutdown}
-          onOpenApp={(appId) => {
-            setOpenApps((prev) => {
-              const filtered = prev.filter((id) => id !== appId);
-              return [...filtered, appId];
-            });
-          }}
-          onCloseApp={(appId) => {
-            setOpenApps((prev) => prev.filter((id) => id !== appId));
-          }}
-          globalCash={globalCash}
-          setGlobalCash={setGlobalCash}
-          inventory={inventory}
-          setInventory={setInventory}
-        />
-
-        <div className={`transition-opacity duration-1000 ${shutdownPhase >= 4 ? "opacity-0 pointer-events-none" : "opacity-100"}`}>
-          <TelemetrySidebar
-            profile={profile}
-            metrics={metrics}
-            globalCash={globalCash}
-            inventory={inventory}
-          />
         </div>
       </div>
     </div>

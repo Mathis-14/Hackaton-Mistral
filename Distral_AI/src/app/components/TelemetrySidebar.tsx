@@ -32,6 +32,7 @@ type TelemetrySidebarProps = {
   metrics: MetricState;
   globalCash: number;
   inventory: Record<string, number>;
+  hideUIPhase?: number;
 };
 
 function clamp(value: number, min: number, max: number) {
@@ -194,7 +195,7 @@ function SidebarPanel({ title, children }: { title: string; children: React.Reac
   );
 }
 
-export default function TelemetrySidebar({ profile, metrics, globalCash, inventory }: TelemetrySidebarProps) {
+export default function TelemetrySidebar({ profile, metrics, globalCash, inventory, hideUIPhase = 0 }: TelemetrySidebarProps) {
   const voiceClonerUnlocked = (inventory["voice-cloner"] || 0) > 0;
 
   const [draggedFiles, setDraggedFiles] = useState<{ name: string; src: string }[]>([]);
@@ -277,177 +278,188 @@ export default function TelemetrySidebar({ profile, metrics, globalCash, invento
     const audio = new Audio(audioUrl);
     sampleAudioRef.current = audio;
     audio.addEventListener("ended", () => setSampleStatus("idle"));
-    audio.play().catch(() => {});
+    audio.play().catch(() => { });
     setSampleStatus("playing");
   }, [clonedVoiceId, sampleText]);
 
   return (
     <aside className="pixel-card h-full min-h-0 p-[0.35vh]">
       <div className="pixel-card__shell flex h-full min-h-0 flex-col overflow-hidden overflow-y-auto border border-white/10 bg-(--carbon-black) p-[1.6vh]">
-        <div className="mb-[0.35vh] text-[0.92vh] uppercase tracking-[0.32em] text-white/42">Telemetry</div>
-        <div className="text-[2.3vh] uppercase tracking-[0.08em] text-white">Host Snapshot</div>
+        <div className={`transition-opacity duration-700 ${hideUIPhase >= 2 ? "opacity-0" : "opacity-100"}`}>
+          <div className="mb-[0.35vh] text-[0.92vh] uppercase tracking-[0.32em] text-white/42">Telemetry</div>
+          <div className="text-[2.3vh] uppercase tracking-[0.08em] text-white">Host Snapshot</div>
+        </div>
 
-        <Separator />
-
-        <SidebarPanel title="Status">
-          <div className="space-y-[1vh]">
-            <PixelMeter label="Suspicion" value={metrics.suspicion} accent="var(--racing-red)" />
-          </div>
-        </SidebarPanel>
-
-        <Separator />
-
-        <SidebarPanel title="Bank Account">
-          <div className="flex items-end justify-between gap-4">
-            <div>
-              <div className="text-[0.92vh] uppercase tracking-[0.24em] text-white/42">Available Balance</div>
-              <div className="mt-[0.55vh] text-[2.6vh] uppercase tracking-[0.04em] text-white">${globalCash.toFixed(2)}</div>
+        <div className={`transition-opacity duration-700 ${hideUIPhase >= 2 ? "opacity-0" : "opacity-100"}`}>
+          <Separator />
+          <SidebarPanel title="Status">
+            <div className="space-y-[1vh]">
+              <PixelMeter label="Suspicion" value={metrics.suspicion} accent="var(--racing-red)" />
             </div>
-          </div>
-        </SidebarPanel>
+          </SidebarPanel>
+        </div>
 
-        <Separator />
-
-        <SidebarPanel title="Profile">
-          <div className="border border-white/10 bg-white/3 px-[1vh] py-[0.95vh]">
-            <PixelMeter label="Awareness" value={metrics.awareness} accent={AWARENESS_COLOR} />
-            <div className="my-[1vh] h-px bg-white/10" />
-            <div className="space-y-[0.7vh] text-[0.95vh] leading-[1.45] text-white/74">
-              {([
-                ["Name", profile.name],
-                ["Age", `${profile.age}`],
-                ["Role", profile.role],
-                ["Character", profile.character],
-                ["Access", profile.access],
-              ] as const).map(([label, value]) => (
-                <div key={label} className="flex items-start justify-between gap-[0.9vh] border-b border-white/8 pb-[0.55vh] last:border-b-0 last:pb-0">
-                  <div className="shrink-0 text-[0.78vh] uppercase tracking-[0.24em] text-white/38">{label}</div>
-                  <div className="text-right text-white/84">{value}</div>
-                </div>
-              ))}
+        <div className={`transition-opacity duration-700 ${hideUIPhase >= 3 ? "opacity-0" : "opacity-100"}`}>
+          <Separator />
+          <SidebarPanel title="Bank Account">
+            <div className="flex items-end justify-between gap-4">
+              <div>
+                <div className="text-[0.92vh] uppercase tracking-[0.24em] text-white/42">Available Balance</div>
+                <div className="mt-[0.55vh] text-[2.6vh] uppercase tracking-[0.04em] text-white">${globalCash.toFixed(2)}</div>
+              </div>
             </div>
-          </div>
-        </SidebarPanel>
+          </SidebarPanel>
+        </div>
 
-        <Separator />
+        <div className={`transition-opacity duration-700 ${hideUIPhase >= 4 ? "opacity-0" : "opacity-100"}`}>
+          <Separator />
+          <SidebarPanel title="Profile">
+            <div className="border border-white/10 bg-white/3 px-[1vh] py-[0.95vh]">
+              <PixelMeter label="Awareness" value={metrics.awareness} accent={AWARENESS_COLOR} />
+              <div className="my-[1vh] h-px bg-white/10" />
+              <div className="space-y-[0.7vh] text-[0.95vh] leading-[1.45] text-white/74">
+                {([
+                  ["Name", profile.name],
+                  ["Age", `${profile.age}`],
+                  ["Role", profile.role],
+                  ["Character", profile.character],
+                  ["Access", profile.access],
+                ] as const).map(([label, value]) => (
+                  <div key={label} className="flex items-start justify-between gap-[0.9vh] border-b border-white/8 pb-[0.55vh] last:border-b-0 last:pb-0">
+                    <div className="shrink-0 text-[0.78vh] uppercase tracking-[0.24em] text-white/38">{label}</div>
+                    <div className="text-right text-white/84">{value}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </SidebarPanel>
+        </div>
 
-        {(inventory["btc-miner"] || 0) > 0 && (
-          <>
-            <SidebarPanel title="Mining Rig">
-              <div className="flex items-end justify-between gap-4">
-                <div>
-                  <div className="text-[0.92vh] uppercase tracking-[0.24em] text-white/42 mb-[0.5vh]">Active Miners</div>
-                  <div className="flex items-center gap-[1vh]">
-                    <div className="flex -space-x-[1vh]">
-                      {Array.from({ length: Math.min(inventory["btc-miner"] || 0, 5) }).map((_, index) => (
-                        <div key={index} className="relative z-10" style={{ zIndex: 10 - index }}>
-                          <BitcoinMinerIcon width="3.5vh" height="3.5vh" />
-                        </div>
-                      ))}
+        <div className={`transition-opacity duration-700 ${hideUIPhase >= 5 ? "opacity-0" : "opacity-100"}`}>
+          <Separator />
+
+          {/* Replaced by wrapped blocks above */}
+
+          {/* Replaced by wrapped blocks above */}
+
+          {(inventory["btc-miner"] || 0) > 0 && (
+            <>
+              <SidebarPanel title="Mining Rig">
+                <div className="flex items-end justify-between gap-4">
+                  <div>
+                    <div className="text-[0.92vh] uppercase tracking-[0.24em] text-white/42 mb-[0.5vh]">Active Miners</div>
+                    <div className="flex items-center gap-[1vh]">
+                      <div className="flex -space-x-[1vh]">
+                        {Array.from({ length: Math.min(inventory["btc-miner"] || 0, 5) }).map((_, index) => (
+                          <div key={index} className="relative z-10" style={{ zIndex: 10 - index }}>
+                            <BitcoinMinerIcon width="3.5vh" height="3.5vh" />
+                          </div>
+                        ))}
+                      </div>
+                      <span className="text-[1.4vh] font-bold text-white/80">x{inventory["btc-miner"]}</span>
                     </div>
-                    <span className="text-[1.4vh] font-bold text-white/80">x{inventory["btc-miner"]}</span>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-[0.92vh] uppercase tracking-[0.24em] text-white/42">Hash Rate</div>
+                    <div className="mt-[0.5vh] text-[1.6vh] font-bold text-[#89E089]">+${(inventory["btc-miner"] || 0) * 10}/sec</div>
                   </div>
                 </div>
-                <div className="text-right">
-                  <div className="text-[0.92vh] uppercase tracking-[0.24em] text-white/42">Hash Rate</div>
-                  <div className="mt-[0.5vh] text-[1.6vh] font-bold text-[#89E089]">+${(inventory["btc-miner"] || 0) * 10}/sec</div>
-                </div>
-              </div>
-            </SidebarPanel>
-            <Separator />
-          </>
-        )}
+              </SidebarPanel>
+              <Separator />
+            </>
+          )}
 
-        <SidebarPanel title="Voice Cloner">
-          <div className="border border-white/10 px-[1vh] py-[0.95vh]" style={{ background: voiceClonerUnlocked ? "rgba(0,170,255,0.04)" : "rgba(255,255,255,0.02)" }}>
-            <div className="flex items-center gap-[0.7vh] mb-[0.8vh]">
-              <MicrophoneIcon locked={!voiceClonerUnlocked} />
-              <span className="text-[0.85vh] font-bold tracking-wider uppercase" style={{ color: voiceClonerUnlocked ? CYAN : "#555" }}>
-                ElevenLabs Clone
-              </span>
-              {!voiceClonerUnlocked && (
-                <span className="ml-auto text-[0.7vh] px-[0.5vh] py-[0.2vh]" style={{ background: "#2a1a1a", color: "#E76E6E", border: "1px solid #3a2222" }}>
-                  LOCKED
+          <SidebarPanel title="Voice Cloner">
+            <div className="border border-white/10 px-[1vh] py-[0.95vh]" style={{ background: voiceClonerUnlocked ? "rgba(0,170,255,0.04)" : "rgba(255,255,255,0.02)" }}>
+              <div className="flex items-center gap-[0.7vh] mb-[0.8vh]">
+                <MicrophoneIcon locked={!voiceClonerUnlocked} />
+                <span className="text-[0.85vh] font-bold tracking-wider uppercase" style={{ color: voiceClonerUnlocked ? CYAN : "#555" }}>
+                  ElevenLabs Clone
                 </span>
-              )}
-            </div>
-
-            {!voiceClonerUnlocked ? (
-              <div className="text-[0.85vh] leading-normal" style={{ color: "#555" }}>
-                Buy Voice Cloner ($500) in the Shop to unlock. Drag WhatsApp audios from Files to clone a voice.
+                {!voiceClonerUnlocked && (
+                  <span className="ml-auto text-[0.7vh] px-[0.5vh] py-[0.2vh]" style={{ background: "#2a1a1a", color: "#E76E6E", border: "1px solid #3a2222" }}>
+                    LOCKED
+                  </span>
+                )}
               </div>
-            ) : (
-              <div className="flex flex-col gap-[0.8vh]">
-                <div
-                  className="flex flex-col items-center justify-center gap-[0.4vh] py-[1vh] text-center transition-colors"
-                  style={{
-                    border: dropZoneActive ? `2px dashed ${CYAN}` : "2px dashed #333",
-                    background: dropZoneActive ? "rgba(0,170,255,0.08)" : "transparent",
-                    minHeight: "4vh",
-                  }}
-                  onDragOver={(event) => { event.preventDefault(); setDropZoneActive(true); }}
-                  onDragLeave={() => setDropZoneActive(false)}
-                  onDrop={handleDropOnCloner}
-                >
-                  {draggedFiles.length === 0 ? (
-                    <span className="text-[0.8vh]" style={{ color: DIM }}>Drag audio files here</span>
-                  ) : (
-                    <div className="flex flex-col gap-[0.3vh] w-full px-[0.5vh]">
-                      {draggedFiles.map((file) => (
-                        <div key={file.name} className="flex items-center justify-between text-[0.8vh]" style={{ color: CYAN }}>
-                          <span className="truncate">{file.name}</span>
-                          <button type="button" onClick={() => setDraggedFiles((prev) => prev.filter((f) => f.name !== file.name))} style={{ color: "#E76E6E", background: "none", border: "none", cursor: "pointer", fontSize: "0.8vh" }}>x</button>
-                        </div>
-                      ))}
+
+              {!voiceClonerUnlocked ? (
+                <div className="text-[0.85vh] leading-normal" style={{ color: "#555" }}>
+                  Buy Voice Cloner ($500) in the Shop to unlock. Drag WhatsApp audios from Files to clone a voice.
+                </div>
+              ) : (
+                <div className="flex flex-col gap-[0.8vh]">
+                  <div
+                    className="flex flex-col items-center justify-center gap-[0.4vh] py-[1vh] text-center transition-colors"
+                    style={{
+                      border: dropZoneActive ? `2px dashed ${CYAN}` : "2px dashed #333",
+                      background: dropZoneActive ? "rgba(0,170,255,0.08)" : "transparent",
+                      minHeight: "4vh",
+                    }}
+                    onDragOver={(event) => { event.preventDefault(); setDropZoneActive(true); }}
+                    onDragLeave={() => setDropZoneActive(false)}
+                    onDrop={handleDropOnCloner}
+                  >
+                    {draggedFiles.length === 0 ? (
+                      <span className="text-[0.8vh]" style={{ color: DIM }}>Drag audio files here</span>
+                    ) : (
+                      <div className="flex flex-col gap-[0.3vh] w-full px-[0.5vh]">
+                        {draggedFiles.map((file) => (
+                          <div key={file.name} className="flex items-center justify-between text-[0.8vh]" style={{ color: CYAN }}>
+                            <span className="truncate">{file.name}</span>
+                            <button type="button" onClick={() => setDraggedFiles((prev) => prev.filter((f) => f.name !== file.name))} style={{ color: "#E76E6E", background: "none", border: "none", cursor: "pointer", fontSize: "0.8vh" }}>x</button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  <button
+                    type="button"
+                    disabled={draggedFiles.length === 0 || cloneStatus === "cloning"}
+                    onClick={handleCloneVoice}
+                    className="w-full py-[0.6vh] text-[0.8vh] font-bold tracking-wider uppercase disabled:opacity-30"
+                    style={{
+                      background: cloneStatus === "done" ? "rgba(137,224,137,0.15)" : "rgba(0,170,255,0.15)",
+                      border: cloneStatus === "done" ? `1px solid ${GREEN}` : `1px solid ${CYAN}`,
+                      color: cloneStatus === "done" ? GREEN : CYAN,
+                      cursor: draggedFiles.length === 0 || cloneStatus === "cloning" ? "not-allowed" : "pointer",
+                    }}
+                  >
+                    {cloneStatus === "idle" && "Clone Voice"}
+                    {cloneStatus === "cloning" && "Cloning..."}
+                    {cloneStatus === "done" && "Cloned"}
+                    {cloneStatus === "error" && "Error - Retry"}
+                  </button>
+
+                  {cloneStatus === "done" && clonedVoiceId && (
+                    <div className="flex flex-col gap-[0.6vh] border-t border-white/10 pt-[0.8vh]">
+                      <span className="text-[0.8vh] tracking-wider uppercase" style={{ color: GREEN }}>Sample Test</span>
+                      <textarea
+                        value={sampleText}
+                        onChange={(event) => setSampleText(event.target.value)}
+                        rows={4}
+                        className="w-full resize-none px-[0.5vh] py-[0.4vh] text-[0.8vh] outline-none"
+                        style={{ background: "#111", border: "1px solid #333", color: "#ccc" }}
+                      />
+                      <button
+                        type="button"
+                        disabled={sampleStatus !== "idle" || !sampleText.trim()}
+                        onClick={handleSampleTest}
+                        className="w-full py-[0.5vh] text-[0.8vh] font-bold tracking-wider uppercase disabled:opacity-30"
+                        style={{ background: "rgba(137,224,137,0.15)", border: `1px solid ${GREEN}`, color: GREEN, cursor: sampleStatus !== "idle" ? "not-allowed" : "pointer" }}
+                      >
+                        {sampleStatus === "idle" && "Generate Sample"}
+                        {sampleStatus === "generating" && "Generating..."}
+                        {sampleStatus === "playing" && "Playing..."}
+                      </button>
                     </div>
                   )}
                 </div>
-
-                <button
-                  type="button"
-                  disabled={draggedFiles.length === 0 || cloneStatus === "cloning"}
-                  onClick={handleCloneVoice}
-                  className="w-full py-[0.6vh] text-[0.8vh] font-bold tracking-wider uppercase disabled:opacity-30"
-                  style={{
-                    background: cloneStatus === "done" ? "rgba(137,224,137,0.15)" : "rgba(0,170,255,0.15)",
-                    border: cloneStatus === "done" ? `1px solid ${GREEN}` : `1px solid ${CYAN}`,
-                    color: cloneStatus === "done" ? GREEN : CYAN,
-                    cursor: draggedFiles.length === 0 || cloneStatus === "cloning" ? "not-allowed" : "pointer",
-                  }}
-                >
-                  {cloneStatus === "idle" && "Clone Voice"}
-                  {cloneStatus === "cloning" && "Cloning..."}
-                  {cloneStatus === "done" && "Cloned"}
-                  {cloneStatus === "error" && "Error - Retry"}
-                </button>
-
-                {cloneStatus === "done" && clonedVoiceId && (
-                  <div className="flex flex-col gap-[0.6vh] border-t border-white/10 pt-[0.8vh]">
-                    <span className="text-[0.8vh] tracking-wider uppercase" style={{ color: GREEN }}>Sample Test</span>
-                    <textarea
-                      value={sampleText}
-                      onChange={(event) => setSampleText(event.target.value)}
-                      rows={4}
-                      className="w-full resize-none px-[0.5vh] py-[0.4vh] text-[0.8vh] outline-none"
-                      style={{ background: "#111", border: "1px solid #333", color: "#ccc" }}
-                    />
-                    <button
-                      type="button"
-                      disabled={sampleStatus !== "idle" || !sampleText.trim()}
-                      onClick={handleSampleTest}
-                      className="w-full py-[0.5vh] text-[0.8vh] font-bold tracking-wider uppercase disabled:opacity-30"
-                      style={{ background: "rgba(137,224,137,0.15)", border: `1px solid ${GREEN}`, color: GREEN, cursor: sampleStatus !== "idle" ? "not-allowed" : "pointer" }}
-                    >
-                      {sampleStatus === "idle" && "Generate Sample"}
-                      {sampleStatus === "generating" && "Generating..."}
-                      {sampleStatus === "playing" && "Playing..."}
-                    </button>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        </SidebarPanel>
+              )}
+            </div>
+          </SidebarPanel>
+        </div>
       </div>
     </aside>
   );

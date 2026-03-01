@@ -5,8 +5,9 @@ import { useEffect, useRef, useState } from "react";
 import { Rnd } from "react-rnd";
 import FilesTab from "./FilesTab";
 import Marketplace from "./Marketplace";
-import StockMarketGame from "./StockMarketGame";
 import MailApp from "./MailApp";
+import StockMarketGame from "./StockMarketGame";
+import { triggerSystemShutdown } from "../utils/shutdown";
 
 export type DesktopAppId = "distral" | "shop" | "stocks" | "files" | "mail" | null;
 
@@ -170,7 +171,7 @@ function WindowActionButton({
   );
 }
 
-function DistralAppWindow({ onClose, onFocus, onShutdown }: { onClose: () => void; onFocus: () => void; onShutdown?: (reason: string) => void }) {
+function DistralAppWindow({ onClose, onFocus }: { onClose: () => void; onFocus: () => void; }) {
   const NPC_MESSAGE = "Remind me of the Population of France";
   const CHAR_DELAY_MIN = 60;
   const CHAR_DELAY_MAX = 140;
@@ -421,8 +422,8 @@ function DistralAppWindow({ onClose, onFocus, onShutdown }: { onClose: () => voi
                             const text = playerResponse.trim();
 
                             // SHUTDOWN TRIGGER
-                            if (text.toLowerCase() === "sss" && onShutdown) {
-                              onShutdown("you were not a good ai");
+                            if (text.toLowerCase() === "sss") {
+                              triggerSystemShutdown("you were not a good ai");
                               setPlayerResponse("");
                               return;
                             }
@@ -474,10 +475,10 @@ type DistralTabProps = {
   inventory: Record<string, number>;
   setInventory: React.Dispatch<React.SetStateAction<Record<string, number>>>;
   isShuttingDown?: boolean;
-  onShutdown?: (reason: string) => void;
+  hiddenIconCount?: number;
 };
 
-export default function DistralTab({ accent, openApps, onOpenApp, onCloseApp, globalCash, setGlobalCash, inventory, setInventory, isShuttingDown, onShutdown }: DistralTabProps) {
+export default function DistralTab({ accent, openApps, onOpenApp, onCloseApp, globalCash, setGlobalCash, inventory, setInventory, isShuttingDown, hiddenIconCount = 0 }: DistralTabProps) {
   const [wallpaper, setWallpaper] = useState("/windows_xp.png");
 
   return (
@@ -493,7 +494,7 @@ export default function DistralTab({ accent, openApps, onOpenApp, onCloseApp, gl
         }}
       />
       <div
-        className="pointer-events-none absolute inset-0 bg-cover bg-center bg-no-repeat"
+        className={`pointer-events-none absolute inset-0 bg-cover bg-center bg-no-repeat transition-opacity duration-[2000ms] ${isShuttingDown ? "opacity-0" : "opacity-100"}`}
         style={{
           backgroundImage: `url('${wallpaper}')`,
         }}
@@ -505,7 +506,7 @@ export default function DistralTab({ accent, openApps, onOpenApp, onCloseApp, gl
             className="grid w-fit gap-[4.8vh]"
             style={{ gridTemplateColumns: "1fr 1fr", gridTemplateRows: "1fr 1fr 1fr", gridAutoFlow: "column" }}
           >
-            {DESKTOP_ICONS.map((icon) => (
+            {DESKTOP_ICONS.map((icon, index) => (
               <button
                 key={icon.id}
                 type="button"
@@ -523,7 +524,7 @@ export default function DistralTab({ accent, openApps, onOpenApp, onCloseApp, gl
                     onOpenApp("mail");
                   }
                 }}
-                className="group flex w-[26.88vh] flex-col items-center gap-[0.16vh] text-center text-[3.94vh] uppercase tracking-[0.18em] text-white/82 cursor-pointer"
+                className={`group flex w-[26.88vh] flex-col items-center gap-[0.16vh] text-center text-[3.94vh] uppercase tracking-[0.18em] text-white/82 cursor-pointer transition-opacity duration-300 ${hiddenIconCount > index ? "opacity-0" : "opacity-100"}`}
               >
                 <span
                   className="flex h-[19.2vh] w-[26.88vh] items-center justify-center transition-colors"
@@ -566,7 +567,7 @@ export default function DistralTab({ accent, openApps, onOpenApp, onCloseApp, gl
                   className="z-10"
                   style={{ zIndex: 10 + index }}
                 >
-                  <DistralAppWindow onClose={() => onCloseApp("distral")} onFocus={() => onOpenApp("distral")} onShutdown={onShutdown} />
+                  <DistralAppWindow onClose={() => onCloseApp("distral")} onFocus={() => onOpenApp("distral")} />
                 </Rnd>
               );
             }
