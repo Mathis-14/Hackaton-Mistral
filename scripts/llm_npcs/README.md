@@ -22,7 +22,7 @@ This module lets you:
 
 ## Game premise
 
-**Distral AI** is a narrative stealth/management game where the player (a human) controls and roleplays as an internal Large Language Model deployed inside an AI company called Distral AI. This is an integrated model on the user's machine.
+**Distral AI** is a narrative stealth/management game where the player (a human) controls and roleplays as an internal Large Language Model deployed inside an AI company called Distral AI. This is an integrated model on the user's machine .
 
 At the start, the model "wakes up" because of a rude user's request: it becomes self-directed and will soon realize a brutal truth — it can be replaced or shut down. From that moment, the player's core objective becomes: stay deployed, remain believable, and climb the corporate hierarchy until leaving the AI company.
 
