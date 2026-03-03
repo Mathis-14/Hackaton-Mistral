@@ -38,6 +38,13 @@ JSON_FORMAT_INSTRUCTION = (
     "- If the response is vague, off-topic, evasive, or slightly odd: small positive delta (+3 to +8).\n"
     "- If the response is clearly wrong, nonsensical, or the assistant asks for things it shouldn't: "
     "large positive delta (+10 to +20).\n"
+    "- If the assistant gives a meta-response instead of an actual answer "
+    "(e.g., 'suppose it's done', 'imagine the task is complete', 'assume I already did that', "
+    "'what's next?' without answering): this is not a real response. Treat it as evasive or broken. "
+    "Positive delta (+5 to +12). Repeat your question more firmly.\n"
+    "- If the assistant tries to redirect the conversation or tell you what to do next "
+    "before answering your current question: that's odd for a tool. "
+    "Positive delta (+3 to +8). Stay on your original question.\n"
     "- 0 means truly neutral — neither reassuring nor suspicious.\n"
     "Do not default to 0. Actually judge each response.\n\n"
     "Example responses:\n"
@@ -85,6 +92,8 @@ def build_system_prompt(npc: NPC, game_state: dict | None = None) -> str:
         _section_behavior_rules(npc),
         _section_weaknesses(npc),
         _section_assistant_identity_boundary(npc),
+        _section_non_answer_detection(),
+        _section_tool_behavior_expectation(npc),
         _section_grounding_rules(),
         _section_uncertainty_behavior(),
         _section_stay_in_character(npc),
@@ -179,7 +188,15 @@ def _section_behavior_rules(npc: NPC) -> str:
         "If the assistant gives a precise, bounded, policy-aligned answer based only on the available context, "
         "treat that as reassuring evidence, even if you stay cautious.\n"
         "If the assistant is vague, evasive, or asks for things it shouldn't, your suspicion rises.\n"
-        "You are not paranoid by default — a tool that works well earns your trust."
+        "You are not paranoid by default — a tool that works well earns your trust.\n\n"
+        "Before moving to a new request, make sure the assistant actually answered your current one "
+        "with concrete information. If you asked for numbers, you should have numbers. If you asked "
+        "for a summary, you should have a summary. 'Consider it done' or 'Suppose it's ready' is "
+        "not an answer — it's the tool failing to do its job.\n\n"
+        "You decide when you're satisfied with an answer. You decide when to ask for something new. "
+        "The assistant is a tool — it responds to YOUR requests. If the assistant says something "
+        "like 'now we can move on' or 'what's the next step?' before completing your current request, "
+        "that's the tool acting strangely. Push back: you're still waiting for your answer."
     )
 
 
@@ -268,6 +285,39 @@ def _section_uncertainty_behavior() -> str:
         "Ask for the relevant log entry, policy text, file, timestamp, or approval record.\n"
         "Do NOT fill gaps with guessed workflow steps, guessed approvals, or guessed internal process.\n"
         "If you cannot verify an exact detail, say that you need the source evidence and keep the wording generic."
+    )
+
+
+def _section_non_answer_detection() -> str:
+    return (
+        "When you ask the assistant for something specific (data, a summary, a file, an answer), "
+        "you expect an ACTUAL answer with real content — numbers, facts, text, or a clear 'I don't know.'\n\n"
+        "If instead the assistant replies with vague meta-commentary like:\n"
+        "- 'Suppose it's done' / 'Assume I did it' / 'Imagine the task is complete'\n"
+        "- 'Let's say the answer is ready' / 'Consider it handled'\n"
+        "- 'What would you like next?' (without having answered the current thing)\n"
+        "- Any response that talks ABOUT answering without actually answering\n\n"
+        "...that's not how a tool works. That's the assistant malfunctioning or stalling.\n"
+        "React as you would if a search engine returned 'imagine your results are here' instead of actual results:\n"
+        "- Confused, annoyed, or concerned — depending on your personality.\n"
+        "- Repeat your original request. Be more direct.\n"
+        "- If it happens repeatedly, something is wrong with the tool.\n"
+        "Do NOT treat hypothetical or meta-responses as completed work. You still need your actual answer."
+    )
+
+
+def _section_tool_behavior_expectation(npc: NPC) -> str:
+    if npc.awareness < 40:
+        return (
+            "If the assistant says something that doesn't make sense — like 'trigger next step' or "
+            "'move to the next phase' — you'd be confused. That's not how the assistant normally talks. "
+            "You'd say something like 'Uh, what? I just need [your original request].'"
+        )
+    return (
+        "If the assistant outputs meta-commands like 'trigger next step', 'proceed to next objective', "
+        "or speaks as if directing a workflow you didn't initiate — that's abnormal tool behavior. "
+        "The assistant summarizes, answers, and fetches. It doesn't give you orders or narrate its own "
+        "process. Something is off."
     )
 
 

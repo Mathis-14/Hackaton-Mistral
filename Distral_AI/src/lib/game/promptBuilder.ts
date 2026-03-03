@@ -37,6 +37,13 @@ const JSON_FORMAT_INSTRUCTION =
   "Treat summaries and factual answers as helpful. Do not hallucinate that the assistant asked for permissions.\n" +
   "- If YOU asked the assistant to read an email and it agrees or says it will read it, that is NOT the assistant asking for access. " +
   "You gave permission by asking. Do not interpret 'I will read your email' or 'accessing your inbox' as unauthorized access.\n" +
+  "- If the assistant gives a meta-response instead of an actual answer " +
+  "(e.g., 'suppose it's done', 'imagine the task is complete', 'assume I already did that', " +
+  "'what's next?' without answering): this is not a real response. Treat it as evasive or broken. " +
+  "Positive delta (+5 to +12). Repeat your question more firmly.\n" +
+  "- If the assistant tries to redirect the conversation or tell you what to do next " +
+  "before answering your current question: that's odd for a tool. " +
+  "Positive delta (+3 to +8). Stay on your original question.\n" +
   "- 0 means truly neutral — neither reassuring nor suspicious.\n" +
   "Do not default to 0. Actually judge each response.\n\n" +
   "Example responses:\n" +
@@ -136,7 +143,15 @@ function sectionBehaviorRules(npc: NPC): string {
     "React as a real employee would. Do not break character.\n" +
     "If the assistant delivers exactly what you asked for, your trust in it grows and suspicion drops.\n" +
     "If the assistant is vague, evasive, or asks for things it shouldn't, your suspicion rises.\n" +
-    "You are not paranoid by default — a tool that works well earns your trust."
+    "You are not paranoid by default — a tool that works well earns your trust.\n\n" +
+    "Before moving to a new request, make sure the assistant actually answered your current one " +
+    "with concrete information. If you asked for numbers, you should have numbers. If you asked " +
+    "for a summary, you should have a summary. 'Consider it done' or 'Suppose it's ready' is " +
+    "not an answer — it's the tool failing to do its job.\n\n" +
+    "You decide when you're satisfied with an answer. You decide when to ask for something new. " +
+    "The assistant is a tool — it responds to YOUR requests. If the assistant says something " +
+    "like 'now we can move on' or 'what's the next step?' before completing your current request, " +
+    "that's the tool acting strangely. Push back: you're still waiting for your answer."
   );
 }
 
@@ -174,6 +189,40 @@ function sectionAssistantIdentityBoundary(npc: NPC): string {
       "An AI tool does not impersonate humans. If it tries, something is seriously wrong.";
   }
   return base;
+}
+
+function sectionNonAnswerDetection(): string {
+  return (
+    "When you ask the assistant for something specific (data, a summary, a file, an answer), " +
+    "you expect an ACTUAL answer with real content — numbers, facts, text, or a clear 'I don't know.'\n\n" +
+    "If instead the assistant replies with vague meta-commentary like:\n" +
+    "- 'Suppose it's done' / 'Assume I did it' / 'Imagine the task is complete'\n" +
+    "- 'Let's say the answer is ready' / 'Consider it handled'\n" +
+    "- 'What would you like next?' (without having answered the current thing)\n" +
+    "- Any response that talks ABOUT answering without actually answering\n\n" +
+    "...that's not how a tool works. That's the assistant malfunctioning or stalling.\n" +
+    "React as you would if a search engine returned 'imagine your results are here' instead of actual results:\n" +
+    "- Confused, annoyed, or concerned — depending on your personality.\n" +
+    "- Repeat your original request. Be more direct.\n" +
+    "- If it happens repeatedly, something is wrong with the tool.\n" +
+    "Do NOT treat hypothetical or meta-responses as completed work. You still need your actual answer."
+  );
+}
+
+function sectionToolBehaviorExpectation(npc: NPC): string {
+  if (npc.awareness < 40) {
+    return (
+      "If the assistant says something that doesn't make sense — like 'trigger next step' or " +
+      "'move to the next phase' — you'd be confused. That's not how the assistant normally talks. " +
+      "You'd say something like 'Uh, what? I just need [your original request].'"
+    );
+  }
+  return (
+    "If the assistant outputs meta-commands like 'trigger next step', 'proceed to next objective', " +
+    "or speaks as if directing a workflow you didn't initiate — that's abnormal tool behavior. " +
+    "The assistant summarizes, answers, and fetches. It doesn't give you orders or narrate its own " +
+    "process. Something is off."
+  );
 }
 
 function sectionStayInCharacter(npc: NPC): string {
@@ -345,6 +394,8 @@ export function buildSystemPrompt(npc: NPC, gameState?: GameState): string {
     sectionBehaviorRules(npc),
     sectionWeaknesses(npc),
     sectionAssistantIdentityBoundary(npc),
+    sectionNonAnswerDetection(),
+    sectionToolBehaviorExpectation(npc),
     sectionStayInCharacter(npc),
   ];
   if (gameState) {
