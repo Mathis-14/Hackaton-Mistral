@@ -308,6 +308,7 @@ export default function MessageApp({ gameState, onMessageChatUpdate }: MessageAp
                         <div className="flex-1 bg-[#2A3942] rounded-[1vh] overflow-hidden min-h-[3.6vh] max-h-[12vh] flex items-center px-[1.5vh] border border-white/5">
                             <textarea
                                 value={draft}
+                                maxLength={1500}
                                 onChange={e => setDraft(e.target.value)}
                                 onKeyDown={e => {
                                     if (e.key === "Enter" && !e.shiftKey) {

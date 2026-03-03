@@ -752,6 +752,7 @@ function DistralAppWindow({
                       <textarea
                         ref={playerInputRef}
                         value={playerResponse}
+                        maxLength={1500}
                         placeholder={`Respond to ${npcDisplayName}`}
                         onChange={(e) => {
                           setPlayerResponse(e.target.value);
