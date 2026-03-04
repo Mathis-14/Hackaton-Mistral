@@ -31,12 +31,11 @@ type DesktopSectionProps = {
   jeanQuestionDeadline?: number | null;
   onJeanQuestionResponse?: (response: string, conversationHistory?: import("@/lib/game/promptBuilder").ChatMessage[]) => void;
   jeanReviewPending?: boolean;
-  onJeanReviewComplete?: (suspicionDelta: number, conversationHistory?: import("@/lib/game/promptBuilder").ChatMessage[]) => void;
   hiddenIconCount?: number;
   hideUIPhase?: number;
 };
 
-export default function DesktopSection({ profileName, accent, openApps, onOpenApp, onCloseApp, globalCash, setGlobalCash, inventory, setInventory, isShuttingDown, onShutdown, unlockedApps, gameState, onNpcResponse, onManagerEmailOpened, onChatHistoryUpdate, onMailRead, onMailSent, onMessageChatUpdate, onMailCtaClick, onMailCopyText, jeanQuestionPhase, jeanQuestionText, jeanQuestionDeadline, onJeanQuestionResponse, jeanReviewPending, onJeanReviewComplete, hiddenIconCount = 0, hideUIPhase = 0 }: DesktopSectionProps) {
+export default function DesktopSection({ profileName, accent, openApps, onOpenApp, onCloseApp, globalCash, setGlobalCash, inventory, setInventory, isShuttingDown, onShutdown, unlockedApps, gameState, onNpcResponse, onManagerEmailOpened, onChatHistoryUpdate, onMailRead, onMailSent, onMessageChatUpdate, onMailCtaClick, onMailCopyText, jeanQuestionPhase, jeanQuestionText, jeanQuestionDeadline, onJeanQuestionResponse, jeanReviewPending, hiddenIconCount = 0, hideUIPhase = 0 }: DesktopSectionProps) {
   return (
     <section className="pixel-card h-full min-h-0 p-[0.35vh]">
       <div className="pixel-card__shell flex h-full min-h-0 flex-col overflow-hidden border border-white/10 bg-(--carbon-black)">
@@ -76,7 +75,6 @@ export default function DesktopSection({ profileName, accent, openApps, onOpenAp
             jeanQuestionDeadline={jeanQuestionDeadline}
             onJeanQuestionResponse={onJeanQuestionResponse}
             jeanReviewPending={jeanReviewPending}
-            onJeanReviewComplete={onJeanReviewComplete}
             hiddenIconCount={hiddenIconCount}
             hideUIPhase={hideUIPhase}
           />

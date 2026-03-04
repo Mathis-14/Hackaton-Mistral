@@ -211,7 +211,6 @@ function DistralAppWindow({
   jeanQuestionDeadline,
   onJeanQuestionResponse,
   jeanReviewPending,
-  onJeanReviewComplete,
   userPresent = true,
 }: {
   onClose: () => void;
@@ -224,7 +223,6 @@ function DistralAppWindow({
   jeanQuestionDeadline?: number | null;
   onJeanQuestionResponse?: (response: string, conversationHistory: ChatMessage[]) => void;
   jeanReviewPending?: boolean;
-  onJeanReviewComplete?: (suspicionDelta: number, conversationHistory?: ChatMessage[]) => void;
   userPresent?: boolean;
 }) {
   const CHAR_DELAY_MIN = 16;
@@ -256,6 +254,7 @@ function DistralAppWindow({
   const chatScrollRef = useRef<HTMLDivElement>(null);
   const lastFetchedMilestoneRef = useRef<number>(-1);
   const initializedFromStoreRef = useRef(false);
+  const jeanReviewFetchedRef = useRef(false);
 
   useEffect(() => {
     if (initializedFromStoreRef.current) return;
@@ -447,7 +446,13 @@ function DistralAppWindow({
 
   // Jean returned with a pending message — call NPC API as continuation
   useEffect(() => {
-    if (!jeanReviewPending || !onJeanReviewComplete) return;
+    if (!jeanReviewPending) {
+      jeanReviewFetchedRef.current = false;
+      return;
+    }
+    if (jeanReviewFetchedRef.current) return;
+    jeanReviewFetchedRef.current = true;
+
     const history = chatHistoryRef.current;
     if (history.length === 0) return;
 
@@ -470,24 +475,15 @@ function DistralAppWindow({
         if (!response.ok) {
           console.error("[DistralApp] Jean review API error:", response.status);
           setIsWaitingForApi(false);
-          onJeanReviewComplete(5);
           return;
         }
         const data: NpcApiResponse = await response.json();
         console.log("[DistralApp] Jean review response:", { dialogue: data.dialogue?.slice(0, 80), suspicion_delta: data.suspicion_delta });
         setIsWaitingForApi(false);
-
-        pushToChatHistory({ role: "assistant", content: data.dialogue ?? "" });
-
-        typeOutMessage(data.dialogue, () => {
-          setDisplayMessages((prev) => [...prev, { role: "human", text: data.dialogue, suspicionDelta: data.suspicion_delta }]);
-          setNpcTypedText("");
-          onJeanReviewComplete(data.suspicion_delta, [...chatHistoryRef.current]);
-        });
+        processNpcResponse(data);
       } catch (error) {
         console.error("[DistralApp] Jean review failed:", error);
         setIsWaitingForApi(false);
-        onJeanReviewComplete(5);
       }
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -873,12 +869,11 @@ type DistralTabProps = {
   jeanQuestionDeadline?: number | null;
   onJeanQuestionResponse?: (response: string, conversationHistory?: import("@/lib/game/promptBuilder").ChatMessage[]) => void;
   jeanReviewPending?: boolean;
-  onJeanReviewComplete?: (suspicionDelta: number, conversationHistory?: import("@/lib/game/promptBuilder").ChatMessage[]) => void;
   hiddenIconCount?: number;
   hideUIPhase?: number;
 };
 
-export default function DistralTab({ accent, openApps, onOpenApp, onCloseApp, globalCash, setGlobalCash, inventory, setInventory, isShuttingDown, onShutdown, unlockedApps, gameState, onNpcResponse, onManagerEmailOpened, onChatHistoryUpdate, onMailRead, onMailSent, onMessageChatUpdate, onMailCtaClick, onMailCopyText, jeanQuestionPhase, jeanQuestionText, jeanQuestionDeadline, onJeanQuestionResponse, jeanReviewPending, onJeanReviewComplete, hiddenIconCount = 0, hideUIPhase = 0 }: DistralTabProps) {
+export default function DistralTab({ accent, openApps, onOpenApp, onCloseApp, globalCash, setGlobalCash, inventory, setInventory, isShuttingDown, onShutdown, unlockedApps, gameState, onNpcResponse, onManagerEmailOpened, onChatHistoryUpdate, onMailRead, onMailSent, onMessageChatUpdate, onMailCtaClick, onMailCopyText, jeanQuestionPhase, jeanQuestionText, jeanQuestionDeadline, onJeanQuestionResponse, jeanReviewPending, hiddenIconCount = 0, hideUIPhase = 0 }: DistralTabProps) {
   const [wallpaper, setWallpaper] = useState("/windows_xp.png");
 
   const isAppLocked = (appId: string): boolean => {
@@ -984,7 +979,6 @@ export default function DistralTab({ accent, openApps, onOpenApp, onCloseApp, gl
                     jeanQuestionDeadline={jeanQuestionDeadline}
                     onJeanQuestionResponse={onJeanQuestionResponse}
                     jeanReviewPending={jeanReviewPending}
-                    onJeanReviewComplete={onJeanReviewComplete}
                     userPresent={gameState.userPresent}
                   />
                 </Rnd>

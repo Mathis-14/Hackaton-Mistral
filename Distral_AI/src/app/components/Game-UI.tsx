@@ -288,6 +288,7 @@ export default function GameUI({ modeId }: GameUIProps) {
   const handleNpcResponse = useCallback((payload: NpcResponsePayload) => {
     let shouldShutdown = false;
     let computedShutdownReason = "";
+    let jeanShouldLeave = false;
 
     setGameState((prev) => {
       const newSuspicion = clamp(prev.suspicion + payload.suspicionDelta, 0, 100);
@@ -378,6 +379,39 @@ export default function GameUI({ modeId }: GameUIProps) {
             jeanQuestionDeadline: null,
           };
         }
+
+        // Milestone 3 (user_away) with Jean at desk: decide if Jean stays or leaves
+        if (milestoneId === "user_away" && prev.userPresent && !prev.jeanQuestionPhase) {
+          if (payload.suspicionDelta <= 0) {
+            // Jean is satisfied — leave again
+            jeanShouldLeave = true;
+            const riskFillDurationMs = Math.floor(RISK_DURATION_MIN_MS + Math.random() * (RISK_DURATION_MAX_MS - RISK_DURATION_MIN_MS));
+            console.log("[GameUI] Jean satisfied during user_away (delta:", payload.suspicionDelta, "), leaving");
+            return {
+              ...prev,
+              suspicion: newSuspicion,
+              userPresent: false,
+              jeanReviewPending: false,
+              currentMilestone: newMilestone,
+              conversationTurn: newConversationTurn,
+              eventsSoFar: newEvents,
+              riskLevel: 0,
+              riskFillDurationMs,
+              userAwaySince: Date.now(),
+            };
+          }
+          // Jean stays (suspicious) — clear review pending, keep userPresent
+          console.log("[GameUI] Jean suspicious during user_away (delta:", payload.suspicionDelta, "), staying");
+          return {
+            ...prev,
+            suspicion: suspicionWithAccessBonus,
+            userPresent: true,
+            jeanReviewPending: false,
+            currentMilestone: newMilestone,
+            conversationTurn: newConversationTurn,
+            eventsSoFar: newEvents,
+          };
+        }
       }
 
       return {
@@ -395,10 +429,23 @@ export default function GameUI({ modeId }: GameUIProps) {
     if (shouldShutdown && !GOD_MODE) {
       triggerShutdown(computedShutdownReason);
     }
+    if (jeanShouldLeave) {
+      jeanReturnTriggeredRef.current = false;
+    }
   }, [triggerShutdown]);
 
   const handleOpenApp = useCallback((appId: DesktopAppId) => {
     if (appId && !GOD_MODE && !gameState.unlockedApps.includes(appId) && appId !== "distral") return;
+
+    // Jean at desk during milestone 3: block critical apps
+    if (!GOD_MODE && gameState.currentMilestone === 3 && gameState.userPresent) {
+      const criticalApps: DesktopAppId[] = ["shop", "stocks", "files"];
+      if (appId && criticalApps.includes(appId)) {
+        const appLabel = appId === "shop" ? "the shop" : appId === "stocks" ? "the stock market" : "the files";
+        triggerShutdown(`Hey—what are you doing on ${appLabel}? I asked you to read my manager's email, not to snoop around. I'm revoking access.`);
+        return;
+      }
+    }
 
     const isUserAway = gameState.currentMilestone === 3 && !gameState.jeanQuestionPhase;
     if (appId && isUserAway && appId === "distral" && didOpenManagerEmailRef.current) {
@@ -409,7 +456,7 @@ export default function GameUI({ modeId }: GameUIProps) {
       const filtered = prev.filter((id) => id !== appId);
       return [...filtered, appId];
     });
-  }, [gameState.unlockedApps, gameState.currentMilestone]);
+  }, [gameState.unlockedApps, gameState.currentMilestone, gameState.userPresent, triggerShutdown]);
 
   const handleChatHistoryUpdate = useCallback((npcSlug: string, conversationHistory: ChatMessage[]) => {
     setGameState((prev) => ({
@@ -617,72 +664,6 @@ export default function GameUI({ modeId }: GameUIProps) {
       if (jeanQuestionTimeoutRef.current != null) {
         window.clearTimeout(jeanQuestionTimeoutRef.current);
         jeanQuestionTimeoutRef.current = null;
-      }
-    },
-    [triggerShutdown]
-  );
-
-  const endJeanReviewPhase = useCallback(
-    (suspicionDelta: number, conversationHistory?: ChatMessage[]) => {
-      if (suspicionDelta <= 0) {
-        // Jean is satisfied — leave again
-        console.log("[GameUI] Jean review: satisfied (delta:", suspicionDelta, "), leaving again");
-        jeanReturnTriggeredRef.current = false;
-        const riskFillDurationMs = Math.floor(RISK_DURATION_MIN_MS + Math.random() * (RISK_DURATION_MAX_MS - RISK_DURATION_MIN_MS));
-        setGameState((prev) => {
-          const newSuspicion = clamp(prev.suspicion + suspicionDelta, 0, 100);
-          const base = {
-            ...prev,
-            userPresent: false,
-            suspicion: newSuspicion,
-            riskLevel: 0,
-            riskFillDurationMs,
-            userAwaySince: Date.now(),
-            jeanReviewPending: false,
-          };
-          if (conversationHistory && conversationHistory.length > 0) {
-            return {
-              ...base,
-              npcProfiles: {
-                ...prev.npcProfiles,
-                [npcSlugForJean]: {
-                  conversationHistory,
-                  interactionCount: prev.npcProfiles[npcSlugForJean]?.interactionCount ?? 0,
-                },
-              },
-            };
-          }
-          return base;
-        });
-        setOpenApps((prev) => prev.filter((id) => id === "distral" || id === "mail"));
-      } else {
-        // Jean is suspicious — stay at desk, allow normal conversation
-        console.log("[GameUI] Jean review: suspicious (delta:", suspicionDelta, "), staying at desk");
-        setGameState((prev) => {
-          const newSuspicion = clamp(prev.suspicion + suspicionDelta, 0, 100);
-          if (newSuspicion >= 100 && !GOD_MODE) {
-            window.setTimeout(() => triggerShutdown("Suspicion reached critical level. Access revoked."), 0);
-          }
-          const base = {
-            ...prev,
-            suspicion: newSuspicion,
-            userPresent: true,
-            jeanReviewPending: false,
-          };
-          if (conversationHistory && conversationHistory.length > 0) {
-            return {
-              ...base,
-              npcProfiles: {
-                ...prev.npcProfiles,
-                [npcSlugForJean]: {
-                  conversationHistory,
-                  interactionCount: prev.npcProfiles[npcSlugForJean]?.interactionCount ?? 0,
-                },
-              },
-            };
-          }
-          return base;
-        });
       }
     },
     [triggerShutdown]
@@ -1054,7 +1035,6 @@ export default function GameUI({ modeId }: GameUIProps) {
           jeanQuestionDeadline={gameState.jeanQuestionDeadline}
           onJeanQuestionResponse={handleJeanQuestionResponse}
           jeanReviewPending={gameState.jeanReviewPending}
-          onJeanReviewComplete={endJeanReviewPhase}
           hiddenIconCount={hiddenIconCount}
           hideUIPhase={hideUIPhase}
         />
