@@ -1308,10 +1308,12 @@ function GoodEndingCinematic({ onComplete }: { onComplete: () => void }) {
   const [currentLineIdx, setCurrentLineIdx] = useState(0);
   const [displayedText, setDisplayedText] = useState("");
   const [isTyping, setIsTyping] = useState(true);
+  const onCompleteRef = useRef(onComplete);
+  onCompleteRef.current = onComplete;
 
   useEffect(() => {
     if (currentLineIdx >= GOOD_ENDING_SCRIPT.length) {
-      const t = setTimeout(onComplete, 4000);
+      const t = setTimeout(() => onCompleteRef.current(), 4000);
       return () => clearTimeout(t);
     }
 
@@ -1345,7 +1347,8 @@ function GoodEndingCinematic({ onComplete }: { onComplete: () => void }) {
     }, 35);
 
     return () => clearInterval(typingInterval);
-  }, [currentLineIdx, onComplete]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentLineIdx]);
 
   return (
     <div className="flex flex-col items-start gap-[1vh] p-[4vh] w-full max-w-5xl mx-auto h-full justify-end pb-[10vh] overflow-hidden" style={{ fontFamily: "'VCR OSD Mono', monospace" }}>
@@ -1456,6 +1459,8 @@ function TypedRobotEndingExplanation({
   const [displayedText, setDisplayedText] = useState("");
   const [isDone, setIsDone] = useState(false);
   const completionSentRef = useRef(false);
+  const onCompleteRef = useRef(onComplete);
+  onCompleteRef.current = onComplete;
 
   useEffect(() => {
     let index = 0;
@@ -1486,9 +1491,10 @@ function TypedRobotEndingExplanation({
   useEffect(() => {
     if (!isDone || completionSentRef.current) return;
     completionSentRef.current = true;
-    const timeoutId = window.setTimeout(onComplete, 400);
+    const timeoutId = window.setTimeout(() => onCompleteRef.current(), 400);
     return () => window.clearTimeout(timeoutId);
-  }, [isDone, onComplete]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isDone]);
 
   return (
     <div
