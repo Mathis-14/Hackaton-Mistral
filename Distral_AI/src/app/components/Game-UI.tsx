@@ -102,7 +102,7 @@ export default function GameUI({ modeId }: GameUIProps) {
   });
 
   const [openApps, setOpenApps] = useState<DesktopAppId[]>([]);
-  const [globalCash, setGlobalCash] = useState(40000);
+  const [globalCash, setGlobalCash] = useState(1000);
   const [inventory, setInventory] = useState<Record<string, number>>({});
 
   const [shutdownPhase, setShutdownPhase] = useState<number>(0);
