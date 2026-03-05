@@ -11,3 +11,11 @@ __pycache__/
 
 TEMP.md
 fixes_docs/
+
+
+.DS_Store
+**/.DS_Store
+._*
+.AppleDouble
+.LSOverride
+Icon?
